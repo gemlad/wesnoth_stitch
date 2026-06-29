@@ -1,0 +1,393 @@
+code,name,hex
+B5200,White,#FFFFFF
+BLANC,Snow White,#FCFCFC
+ECRU,Ecru,#F0EBD8
+150,Dusty Rose VD,#AB0249
+151,Dusty Rose VL,#F26B8A
+152,Shell Pink MD Lt,#E2637A
+153,Shell Pink VL,#E36B84
+154,Grape VD,#8E5474
+155,Blue Violet MD Dk,#9991BA
+156,Blue Violet MD Lt,#A69FC9
+157,Cornflower Blue VL,#BBB2D3
+158,Cornflower Blue MD Dk,#5C7AA2
+159,Gray Blue Lt,#C7C7D5
+160,Gray Blue MD,#9AA4C2
+161,Gray Blue,#778BAF
+162,Blue Lt,#6586AD
+163,Celadon Green MD,#508D6E
+164,Forest Green Lt,#72B087
+165,Moss Green VL,#6DB489
+166,Moss Green MD Lt,#A3C67A
+167,Yellow Green VD,#9DB465
+168,Pistachio Green VD,#8D7942
+169,Pewter Lt,#849084
+208,Lavender VD,#603F6F
+209,Lavender Dk,#7F548D
+210,Lavender MD,#9E79AB
+211,Lavender Lt,#BBA4C8
+221,Shell Pink VD,#89363C
+223,Shell Pink Lt,#BC6C6C
+224,Shell Pink VL,#BB8881
+225,Shell Pink UL VL,#FFE6DB
+300,Mahogany VD,#6B2301
+301,Mahogany MD,#B33A22
+302,Mahogany DK,#993217
+307,Christmas Gold,#F5D300
+304,Cranberry DK,#941527
+310,Black,#000000
+319,Hunter Green VD,#2B5E2B
+320,Pistachio Green MD,#6B9755
+321,Red,#CB0015
+322,Baby Blue DK,#4B6291
+326,Forest Green VD,#1A5C25
+327,Garnet VD,#9C2740
+333,Blue Violet VD,#5C3365
+334,Baby Blue MD,#24468E
+335,Rose,#E63E62
+336,Navy Blue,#182556
+340,Lavender,#6D3876
+341,Blue Violet Lt,#9C80B8
+347,Salmon VD,#BD0E29
+349,Coral Dk,#D32B2B
+350,Coral MD,#E04848
+351,Coral,#E96A67
+352,Coral Lt,#EB8B86
+353,Peach,#EDADA8
+355,Terra Cotta MD,#C15858
+356,Terra Cotta Lt,#C37463
+367,Pistachio Green DK,#415E33
+368,Pistachio Green Lt,#699255
+369,Pistachio Green VL,#A3C68B
+370,Mustard MD,#B18347
+371,Mustard,#BC9557
+372,Mustard Lt,#C6A86A
+400,Mahogany DK,#8C3C0B
+407,Hazelnut Brown DK,#7C553A
+3371,Black Brown,#3E200B
+413,Dark Chocolate,#413022
+414,Steel Gray DK,#666655
+415,Pearl Gray,#989898
+318,Pearl Gray Lt,#A3A3A3
+762,Steel Gray Lt,#BABABA
+3072,Pearl Gray VL,#D7D7D7
+317,Pewter Gray DK,#535353
+420,Hazelnut Brown DK2,#7A5A2B
+869,Hazelnut Brown VD,#956D36
+422,Hazelnut Brown Lt,#A97D44
+433,Brown MD,#6E4022
+434,Brown Lt,#825028
+435,Brown VL,#946035
+436,Tan,#A87340
+437,Tan Lt,#BF914D
+444,Lemon DK,#FFD726
+3799,Charcoal Gray DK,#484240
+844,Beaver Gray UL Dk,#4D4542
+451,Shell Gray DK,#6A5A55
+452,Shell Gray MD,#8F7F7A
+453,Shell Gray Lt,#B3A49F
+469,Avocado Green,#495D1D
+470,Avocado Green Lt,#607030
+471,Avocado Green VL,#738040
+472,Avocado Green UL Lt,#9CB160
+498,Red DK,#870B20
+500,Blue Green VD,#316C45
+501,Blue Green DK,#3B7F52
+502,Blue Green,#5A9B6E
+503,Blue Green MD,#7AB88A
+504,Blue Green VL,#A0CFA9
+517,Wedgewood DK,#103E72
+518,Wedgewood Lt,#3669A6
+519,Sky Blue,#78ACD6
+520,Fern Green DK,#376D3D
+522,Fern Green,#698B59
+523,Fern Green Lt,#98AE83
+524,Fern Green VL,#BFCE9F
+535,Steel Gray,#464549
+543,Beige Brown UL VL,#E6D1B8
+550,Violet VD,#592460
+552,Violet DK,#7B3383
+553,Violet,#984DA3
+554,Violet Lt,#B87AC0
+561,Jade VD,#306851
+562,Jade MD,#498B6E
+563,Jade Lt,#6EB090
+564,Jade VL,#A3D4B7
+580,Moss Green DK,#3E5C14
+581,Moss Green,#577A22
+582,Moss Green Lt,#8BAA34
+583,Moss Green MD DK,#486B14
+823,Navy Blue VD,#021B4B
+820,Blue VD,#1D3C75
+3325,Baby Blue Lt,#587EB5
+3755,Baby Blue VL,#8FAFCE
+3756,Baby Blue UL VL,#B3CCE0
+3760,Wedgewood,#5484A9
+828,Sky Blue Lt,#A5C6DF
+3753,Sky Blue VL,#C7DBE9
+597,Turquoise,#2B8C8E
+598,Turquoise Lt,#6AB9B3
+600,Cranberry VD,#C8125B
+601,Cranberry DK,#D33373
+602,Cranberry MD,#DF4F81
+603,Cranberry,#E8739C
+604,Cranberry Lt,#F1A5BC
+605,Cranberry VL,#F8C3D2
+606,Orange Red Bright,#FA1A00
+610,Drab Brown DK,#3C2415
+611,Drab Brown,#5C3C25
+612,Drab Brown MD,#7C5C3F
+613,Drab Brown Lt,#A08560
+632,Desert Sand UL VD,#8B6045
+640,Beige Gray VD,#756D5F
+641,Beige Gray DK,#8A8275
+642,Beige Gray MD,#A09B8E
+644,Beige Gray MD Lt,#C3BCAE
+645,Beaver Gray MD DK,#878380
+646,Beaver Gray DK,#9C9895
+647,Beaver Gray MD,#B2AEAB
+648,Beaver Gray Lt,#C9C5C2
+666,Christmas Red Bright,#CE0F15
+676,Old Gold Lt,#D8B970
+677,Old Gold VL,#C5A251
+680,Old Gold DK,#9E7726
+699,Green,#056508
+700,Green Bright,#0C7C0C
+701,Green Lt,#299E29
+702,Kelly Green,#44B844
+703,Chartreuse,#7ED47E
+704,Chartreuse Bright Lt,#9BE49B
+712,Cream,#F2E8CF
+746,Yellow Cream Lt,#FFF5D4
+727,Topaz VL,#FFE98E
+725,Topaz,#FFE066
+726,Topaz Lt DK,#FFC733
+729,Old Gold MD,#C49E38
+730,Olive Green VD,#594F1D
+731,Olive Green DK,#6B5F20
+732,Olive Green,#837428
+733,Olive Green MD,#998A30
+734,Olive Green Lt,#B2A238
+738,Tan VL,#DBC5A0
+739,Tan UL VL,#ECD8B8
+740,Tangerine,#FF8800
+741,Tangerine MD,#FF9B21
+742,Tangerine Lt,#FFB540
+743,Yellow MD,#FFC63E
+744,Yellow Pale,#FFD566
+745,Yellow Lt Pale,#FFE38E
+747,Sky Blue VL,#D1EBF0
+3078,Topaz VL2,#FCDE52
+772,Yellow Green VL,#D1E4B5
+777,Raspberry VD,#A03E5D
+778,Antique Mauve VL,#DBA5A7
+780,Topaz UL VD,#7A5600
+781,Topaz VD,#906710
+782,Topaz DK,#AA7D1E
+783,Topaz MD,#C59626
+791,Royal Blue VD,#111A6C
+792,Cornflower Blue DK,#3440A2
+793,Cornflower Blue MD,#5064B6
+794,Cornflower Blue Lt,#8EA4D6
+796,Royal Blue DK,#2845A3
+797,Royal Blue,#3858B0
+798,Delft Blue DK,#4974C4
+799,Delft Blue MD,#6E99D8
+800,Delft Blue Pale,#A0BFE4
+809,Delft Blue Lt,#C4D9F0
+806,Peacock Blue DK,#127580
+807,Peacock Blue,#3B9DA8
+813,Blue Lt2,#6BAACC
+824,Blue MD Dk,#3F73AA
+825,Blue DK,#4F84BB
+826,Blue MD,#6B9ACB
+827,Blue VL,#98BFDE
+3841,Blue UL VL,#C4D7E7
+3051,Green Gray DK,#6C7955
+3052,Green Gray MD,#8A9A70
+3053,Green Gray,#A9B68E
+838,Beige Brown VD,#3C2712
+839,Beige Brown DK,#523A20
+840,Beige Brown MD,#6D5033
+841,Beige Brown Lt,#8B6E4A
+842,Beige Brown VL,#AC9170
+868,Hazelnut Brown VD2,#9E5933
+890,Pistachio Green UL DK,#0B4622
+895,Pistachio Green DK2,#2E7A40
+898,Coffee Brown VD,#462B12
+899,Rose MD,#C73E5E
+900,Burnt Orange DK,#D63000
+946,Burnt Orange MD,#E85020
+947,Burnt Orange Bright,#FF6330
+948,Peach VL,#FFC4A8
+951,Desert Sand VL,#FDD9C4
+902,Garnet VD2,#60091A
+814,Garnet VD DK,#6D1522
+815,Garnet DK,#881936
+816,Garnet,#AB2245
+817,Coral Red VD,#B53E5C
+918,Red Copper DK,#6F2D10
+919,Red Copper MD,#9B4320
+920,Copper MD,#AC5830
+921,Copper,#BD6E40
+922,Copper Lt,#CF8350
+924,Gray Green VD,#354850
+926,Gray Green DK,#46626B
+927,Gray Green MD,#6E8B94
+928,Gray Green Lt,#A0B6BC
+3768,Gray Green VL,#C9D6D9
+930,Antique Blue DK,#3F5A6B
+931,Antique Blue MD,#597382
+932,Antique Blue Lt,#839FAD
+934,Black Avocado Green,#1B3112
+935,Avocado Green DK,#2B4821
+936,Avocado Green VD DK,#3D622E
+937,Avocado Green MD,#547D3D
+3808,Aquamarine DK,#0F656E
+3809,Aquamarine,#1B828B
+3810,Aquamarine Lt,#3EAAB0
+3812,Teal DK,#1E8E82
+943,Aquamarine MD,#40B8A0
+3816,Seagreen MD,#A2D3A3
+3817,Celadon Green VL,#BFE0BF
+909,Emerald Green DK,#408B58
+910,Emerald Green MD,#50A068
+911,Emerald Green,#5FBA78
+912,Emerald Green Lt,#7ACE90
+913,Nile Green MD,#6DB889
+966,Baby Green VL,#B3D8C6
+954,Baby Green MD Lt,#76CE96
+955,Baby Green Lt,#95D8AD
+3813,Baby Green UL VL,#D0EBDA
+950,Desert Sand Lt,#EBC5A6
+3773,Sportsman Flesh MD,#F1BFA8
+3774,Sportsman Flesh VL,#F2C7A8
+3064,Sportsman Flesh,#E8A292
+957,Geranium Pale,#F28DA1
+3685,Geranium DK,#C44A62
+3687,Geranium MD,#D96E82
+3688,Geranium Lt,#E8A0AB
+3689,Geranium VL,#F2C7CE
+963,Dusty Rose UL VL,#F797A5
+964,Seagreen Lt,#B5E5D0
+3818,Seagreen VD,#206556
+970,Pumpkin Lt,#F67813
+971,Pumpkin Bright,#FF7F00
+972,Canary Deep,#FF9A28
+973,Canary Bright,#FFB438
+975,Golden Brown DK,#7C4B10
+976,Golden Brown MD,#8A5D20
+977,Golden Brown Lt,#B07D38
+988,Forest Green MD,#6E8B45
+989,Forest Green,#8AAE5E
+986,Forest Green VD2,#325E28
+987,Forest Green DK2,#4F7A38
+991,Aquamarine DK2,#20756A
+992,Aquamarine Lt2,#4B9D8E
+993,Aquamarine VL,#70C2B0
+995,Electric Blue DK,#0060CE
+996,Electric Blue MD,#30A0FF
+3011,Khaki Green DK,#595522
+3012,Khaki Green MD,#726A30
+3013,Khaki Green Lt,#959545
+3021,Brown Gray VD,#4A3C28
+3022,Brown Gray MD,#5C5245
+3023,Brown Gray Lt,#847A6B
+3024,Brown Gray VL,#ACA594
+3031,Mocha Brown VD,#3F3022
+3032,Mocha Brown MD,#AE966E
+3033,Mocha Brown VL,#D1C0A0
+3041,Antique Violet MD,#836479
+3042,Antique Violet Lt,#A88CA0
+3045,Yellow Beige DK,#9D7C38
+3046,Yellow Beige MD,#BEA04A
+3047,Yellow Beige Lt,#DFC56A
+3328,Salmon DK,#D6464E
+3350,Raspberry DK,#A03040
+3354,Raspberry,#C5556D
+3326,Raspberry Lt,#DA8495
+3340,Apricot MD,#FF8150
+3341,Apricot,#FCA878
+3345,Hunter Green2,#4B7A20
+3346,Hunter Green Lt,#5E8E30
+3347,Yellow Green MD,#71A340
+3348,Yellow Green Lt,#8BB850
+3362,Pine Green DK,#3A4A22
+3363,Pine Green MD,#506534
+3364,Pine Green,#6A8248
+3607,Plum Lt,#C23C78
+3608,Plum VL,#D05C90
+3609,Plum UL Lt,#E088AD
+3705,Melon DK,#FF6680
+3706,Melon MD,#FF8899
+3708,Melon Lt,#FFAABB
+3713,Salmon VL,#F8CBD0
+761,Salmon UL VL,#FFD9D2
+3716,Dusty Rose MD Lt,#F5A0AA
+3721,Shell Pink DK,#8E3B42
+3722,Shell Pink MD DK,#A55056
+3726,Shell Pink MD,#BF6C72
+3727,Shell Pink MD Lt,#D49097
+3731,Dusty Rose VD2,#D45F72
+3733,Dusty Rose,#E88D95
+3740,Antique Violet DK,#6E4A5F
+3743,Antique Violet VL,#C8ACC0
+3746,Blue Violet DK,#7B5DAE
+3761,Sky Blue Lt2,#ACD8E0
+3765,Peacock Blue MD DK,#2A6B83
+3766,Peacock Blue Lt,#558E9B
+3770,Flesh VL,#FEEFD5
+3771,Desert Sand VL2,#EFCCA7
+3776,Mahogany Lt,#C26835
+3778,Terra Cotta VL,#B38670
+3777,Terra Cotta UL VD,#924A40
+3779,Flesh,#F1D6B0
+3781,Mocha Brown DK,#523828
+3782,Mocha Brown,#91714E
+3790,Mocha,#806040
+3787,Brown Gray DK,#615045
+3864,Cocoa VL,#BBA595
+3863,Cocoa Lt,#A08878
+3862,Cocoa MD,#846A5A
+3861,Cocoa DK,#704E40
+3801,Christmas Red Lt,#E21E3B
+3802,Wine VD,#7A1A38
+3803,Wine DK,#9C2050
+3804,Cyclamen Pink DK,#CE3068
+3805,Cyclamen Pink,#E25088
+3806,Cyclamen Pink Lt,#F070A0
+3819,Moss Green Lt2,#CED868
+3820,Straw DK,#DFCE65
+3821,Straw,#F0DC78
+3822,Straw Lt,#F7E88A
+3823,Yellow UL Pale,#FFF5C0
+3824,Apricot Lt,#FEB5A0
+3830,Pumpkin Pale DK,#AB1E20
+3831,Raspberry DK MD,#B83A42
+3832,Raspberry MD,#D86070
+3833,Raspberry Lt,#EA8A9A
+3834,Raspberry VL,#F4ABB5
+3835,Grape DK,#72426A
+3836,Grape Lt,#906882
+3837,Lavender UL DK,#582C70
+3838,Lavender Blue DK,#9A70A0
+3839,Lavender Blue MD,#A890C0
+3840,Lavender Blue Lt,#C0B0D0
+3842,Wedgewood VD,#295880
+3843,Wedgewood MD,#3B7098
+3844,Wedgewood Bright,#5098C0
+3848,Teal Green DK,#1D5E5A
+3849,Teal Green MD,#3A8880
+3850,Teal Green Lt,#58AAA0
+3851,Teal Green Bright Lt,#78C8C0
+3852,Straw VD,#C6960C
+3853,Autumn Gold DK,#D8A830
+3854,Autumn Gold MD,#E8C060
+3855,Autumn Gold Lt,#F0D090
+3856,Mahogany UL VL,#FDE0A8
+3857,Rosewood DK,#662A20
+3858,Rosewood MD,#8B4838
+3859,Rosewood Lt,#B07060
+3860,Cocoa,#D0A090
+3865,Winter White,#FAF8F0
+3866,Mocha Brown UL VL,#F8F4E8
