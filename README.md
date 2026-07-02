@@ -1,14 +1,25 @@
-# Thread & Pixel — Wesnoth Art to Cross-Stitch
+# Wesnoth Stitch — Wesnoth Art to Cross-Stitch
 
 Pulls art assets from the official [Battle for Wesnoth](https://github.com/wesnoth/wesnoth)
 repository and converts them into cross-stitch patterns: a quick PNG preview first,
 then (if you like what you see) a full printable PDF chart with stitch symbols
 and a DMC floss key.
 
+## Status
+
+This Python script is the working prototype, now moved into [prototype/](prototype/).
+It's being rewritten from scratch as an Electron + TypeScript desktop app with an
+interactive in-app pattern preview, proper perceptual colour quantization, and a
+real GUI instead of a CLI — see [wesnoth-stitch-design-v2.md](wesnoth-stitch-design-v2.md)
+for the full design and [wesnoth-stitch-milestone-1-tasks.md](wesnoth-stitch-milestone-1-tasks.md)
+for the current in-progress milestone. The instructions below still describe this
+Python prototype, which remains the only runnable version until the rewrite reaches
+export parity (Milestone 3).
+
 ## Setup
 
 ```bash
-cd wesnoth_stitch
+cd prototype
 pip install -r requirements.txt
 ```
 
@@ -36,7 +47,7 @@ This will:
    listing every DMC color used and how many stitches it covers, and an
    estimated finished size at a few common Aida fabric counts.
 
-Both files land in `wesnoth_stitch/output/`.
+Both files land in `prototype/output/`.
 
 Run `python main.py --refresh` if you want to force a fresh fetch of the file
 list instead of using the cached one (e.g. after a big Wesnoth art update).
