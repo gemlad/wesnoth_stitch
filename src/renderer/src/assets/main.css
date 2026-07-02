@@ -1,0 +1,37 @@
+@import './base.css';
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+#root {
+  width: 100%;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.app-shell h1 {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--ev-c-text-1);
+  margin: 0 0 12px;
+}
+
+.app-shell .subtitle {
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--ev-c-text-2);
+  font-weight: 600;
+  margin: 0;
+}

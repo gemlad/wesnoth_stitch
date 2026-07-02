@@ -1,5 +1,15 @@
+# Node / Electron
+node_modules
+dist
+out
+.eslintcache
+*.log*
+
+# Python prototype
 __pycache__/
 *.pyc
 wesnoth_cache/
 output/
+
+# OS
 .DS_Store
