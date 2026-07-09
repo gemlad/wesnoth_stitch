@@ -19,8 +19,16 @@ for each task — don't record done/in-progress here.
 ## Scope note
 
 Milestone 2 turns a **selected** sprite into a stitchable pattern on screen:
-quantize its colours → map them to DMC floss → render the stitch grid → let the user
-drive the colour count with a slider. It ends at a live, correct on-screen pattern.
+**map its colours to DMC floss first** (fidelity ceiling), then **reduce over floss** to
+the chosen colour count → render the stitch grid → let the user drive the colour count
+with a slider. It ends at a live, correct on-screen pattern.
+
+> **Pipeline ordering (§5.2):** map every pixel to its nearest DMC floss *before* any
+> colour reduction, so we don't ditch fidelity to arbitrary centroids and then snap.
+> Reduction is a k-medoids/agglomerative **merge over real floss**, weighted by pixel
+> frequency — the final palette is guaranteed-real DMC with no snap-drift, the default
+> count is *distinct DMC* (what Req. 6 really means), and the slider merge is monotone
+> (stable) by construction. This is why tasks 2 and 3 below are mapping-then-reduce.
 
 Explicitly **not** in M2 (per §9): **export** (PNG/PDF chart with floss key) is
 Milestone 3; **packaging/installer** is Milestone 4. The sprite source stays the
@@ -39,28 +47,32 @@ hardcoded dev path from M1 (§5.1 note) — no folder picker yet.
   dataset (§3: reuse the data, convert to JSON at build time or load the CSV).
 - Add `culori`-based colour utilities in a shared/testable module: sRGB→Lab
   conversion and Lab (ΔE) distance (§5.2), plus a precomputed **DMC Lab reference
-  table** for nearest-floss search (used by #15).
+  table** for nearest-floss search (used by the mapping step, #15).
 - No UI. Pure functions with unit tests against a few known conversions.
 - Depends on: nothing (M1 shipped)
 
-### 2. Colour quantization — Lab k-means (#14)
-- Branch: `feature/quantization`
-- Implement the §5.2 pipeline over a decoded sprite (raw RGBA): exclude transparent
-  pixels; count exact-duplicate colours first (the "true" colour count, Req. 6);
-  run **k-means in Lab space**, `k` = requested colour count, weighted by pixel
-  frequency; map every opaque pixel to its nearest centroid.
-- **Slider stability (§5.2):** seed deterministically (k-means++ / fixed seed) and
-  warm-start each run from the previous `k`'s centroids so adjacent `k` values give
-  visually stable, incrementally-changing palettes rather than independent re-clusters.
-- Produces `QuantizedPalette` + `StitchPattern` (§6). Pure, testable module.
+### 2. DMC floss mapping — per-pixel, fidelity-first (#15)
+- Branch: `feature/dmc-mapping`
+- **First** pipeline step (§5.2): over a decoded sprite (raw RGBA), exclude transparent
+  pixels and map **every opaque pixel to its nearest DMC floss** by Lab (ΔE) distance
+  against the reference table from #13. Dedupe by exact colour first so the search is
+  (distinct sprite colours × DMC), not per-pixel.
+- Produces the DMC-mapped base + the **distinct-DMC count** (the "true" colour count for
+  Req. 6). Populates `QuantizedPalette.colours[].dmc` (code + name).
+- Pure, testable: assert a handful of sprite colours resolve to sensible floss codes,
+  and that transparent pixels are excluded.
 - Depends on: 1
 
-### 3. DMC floss mapping (#15)
-- Branch: `feature/dmc-mapping`
-- Map each post-quantization centroid to its nearest DMC floss by Lab distance
-  against the reference table from #13; populate `QuantizedPalette.colours[].dmc`
-  (code + name) (§5.3).
-- Pure, testable: assert a handful of centroids resolve to sensible floss codes.
+### 3. Colour reduction over DMC — Lab k-medoids/merge (#14)
+- Branch: `feature/reduce-over-dmc`
+- **Second** pipeline step (§5.2): when the requested colour count is below the
+  distinct-DMC count, reduce the DMC-mapped palette down to `k` by **merging the
+  perceptually closest floss colours** — k-medoids / agglomerative merge in Lab,
+  weighted by pixel frequency. Each group's representative is itself a real DMC floss
+  (no k-means averages, no second snap); merged pixels reassign to it.
+- **Slider stability (§5.2):** the merge is monotone and nests, so adjacent `k` values
+  differ by exactly one merge — inherently warm-startable and stable, no re-clustering.
+- Produces the final `QuantizedPalette` + `StitchPattern` (§6). Pure, testable module.
 - Depends on: 1, 2
 
 ### 4. Stitch-symbol set + slider ceiling (#16)
@@ -70,11 +82,11 @@ hardcoded dev path from M1 (§5.1 note) — no folder picker yet.
   slider's **hard maximum**, so every colour stays distinguishable by symbol alone
   (incl. black-and-white charts).
 - Records the chosen glyph set + count as a constant the slider (#19) reads.
-- Depends on: 3
+- Depends on: 3 (the reduced palette, #14)
 
 ### 5. Convert-a-sprite-to-a-pattern over IPC (#17)
 - Branch: `feature/convert-ipc`
-- Expose the pipeline (quantize → DMC map → symbols) behind a typed IPC channel,
+- Expose the pipeline (DMC map → reduce over floss → symbols) behind a typed IPC channel,
   e.g. `convertSprite(id, colourCount) → { QuantizedPalette, StitchPattern }`,
   following the M1 shared-contract pattern (`src/shared/ipc.ts`).
 - **Design call to make here:** the preview must re-run live as the slider drags
@@ -95,10 +107,9 @@ hardcoded dev path from M1 (§5.1 note) — no folder picker yet.
 
 ### 7. Colour-count slider + live re-quantization (#19)
 - Branch: `feature/colour-slider`
-- Slider from 1 to the symbol-set max (#16); default = the sprite's exact-duplicate
+- Slider from 1 to the symbol-set max (#16); default = the sprite's distinct-DMC
   colour count capped at 40 (§5.2). Dragging re-runs the pipeline (#17) and updates
-  the Konva preview (#18) live, relying on the seeded/warm-started quantization for
-  visual stability.
+  the Konva preview (#18) live, relying on the monotone floss merge for visual stability.
 - This is where "default colours = the sprite's own colour count" (Req. 6) becomes
   visible and testable.
 - Depends on: 5, 6
@@ -147,10 +158,10 @@ forward — it doesn't change M2's tasks, but it changes what comes after.
 ## Definition of done for Milestone 2
 
 - Selecting a sprite and choosing a colour count produces a **live, correct on-screen
-  stitch pattern**: colours quantized perceptually (Lab), each mapped to a real DMC
-  floss, rendered 1:1 on the Konva grid with a per-cell symbol option and a
-  configurable background colour.
-- The colour-count slider re-quantizes live and stays visually stable across steps;
+  stitch pattern**: colours mapped to real DMC floss first, then reduced perceptually
+  (Lab merge) to the chosen count, rendered 1:1 on the Konva grid with a per-cell symbol
+  option and a configurable background colour.
+- The colour-count slider re-runs the pipeline live and stays visually stable across steps;
   its maximum is the legible symbol-set size; its default is the sprite's own colour
   count (capped).
 - The 40-colour cap and symbol-set ceiling are validated against real sprites (§8).

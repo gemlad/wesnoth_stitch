@@ -164,40 +164,66 @@ in RGB, and two shades that are visually distinct can be RGB-close. The result i
 that visually important detail gets merged away while near-duplicate shades survive
 as separate colours, wasting your colour budget.
 
+**Map to DMC *before* reducing (don't ditch fidelity too soon).** The output is
+always DMC floss — that's the only alphabet you can actually stitch. So the most
+faithful representation available is "every pixel → its best DMC match"; that's
+lossless *with respect to the medium*. We therefore map to floss first (the fidelity
+ceiling) and treat colour *reduction* as a second, honest step over real floss —
+rather than clustering into arbitrary centroids and only snapping to DMC at the end.
+
+Mapping-first avoids two failure modes of quantize-then-snap: (a) **snap-drift /
+collisions** — k-means centroids optimise for raw pixels, then a *second* lossy snap
+to DMC can collapse two centroids onto the same floss, so you ask for `k` colours and
+silently get fewer distinct floss; (b) a **misleading default count** — "the sprite's
+own colour count" (Req. 6) as distinct *RGB* over-counts shades that are the same
+thread. Distinct *DMC* is what Req. 6 actually wants.
+
 **Approach:**
 
 1. Convert every opaque pixel to Lab colour space (`culori`). Lab is designed so that
    Euclidean distance approximates *perceived* colour difference — this is the fix.
-2. Count exact-duplicate colours first (cheap, gives you the "true" colour count of
-   the sprite for Req. 6).
-3. Run k-means clustering in Lab space, `k` = the user's chosen colour count,
-   weighted by pixel frequency (so a colour used once doesn't get a whole cluster
-   to itself at the expense of a colour used 500 times).
-4. Map every pixel to its nearest cluster centroid. Transparent pixels are excluded
-   from clustering entirely and stay transparent (they're not stitches).
-5. Feed the resulting centroids into the preview (§5.4) immediately — this step needs
-   to be fast enough to re-run live as the user drags a colour-count slider.
+   Transparent pixels are excluded entirely and stay transparent (they're not stitches).
+2. **Map each opaque pixel to its nearest DMC floss** by Lab (ΔE) distance against the
+   reference table (§5.3, #13). Dedupe by exact colour first so this is
+   (distinct sprite colours × DMC) distance calcs, not per-pixel — cheap at 64–144px.
+   The number of **distinct DMC colours** the sprite resolves to is the "true" colour
+   count for Req. 6.
+3. **Reduce over DMC.** If the requested colour count is below the distinct-DMC count,
+   merge the perceptually closest floss colours — **k-medoids / agglomerative merge in
+   Lab, weighted by pixel frequency** (so a floss used once doesn't survive at the
+   expense of one used 500 times), down to `k`. The representative of each merged group
+   is itself a real DMC colour (k-medoids, not k-means averages), so the final palette
+   is guaranteed-real floss with no second snap. Merged pixels reassign to their group's
+   representative.
+4. Feed the resulting palette into the preview (§5.4) immediately — this step needs to
+   be fast enough to re-run live as the user drags a colour-count slider.
 
-**Default colour count (Req. 6):** = the exact-duplicate colour count from step 2,
-capped at a sensible ceiling (proposing 40). All Wesnoth sprites are hand-crafted
-pixel art, not photographic/antialiased source images, so exact-duplicate colour
-counts should stay naturally low and clustering shouldn't need to kick in for most
-sprites at default — the cap is a safety ceiling for outliers (e.g. a sprite with
-unusually rich shading), not something expected to bind routinely. **Open
-question — see §8:** confirm 40 is actually generous enough once quantization is
-built and can be run against real sprites.
+**Default colour count (Req. 6):** = the distinct-DMC count from step 2, capped at a
+sensible ceiling (proposing 40). All Wesnoth sprites are hand-crafted pixel art, not
+photographic/antialiased source images, so distinct-DMC counts should stay naturally
+low and reduction shouldn't need to kick in for most sprites at default — the cap is a
+safety ceiling for outliers (e.g. a sprite with unusually rich shading), not something
+expected to bind routinely. **Open question — see §8:** confirm 40 is actually generous
+enough once the pipeline is built and can be run against real sprites.
 
-**Stability while dragging the slider:** unseeded k-means can jitter between runs —
-a colour could jump to a visually different centroid on a one-step slider move,
-which would read as flicker rather than a smooth transition. Seed with a fixed
-random seed (or k-means++) and, ideally, warm-start each run from the previous
-`k`'s centroids so nearby `k` values produce visually stable, incrementally-changing
-palettes rather than independent re-clusterings.
+**Stability while dragging the slider:** reduction over the fixed DMC-mapped base is a
+**merge** — lowering `k` just merges the next-closest pair of floss colours, so the
+palette changes incrementally and monotonically rather than re-clustering from scratch.
+This is naturally warm-startable (agglomerative merges nest) and inherently more stable
+than re-seeding k-means each step: no colour jumps to a visually different value on a
+one-step slider move.
 
-### 5.3 DMC Floss Mapping
+**One honest tradeoff:** mapping-first can band slightly harder on smooth gradients
+(many near shades all snap to one floss, where free k-means might place an in-between
+centroid). But you can't *stitch* an in-between colour anyway, so that loss is inherent
+to the medium — and on limited-palette pixel art it barely applies.
 
-Convert each cluster centroid (post-quantization) to Lab, nearest-neighbour search
-against the DMC floss Lab reference table, assign floss code + a stitch symbol.
+### 5.3 DMC Floss Reference & Stitch Symbols
+
+The **DMC floss Lab reference table** (precomputed sRGB→Lab for every floss, #13) is
+what §5.2 maps against — mapping to floss is now the *first* pipeline step, not a
+post-quantization snap. Each colour in the reduced palette (already a real DMC floss by
+construction, §5.2) is assigned a stitch symbol for the chart.
 
 **Symbol collisions (resolves §8):** cap the colour-count slider's maximum at the
 size of the legible stitch-symbol set, rather than allowing colour count to exceed
@@ -241,8 +267,8 @@ interface SpriteAsset {
 
 interface QuantizedPalette {
   colours: { lab: LabColor; rgb: RGB; dmc: DMCEntry; pixelCount: number }[];
-  colourCount: number;    // user-chosen k
-  sourceColourCount: number; // exact-duplicate count, pre-quantization
+  colourCount: number;    // user-chosen k (post-reduction)
+  sourceColourCount: number; // distinct-DMC count, pre-reduction (§5.2 step 2, Req. 6 default)
 }
 
 interface PatternSettings {
@@ -311,8 +337,9 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 
 1. Electron + Vite + React scaffold; sprite browser over a single hardcoded checkout
    path; click-to-preview at full res. No quantization yet.
-2. Quantization pipeline (Lab k-means, seeded for slider stability — §5.2) + DMC
-   mapping + live 1:1 Konva grid preview with colour-count slider. Validate the
+2. Conversion pipeline (map to DMC first, then reduce over floss — Lab k-medoids/merge,
+   monotone for slider stability — §5.2) + live 1:1 Konva grid preview with colour-count
+   slider. Validate the
    40-colour default cap (§8) against a few real sprites here, including one with
    unusually rich shading, while the pipeline is still fresh to iterate on. Pin
    down the stitch-symbol set and its size (§5.3, §8), since it sets the slider's
