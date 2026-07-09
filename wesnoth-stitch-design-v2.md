@@ -130,6 +130,10 @@ directory, not a unit-database browser:
   in a grid. Thumbnails are decoded in the main process and downscaled
   nearest-neighbour to a 64px longest side (#4) — nearest-neighbour keeps the pixel
   art crisp; sprites already ≤64px are sent through unscaled.
+- The grid (#5) paints each thumbnail's raw RGBA onto a `<canvas>` (kept crisp with
+  `image-rendering: pixelated`) and **lazy-loads** thumbnails as cells scroll into
+  view (IntersectionObserver), so it doesn't fire ~7k IPC requests up front. Full
+  row virtualization is deferred — lazy image loading keeps it responsive at M1 scale.
 - Clicking a thumbnail loads it into the preview pane at full resolution.
 
 This is a deliberate simplification: it gets you a working, pixel-accurate browser
