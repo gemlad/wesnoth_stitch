@@ -67,6 +67,7 @@ Slack's desktop client — web tech for the UI, native app for everything else.
 coloured cells + a symbol-overlay layer better than Fabric's object-manipulation focus, which you don't need |
 | Colour maths | `culori` | Lab colour space conversion + distance, needed for both
 quantization and DMC matching |
+| Image decoding | `pngjs` | pure-JS, deterministic RGBA decode in the main process (added #4); chosen over Electron's `nativeImage` to avoid platform BGRA/byte-order quirks and a native rebuild, and to keep exact source pixels for the quantizer (§5.2) |
 | DMC floss data | reuse the prototype's dataset | prototype stores this as `dmc_colors.csv` (code, name, hex columns) — convert to JSON at build time or load the CSV directly, no need to re-source the data itself |
 | Persistence | flat JSON files (recent sources, last settings) | no need for a DB at this scale |
 | Packaging | electron-builder | app is intended to be distributable to others eventually (not just personal/dev use), so an installer target is in scope even if early builds stay personal-use |
@@ -123,9 +124,12 @@ directory, not a unit-database browser:
 
 - User points the app at a local Wesnoth checkout (a plain folder picker — no in-app
   git cloning in v1; you almost certainly already have a checkout).
-- App scans `images/units/` recursively, groups by subfolder (which loosely
-  corresponds to faction, e.g. `human-loyalists/`, `undead/`), and shows thumbnails
-  in a grid.
+- App scans `images/units/` recursively, groups by the **top-level** subfolder
+  (which loosely corresponds to faction, e.g. `human-loyalists/`, `undead/`) so
+  nested animation frames still bucket under their faction, and shows thumbnails
+  in a grid. Thumbnails are decoded in the main process and downscaled
+  nearest-neighbour to a 64px longest side (#4) — nearest-neighbour keeps the pixel
+  art crisp; sprites already ≤64px are sent through unscaled.
 - Clicking a thumbnail loads it into the preview pane at full resolution.
 
 This is a deliberate simplification: it gets you a working, pixel-accurate browser
