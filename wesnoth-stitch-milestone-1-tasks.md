@@ -8,6 +8,14 @@ Each task below is sized to merge in one sitting on its own branch (per-task
 branching, not per-milestone — milestones stay open too long and produce
 unreviewable merges), roughly in dependency order.
 
+## Status
+
+**Live status is tracked in GitHub Issues, not here.** These tasks map to issues
+**#1–#7** under the [Milestone 1 — Sprite browser](https://github.com/gemlad/wesnoth_stitch/milestone/1)
+milestone; run `gh issue list` for current state. This doc is the *design rationale*
+for each task (the "why" and the acceptance criteria) — don't record done/in-progress
+here, or the two sources drift.
+
 ## Scope note
 
 Per the milestone text, the checkout path is **hardcoded** for M1 — no folder
@@ -23,14 +31,14 @@ configurable `SPRITE_ROOT` constant rather than assuming the full
 
 ## Tasks
 
-### 1. Electron + Vite + React scaffold ✅ Done
-- Branch: `scaffold/electron-vite-react` (merged in `1b952aa`, commit `c4fe3ac`)
+### 1. Electron + Vite + React scaffold (#1)
+- Branch: `scaffold/electron-vite-react`
 - Set up electron-vite with TypeScript, React, main/renderer/preload split per §4.
 - App launches to a blank window in dev mode.
 - No IPC, no business logic yet — just confirming the toolchain boots.
 - Depends on: nothing
 
-### 2. IPC skeleton between main and renderer
+### 2. IPC skeleton between main and renderer (#2)
 - Branch: `scaffold/ipc-skeleton`
 - Define a minimal typed IPC contract (e.g. `getSpriteList`, `getThumbnail`,
   `getFullImage`) per §4 — main owns filesystem/decoding, renderer only ever
@@ -39,7 +47,7 @@ configurable `SPRITE_ROOT` constant rather than assuming the full
   IPC shape early so later tasks build against a stable contract.
 - Depends on: 1
 
-### 3. Asset scanning (main process)
+### 3. Asset scanning (main process) (#3)
 - Branch: `feature/asset-scan`
 - Recursively scan the hardcoded `SPRITE_ROOT` (`wesnoth-sprites/units/`), group
   results by subfolder (§5.1), return `SpriteAsset[]` (path + folder) over the real
@@ -49,20 +57,20 @@ configurable `SPRITE_ROOT` constant rather than assuming the full
   it until someone refetches the sprite set.
 - Depends on: 2
 
-### 4. Thumbnail generation (main process)
+### 4. Thumbnail generation (main process) (#4)
 - Branch: `feature/thumbnails`
 - Decode each PNG and produce a thumbnail buffer (main-process only, per §4).
 - Wire into the `getThumbnail` IPC handler from task 2.
 - Depends on: 3
 
-### 5. Sprite browser grid (renderer)
+### 5. Sprite browser grid (renderer) (#5)
 - Branch: `feature/sprite-browser-ui`
 - React component: grid of thumbnails grouped by folder (e.g. `human-loyalists`,
   `undead`), per §5.1.
 - Consumes `getSpriteList` + `getThumbnail` over IPC.
 - Depends on: 4
 
-### 6. Full-resolution preview pane (renderer)
+### 6. Full-resolution preview pane (renderer) (#6)
 - Branch: `feature/preview-pane`
 - Clicking a thumbnail requests the full-res decoded image via `getFullImage` and
   renders it at 1:1.
@@ -70,7 +78,7 @@ configurable `SPRITE_ROOT` constant rather than assuming the full
   locked, then wired together in task 7.
 - Depends on: 2
 
-### 7. Wire up click-to-preview end-to-end
+### 7. Wire up click-to-preview end-to-end (#7)
 - Branch: `feature/browser-preview-integration`
 - Connect sprite browser (5) selection state to the preview pane (6); confirm the
   full click-through flow works against the real `wesnoth-sprites/units/` sprite set,
