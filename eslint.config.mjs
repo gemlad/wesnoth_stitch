@@ -28,5 +28,14 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
+  {
+    // Plain JS can't carry a return-type annotation, so requiring one there is a rule that
+    // cannot be satisfied. The build scripts under scripts/ are .mjs because they run
+    // straight from node (or electron) with no compile step.
+    files: ['**/*.mjs', '**/*.js'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off'
+    }
+  },
   eslintConfigPrettier
 )
