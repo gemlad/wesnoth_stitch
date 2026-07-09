@@ -249,9 +249,32 @@ construction, §5.2) is assigned a stitch symbol for the chart.
 **Symbol collisions (resolves §8):** cap the colour-count slider's maximum at the
 size of the legible stitch-symbol set, rather than allowing colour count to exceed
 it. Guarantees every colour on a printed (including black-and-white) chart stays
-visually distinguishable by symbol alone. The exact symbol-set size depends on the
-font/glyph set chosen for the chart — pin that down alongside the PDF export design
-(§5.5), since it determines the real ceiling.
+visually distinguishable by symbol alone.
+
+**The set, pinned down (#16).** `STITCH_SYMBOLS` holds **40 glyphs**, ordered by
+*distinctness* rather than codepoint. Symbols are handed out in array order and the
+palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top of
+the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
+Four tiers:
+
+1. **Solid geometrics** (8) — separable by silhouette alone: `● ■ ▲ ▼ ◆ ★ ◀ ▶`
+2. **Outline counterparts** (8) — same silhouettes, inverted fill: `○ □ △ ▽ ◇ ☆ ◁ ▷`
+3. **Strokes** (2) — a different visual class, thin and open: `+ ×`
+4. **Letters** (22) — the fallback commercial charts have always used: A–Z less `I` and
+   `O` (confusable with digits and with `○`), `Q` (with `O`), and `X` (with `×`).
+
+Every glyph is a single BMP code point from Basic Latin, Latin-1, Geometric Shapes, or
+the two star characters — ranges with near-universal font coverage, so neither Chromium's
+canvas (§5.4) nor a bundled PDF font (§5.5) falls back to tofu. Deliberately excluded are
+the size variants (`▲`/`▴`), weight variants (`+`/`✚`) and mirrored halves (`◐`/`◑`) the
+prototype shipped: none survive being printed at 5pt. Asking for a symbol past the end
+throws rather than wrapping — the prototype's `i % len` silently aliased two colours onto
+one glyph.
+
+`MAX_COLOUR_COUNT = 40` is therefore the slider's **hard maximum** (read by #19), and it
+coincides exactly with the colour cap §5.2 proposes, so neither ceiling silently binds
+before the other. If #20 finds the cap should rise above 40, **the symbol set must grow
+first**: a chart cannot show more colours than it has symbols to name.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
@@ -350,9 +373,12 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 - **Colour-count ceiling:** is 40 the right default cap (§5.2), or should this be
   checked against a few real high-colour sprites first? Left open deliberately —
   validate during Milestone 2 (§9) once quantization exists to test against.
-- **Symbol-set size:** §5.3 caps the colour-count slider at the legible stitch-symbol
-  set size, but that size depends on the font/glyph set used for the PDF chart,
-  which isn't chosen yet. Pin down alongside export design (§5.5).
+- ~~**Symbol-set size:**~~ **Resolved (#16).** The set is 40 glyphs — solid geometrics,
+  their outline counterparts, two strokes, then letters — all inside font-safe Unicode
+  ranges, so the choice no longer waits on the PDF font (§5.5). `MAX_COLOUR_COUNT = 40`
+  is the slider's hard maximum. See §5.3. Note this ties the two ceilings together: the
+  colour-cap question above can no longer be answered *upward* without extending the
+  symbol set, and #20 now validates both in one pass.
 
 ## 9. Milestones
 
