@@ -60,10 +60,13 @@ describe('convertSprite', () => {
 
   it('caps the default at the symbol ceiling for a sprite that exceeds it', async () => {
     const out = await convertSprite('merfolk', MERFOLK)
-    expect(out.palette.sourceColourCount).toBe(94) // the census outlier
+    // 95, where the pre-#20 census said 94: compositing the drop shadow over white (§5.2)
+    // lifts its flat black off DMC 310 — where it used to collapse onto the sprite's own
+    // black pixels — and onto a grey of its own.
+    expect(out.palette.sourceColourCount).toBe(95) // the census outlier
     expect(out.palette.colourCount).toBe(MAX_COLOUR_COUNT) // capped, so it reduced
     expect(out.symbols).toHaveLength(MAX_COLOUR_COUNT)
-    expect(defaultColourCount(94)).toBe(MAX_COLOUR_COUNT)
+    expect(defaultColourCount(95)).toBe(MAX_COLOUR_COUNT)
   })
 
   it('treats a colour count above the sprite’s own as a no-op, not an error', async () => {

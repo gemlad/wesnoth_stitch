@@ -227,8 +227,11 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
    ≥ **128** (a tunable `alphaThreshold`), so anti-aliased edge fringe — mostly
    transparent pixels with blended colours — is left unstitched rather than becoming a
    full stitch of a colour that isn't really in the sprite. Cross-stitch can't do
-   partial coverage, so the choice is binary. **#20 validates the default** against real
-   sprites (implemented in #15).
+   partial coverage, so the choice is binary.
+   **Every surviving translucent pixel is then composited over white** before it is
+   mapped, so alpha decides *whether* there is a stitch and the composite decides *what
+   colour* it is. See "Translucency is semantic" below — this is #20's finding, and it
+   changed the pipeline (implemented in #15, corrected in #20).
 2. **Map each opaque pixel to its nearest DMC floss** by Lab (ΔE) distance against the
    reference table (§5.3, #13). Dedupe by exact colour first so this is
    (distinct sprite colours × DMC) distance calcs, not per-pixel — cheap at 64–144px.
@@ -255,25 +258,88 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
 not a number chosen here. A chart cannot show more colours than it has symbols to name,
 so the symbol set is what binds.
 
-**Census (#16), over all 7,116 sprites in the checkout** — the original guess of 40 was
-made blind, so it is worth recording what the data actually says:
+**Census (#16, re-run in #20 against the composited pipeline), over all 7,118 sprites in
+the checkout** — the original guess of 40 was made blind, so it is worth recording what the
+data actually says. Reproduce with `npm run validate:cap`:
 
 | | distinct-DMC count |
 |---|---|
 | median | 24 |
 | p90 | 35 |
 | p99 | 47 |
-| max | 94 (`merfolk/citizen.png`) |
+| max | 95 (`merfolk/citizen.png`) |
 
-Full palette fits under the cap — i.e. no reduction at default — for **93.2%** of sprites
-at 37, against 95.8% at the originally-proposed 40. So lowering the ceiling to buy
-legibility costs 2.6 points of coverage, or 188 extra sprites that reduce.
+Full palette fits under the cap — i.e. no reduction at default — for **93.0%** of sprites
+at 37, against 95.7% at the originally-proposed 40. So lowering the ceiling to buy
+legibility costs 2.7 points of coverage, or 189 extra sprites that reduce.
 
 This corrects an assumption above: reduction is **not** a rare safety net for outliers.
-Roughly one sprite in fifteen exceeds the cap, and the long tail (merfolk, yeti death
-frames, the jinn) runs to 94 distinct floss — those are heavily shaded and anti-aliased
+Roughly one sprite in fourteen exceeds the cap, and the long tail (merfolk, yeti death
+frames, the jinn) runs to 95 distinct floss — those are heavily shaded and anti-aliased
 despite being pixel art. Reduction is a routine, load-bearing part of the pipeline, which
 is a good argument for the care taken over its stability in step 3.
+
+**What the cap actually costs, measured (#20).** Coverage says how *often* the cap binds,
+not how much it hurts when it does. So: for every opaque pixel of the twelve richest
+sprites (77–95 distinct floss), how far in Lab ΔE is the floss it ends up stitched in from
+the floss it would have had at full fidelity?
+
+| | pixel-weighted mean ΔE | for reference |
+|---|---|---|
+| capped at 37 | **1.14** | |
+| capped at 40 | 0.97 | the original proposal |
+| | | ΔE ≈ 2.3 ≈ one just-noticeable difference |
+
+Even on the worst sprite in the checkout, the average pixel lands **half a JND** from
+where full fidelity would have put it, and raising the cap to 40 improves that by 0.17 ΔE
+— imperceptible — while rescuing only 189 sprites (2.7%) from reducing at all, and
+demanding three more legible glyphs that do not exist (§5.3). The p95 is ~10 ΔE and the
+max ~30, so a thin tail of pixels does shift visibly; the mean is what a stitched piece
+reads as. **37 is generous. The colour cap was never the binding constraint — glyph
+legibility is.** That inverts the framing §8 opened with.
+
+#### Translucency is semantic, not coverage (#20)
+
+§5.2 assumed the partial-alpha band was anti-aliased edge fringe. It is not, and the
+`alphaThreshold` default sat exactly on top of the thing it isn't. Alpha across a
+297-sprite sample:
+
+| alpha | pixels |
+|---|---|
+| 0 (clear) | 80.09% |
+| 255 (opaque) | 17.32% |
+| everything else | 2.59% |
+
+and that 2.59% is almost entirely **one value**: `alpha = 153`, 42,765 of the ~44,500
+partial pixels. It is a single flat colour per sprite — pure black, or `rgb(23,0,53)` —
+occupying the rows at and below the sprite's lowest opaque pixel, in **269 of 297**
+sprites. It is Wesnoth's **drop shadow**, drawn at 60% opacity. Twenty-four sprites in the
+checkout are nothing else, and are named accordingly (`*-shadow.png`, `sand-halo-*.png`).
+It accounts for **12.57% of every stitched cell in the checkout**.
+
+Taken at face value that pixel is `rgb(0,0,0)`, so it was mapped to **DMC 310 Black** and
+stitched at full strength: a hard black blob under the unit, spending a colour of the
+37-colour budget on it. A stitch has no opacity, so there is no faithful way to render a
+60% shadow *as drawn*.
+
+**So translucent pixels are composited before mapping**: `src·α + matte·(1−α)`. The
+shadow becomes the mid grey it looks like — `merfolk/citizen.png` now charts it as DMC 317
+Pewter Gray DK rather than DMC 310 Black — in a floss you can actually buy. Alpha still
+decides *whether* a pixel is a stitch; the composite decides *what colour* it is. That
+split is why `alphaThreshold` stays at 128, and the histogram shows it is safe: there is
+essentially nothing between alpha 96 and 224 except the shadow spike, so the threshold sits
+in an empty region and its exact value does not matter.
+
+**The matte is always white, never the user's fabric colour** — though the fabric colour is
+the physically faithful choice, and the preview knows it (`PatternSettings.backgroundColour`,
+§6). Two reasons. It would make the palette a function of a *view* setting, so nudging the
+fabric picker would re-run quantization, invalidate the plan cache (§4) and churn every
+colour and glyph on the chart. And it would put UI state inside `pipeline/`, which is
+deliberately a pure function of pixels and floss. White is the conventional chart reference,
+and it keeps a sprite's pattern the same object whatever cloth it ends up on.
+
+This is what moved the census: citizen goes 94 → 95 distinct floss, because the shadow's
+black no longer collapses onto DMC 310 alongside the sprite's own black pixels.
 
 **Stability while dragging the slider:** reduction over the fixed DMC-mapped base is a
 **merge** — lowering `k` just merges the next-closest pair of floss colours, so the
@@ -356,14 +422,15 @@ cannot show more colours than it has symbols to name.
 The ceiling is a real constraint with real costs, and they should be understood before
 anyone tries to raise it:
 
-- **It is a limit on charting, not on stitching.** Nothing stops you stitching 94 floss
+- **It is a limit on charting, not on stitching.** Nothing stops you stitching 95 floss
   colours. The 37 exists because a *printed black-and-white chart* must name each colour
   with a glyph you can tell apart from the other 36. That is the most demanding consumer
   of the palette, and it sets the budget for everything upstream.
-- **485 sprites (6.8%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
-  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 94 distinct floss
-  and loses 57 of them. Reduction is designed to make that loss principled rather than
-  arbitrary, but it is still a loss.
+- **497 sprites (7.0%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
+  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 95 distinct floss
+  and loses 58 of them. #20 measured what that loss is worth: a pixel-weighted mean of
+  1.14 ΔE, half a just-noticeable difference. Reduction is designed to make that loss
+  principled rather than arbitrary, and by that measure it succeeds — but it is still a loss.
 - **The cap is imposed on the preview by the export.** The on-screen colour preview
   (§5.4) and the PNG export need no symbols and could carry far more colours. The slider
   is capped globally anyway, so that what you preview is always what you can export. A
@@ -378,7 +445,17 @@ anyone tries to raise it:
   rendering a real chart at 9px on screen — which is how the rotation variants and the
   `★`/`◆` blob collision were caught — but not yet at 5pt in the actual export font.
   `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
-  drops by one for each glyph removed; the two numbers are the same number (#20).
+  drops by one for each glyph removed; the two numbers are the same number.
+
+  **#20 built the test but could not take it.** `npm run legibility:sheet` renders
+  `out/legibility/glyph-legibility-test.pdf`: seven A4 pages at exact physical size —
+  a 100mm calibration ruler, the whole set at four cell sizes, a side-by-side and
+  *separated* drill on the marginal pairs, a blind identification task, and two real
+  charts (dwarvish scout at `k=20`, merfolk citizen at `k=37`). The scale that matters is
+  **2.36 mm per cell**: a 72-cell sprite across A4's printable width, which puts the glyph
+  at ~4.8pt — that is where "legible at ~5pt" comes from. Two caveats the sheet cannot
+  remove: it renders through Chromium with the app's font stack, not the export font
+  (§5.5 does not exist yet), and the verdict is a human judgement. Tracked as #28.
 - **Symbols are assigned by palette index, so they are stable only for a fixed `k`.**
   This is the sharpest limitation, and it partly undercuts §5.2's stability story.
   Reduction keeps *colours* stable as the slider moves, but the palette reorders by pixel
@@ -593,15 +670,32 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 - ~~**Colour-count ceiling:**~~ **Resolved (#16), and not the way §5.2 guessed.** The cap
   is not a free choice: it *is* the symbol-set size, because a chart cannot show more
   colours than it has symbols to name. So `MAX_COLOUR_COUNT = 37`. A census over all
-  7,116 sprites (§5.2) shows the full palette fits under it 93.2% of the time (95.8% at
-  the old 40), with a median of 24 and a long tail to 94. The original framing — a safety
-  ceiling for rare outliers — was wrong: about one sprite in fifteen exceeds the cap, so
+  7,118 sprites (§5.2) shows the full palette fits under it 93.0% of the time (95.7% at
+  the old 40), with a median of 24 and a long tail to 95. The original framing — a safety
+  ceiling for rare outliers — was wrong: about one sprite in fourteen exceeds the cap, so
   reduction runs routinely.
-- **Still open for #20:** whether 37 glyphs *actually* read at print scale. The set was
-  checked by rendering a real chart (dwarvish scout at `k=20`) in black and white at
-  9px, which is what caught the rotation variants and the `★`/`◆` blob collision. The
-  remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any fails on paper,
-  dropping it lowers the cap by one — the two are the same number.
+- ~~**Is the cap generous enough?**~~ **Resolved (#20), and the question was the wrong way
+  round.** Capping the twelve richest sprites at 37 moves the average pixel **1.14 ΔE**
+  from where full fidelity would put it — half a just-noticeable difference. Raising the
+  cap to 40 improves that to 0.97 ΔE, which nobody can see, while rescuing 2.7% of sprites
+  from reducing and demanding three more legible glyphs that do not exist. Colour fidelity
+  was never the binding constraint. **Glyph legibility is, and it is the only thing
+  holding the number at 37.**
+- ~~**Anti-aliasing / `alphaThreshold`:**~~ **Resolved (#20), and the premise was wrong.**
+  The partial-alpha band is not anti-aliasing fringe. It is one value — `alpha = 153` — and
+  it is Wesnoth's drop shadow, present under 90% of sprites and worth 12.57% of every
+  stitched cell in the checkout. Mapped at face value it charted as DMC 310 Black. Pixels
+  above the threshold are now **composited over white** before mapping, so the shadow
+  becomes the grey it looks like (DMC 317 on `merfolk/citizen.png`), and `alphaThreshold`
+  stays at 128 — the histogram is empty either side of it, so its exact value is
+  immaterial. See §5.2, "Translucency is semantic".
+- **Still open — needs a printer, not a program.** Whether 37 glyphs *actually* read at
+  print scale. The set was checked by rendering a real chart (dwarvish scout at `k=20`) in
+  black and white at 9px, which is what caught the rotation variants and the `★`/`◆` blob
+  collision. The remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any
+  fails on paper, dropping it lowers the cap by one — the two are the same number. #20
+  built the test sheet (`npm run legibility:sheet`, §5.3) but the verdict is a human
+  judgement, so it is tracked as its own issue (#28).
 
 ## 9. Milestones
 

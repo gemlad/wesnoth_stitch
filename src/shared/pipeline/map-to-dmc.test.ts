@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { mapSpriteToDmc } from './map-to-dmc'
-import { srgbToLab } from '../colour'
+import { mapSpriteToDmc, overMatte } from './map-to-dmc'
+import { nearestDmcToRgb, srgbToLab } from '../colour'
 import type { DecodedImage } from '../ipc'
 
 type Pixel = [r: number, g: number, b: number, a: number]
@@ -110,5 +110,116 @@ describe('mapSpriteToDmc', () => {
     expect(pattern.cells.every((row) => row.length === 3)).toBe(true)
     const totalStitches = palette.colours.reduce((n, c) => n + c.pixelCount, 0)
     expect(totalStitches).toBe(5) // 6 pixels, 1 transparent
+  })
+})
+
+/**
+ * Wesnoth's drop shadow is flat black at alpha 153 (60% opaque) and sits under 90% of
+ * sprites. Stitched at face value it is DMC 310 Black — a hard blob, because a stitch has
+ * no opacity. Composited over white first, it becomes the grey it looks like (#20, §5.2).
+ */
+describe('overMatte', () => {
+  // Tested directly, because DMC quantization is coarse enough to absorb a one-level
+  // channel error: a subtly wrong composite still lands on the right floss.
+  it('is the identity at full opacity, for every channel value', () => {
+    for (const c of [0, 1, 23, 127, 128, 220, 254, 255]) expect(overMatte(c, 255)).toBe(c)
+  })
+
+  it('is the matte itself at zero opacity', () => {
+    expect(overMatte(0, 0)).toBe(255)
+    expect(overMatte(123, 0)).toBe(255)
+  })
+
+  it('blends src·α + white·(1−α), rounded', () => {
+    expect(overMatte(0, 153)).toBe(102) // the drop shadow: 60% black on white
+    expect(overMatte(0, 128)).toBe(127) // (0·128 + 255·127) / 255
+    expect(overMatte(10, 200)).toBe(63) // (10·200 + 255·55) / 255 = 62.84
+  })
+
+  it('never leaves the 8-bit range', () => {
+    for (let a = 0; a <= 255; a += 17) {
+      for (const c of [0, 128, 255]) {
+        const v = overMatte(c, a)
+        expect(v).toBeGreaterThanOrEqual(0)
+        expect(v).toBeLessThanOrEqual(255)
+      }
+    }
+  })
+
+  it('moves monotonically toward the matte as alpha falls', () => {
+    let previous = -1
+    for (const a of [255, 200, 153, 100, 50, 0]) {
+      const v = overMatte(0, a)
+      expect(v).toBeGreaterThan(previous)
+      previous = v
+    }
+  })
+})
+
+describe('mapSpriteToDmc — translucency is composited over white', () => {
+  /** Exactly what Wesnoth draws under a unit. */
+  const SHADOW: Pixel = [0, 0, 0, 153]
+
+  it('leaves fully opaque pixels untouched — compositing at α=255 is the identity', () => {
+    for (const px of [RED, BLACK, WHITE, NEAR_BLACK]) {
+      const [r, g, b] = px
+      const { palette } = mapSpriteToDmc(makeImage(1, 1, [px]))
+      // Exactly the floss a direct, un-composited lookup of the source pixel would give.
+      expect(palette.colours[0].dmc.code).toBe(nearestDmcToRgb({ r, g, b }).code)
+    }
+  })
+
+  it('turns the drop shadow into a mid grey, not black', () => {
+    const shadow = mapSpriteToDmc(makeImage(1, 1, [SHADOW]))
+    const black = mapSpriteToDmc(makeImage(1, 1, [BLACK]))
+
+    // 0·(153/255) + 255·(102/255) = 102 → a mid grey, nowhere near black.
+    expect(shadow.palette.colours[0].dmc.code).not.toBe(black.palette.colours[0].dmc.code)
+    const { r, g, b } = shadow.palette.colours[0].rgb
+    const lightness = (r + g + b) / 3
+    expect(lightness).toBeGreaterThan(60)
+    expect(lightness).toBeLessThan(160)
+  })
+
+  it('composites toward white as alpha falls, monotonically', () => {
+    const lightnessAt = (a: number): number => {
+      const { palette } = mapSpriteToDmc(makeImage(1, 1, [[0, 0, 0, a]]), { alphaThreshold: 1 })
+      const { r, g, b } = palette.colours[0].rgb
+      return (r + g + b) / 3
+    }
+    expect(lightnessAt(255)).toBeLessThan(lightnessAt(153))
+    expect(lightnessAt(153)).toBeLessThan(lightnessAt(64))
+  })
+
+  it('still uses alpha only to decide whether a stitch exists at all', () => {
+    // Below the threshold the pixel is no-stitch, however it would have composited.
+    const off = mapSpriteToDmc(makeImage(2, 1, [BLACK, [0, 0, 0, 127]]))
+    expect(off.pattern.cells[0][1]).toBeNull()
+    expect(off.palette.colourCount).toBe(1)
+    // One step above, it is a stitch — and not a black one.
+    const on = mapSpriteToDmc(makeImage(2, 1, [BLACK, [0, 0, 0, 128]]))
+    expect(on.pattern.cells[0][1]).not.toBeNull()
+    expect(on.palette.colourCount).toBe(2)
+  })
+
+  it('composites before dedup, so one source colour at two alphas stays two shades', () => {
+    // Face-value mapping packs both as rgb(0,0,0) and collapses them into one floss.
+    const { palette } = mapSpriteToDmc(makeImage(2, 1, [BLACK, SHADOW]))
+    expect(palette.colourCount).toBe(2)
+  })
+
+  it('composites identically in the grid and in the palette tally', () => {
+    // If the two passes disagreed, the grid would index into the wrong floss.
+    const { palette, pattern } = mapSpriteToDmc(makeImage(3, 1, [BLACK, SHADOW, SHADOW]))
+    const shadowIndex = pattern.cells[0][1]!
+    expect(pattern.cells[0][2]).toBe(shadowIndex)
+    expect(palette.colours[shadowIndex].pixelCount).toBe(2)
+    expect(palette.colours[pattern.cells[0][0]!].pixelCount).toBe(1)
+  })
+
+  it('never overshoots the 8-bit range — translucent white stays white', () => {
+    const { palette } = mapSpriteToDmc(makeImage(1, 1, [[255, 255, 255, 153]]))
+    const plainWhite = mapSpriteToDmc(makeImage(1, 1, [WHITE]))
+    expect(palette.colours[0].dmc.code).toBe(plainWhite.palette.colours[0].dmc.code)
   })
 })
