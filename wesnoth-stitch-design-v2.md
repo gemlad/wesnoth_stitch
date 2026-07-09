@@ -63,8 +63,8 @@ Slack's desktop client — web tech for the UI, native app for everything else.
 | Language | TypeScript throughout (main + renderer) | matches your stated direction |
 | Bundler | electron-vite | least-friction Electron+TS+React setup |
 | UI framework | React | just for panels/forms — the stitch grid itself is canvas, not DOM |
-| Canvas/grid | Konva.js | pick over Fabric because Konva's layer model suits a fixed grid of
-coloured cells + a symbol-overlay layer better than Fabric's object-manipulation focus, which you don't need |
+| Canvas/grid | Konva.js, via `react-konva` (#18) | pick over Fabric because Konva's layer model suits a fixed grid of
+coloured cells + a symbol-overlay layer better than Fabric's object-manipulation focus, which you don't need. `react-konva` 19.2 peers React 19.2, so it fits the app as it stands; with the grid collapsed to two `Shape`s (§5.4) its reconciler has almost nothing to do, and it buys the stage's mount/unmount and prop-driven redraw for free |
 | Colour maths | `culori` | Lab colour space conversion + distance, needed for both
 quantization and DMC matching |
 | Image decoding | `pngjs` | pure-JS, deterministic RGBA decode in the main process (added #4); chosen over Electron's `nativeImage` to avoid platform BGRA/byte-order quirks and a native rebuild, and to keep exact source pixels for the quantizer (§5.2) |
@@ -395,16 +395,54 @@ anyone tries to raise it:
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
-- Konva `Stage`, one `Layer` of `Rect`s — one rect per source pixel, 1:1, filled with
-  its quantized/DMC colour. Transparent source pixels render as the user's chosen
-  background colour (resolves §8 — background is configurable, not assumed-white
-  Aida, so the preview matches what a non-white fabric would actually look like).
-- A second optional layer overlays the DMC symbol per cell (toggleable — colour-only
-  vs. symbol-only vs. both, matching what you'd actually print).
-- Zoom/pan on the stage. At typical Wesnoth sprite sizes (64–144px) this is nowhere
-  near a performance concern — no virtualization needed for v1.
+- Konva `Stage` with two `Layer`s, each holding a **single `Shape`** whose `sceneFunc`
+  draws every visible cell: one for the colour grid, one for the symbol/grid overlay.
+  Cells are 1:1 with source pixels, filled with their quantized/DMC colour. Transparent
+  source pixels render as the user's chosen background colour (resolves §8 — background
+  is configurable, not assumed-white Aida, so the preview matches what a non-white fabric
+  would actually look like).
+- The overlay layer draws the per-cell DMC symbol (toggleable — colour-only vs.
+  symbol-only vs. both, matching what you'd actually print) *and* rules the cell grid,
+  with a heavier line every 10 cells. In symbol-only mode that grid is the only thing
+  separating one stitch from the next, which is why every printed chart has one. Glyph
+  ink is picked per cell by WCAG contrast against whatever sits behind it, so a symbol
+  never disappears into a dark navy floss or a pale fabric.
+- Zoom/pan on the stage. Zoom *is* the stage's scale, so one stage unit is one source
+  pixel and the drawing code works in whole cell coordinates, never pixels. Symbols are
+  sized in cell units and scaled by the stage transform, which Chromium does exactly
+  (measured: a `0.72px` font under `scale(16)` matches an `11.52px` font, glyph for
+  glyph, to <0.001px of advance width). Both scene functions cull to the visible cell
+  range — zoom is unbounded above, so at 48× only a few hundred of 5,184 cells are on
+  screen.
 - This preview is the thing that re-renders live as the user moves the colour-count
   slider, so quantization (§5.2) needs to be fast on every drag, not just on commit.
+
+#### Why not one `Rect` per source pixel (#18)
+
+**Until #18 this section specified one `Konva.Rect` per source pixel, and asserted that at
+Wesnoth sprite sizes this is "nowhere near a performance concern — no virtualization
+needed for v1". Nobody had measured it. It is wrong.** On a 72×72 sprite (5,184 cells),
+in Electron, median of 10 draws:
+
+| | node-per-cell | one `Shape` + `sceneFunc` |
+|---|---:|---:|
+| build | 87.3 ms | 3.7 ms |
+| recolour every cell + redraw | 12.9 ms | 1.9 ms |
+| redraw, nothing changed | 10.9 ms | — |
+| zoom step | 14.5 ms | 2.1 ms |
+| symbol overlay redraw | 55.5 ms (3,631 `Text` nodes) | 2.6 ms |
+
+A 10.9 ms floor to redraw an *unchanged* layer already eats two thirds of a 16.7 ms frame
+before React or the ~1.9 ms conversion (§4) get a turn, so the live slider could not have
+hit 60 fps on top of it; and 3,631 `Konva.Text` nodes cost 55.5 ms per redraw — 18 fps to
+pan a *static* chart. Collapsing each layer to one `Shape` whose `sceneFunc` loops
+`fillRect`/`fillText` removes the per-node overhead. Measured in the real app afterwards,
+both layers redraw in **1.0 ms** at fit zoom and **0.3 ms** zoomed in (culling), against a
+~1.9 ms warm conversion — leaving ~14 ms of the frame spare for §5.2's slider.
+
+Those loops live in `src/renderer/src/pattern/draw.ts` as pure functions over a structural
+`DrawContext` rather than behind Konva's types, so they unit-test against a recording fake
+with no jsdom and no canvas.
 
 ### 5.5 Export
 
@@ -434,7 +472,16 @@ interface QuantizedPalette {
 
 interface PatternSettings {
   backgroundColour: RGB;  // fabric colour assumption; "no stitch" cells render as this
+  symbolDisplay: 'colour' | 'symbol' | 'both';  // which chart layers are drawn (§5.4)
 }
+// Note (#18): this one does NOT live with the pipeline types. Nothing in the pipeline
+// reads or produces it — mapSpriteToDmc, reduceTo and symbolsFor are pure functions of
+// pixels and floss, and none of them care what colour the fabric is. Putting a view
+// setting in shared/pipeline/types.ts would sit UI state inside the one module whose
+// selling point is being headless and reusable. Both fields are consumed only by the
+// preview (§5.4) and, later, export (§5.5), so it lives in the renderer, at
+// src/renderer/src/pattern/settings.ts. It moves to shared/ipc.ts if and when export
+// runs in the main process and it actually has to cross a process boundary.
 
 interface StitchPattern {
   width: number;
