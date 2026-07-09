@@ -200,7 +200,13 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
    expense of one used 500 times), down to `k`. The representative of each merged group
    is itself a real DMC colour (k-medoids, not k-means averages), so the final palette
    is guaranteed-real floss with no second snap. Merged pixels reassign to their group's
-   representative.
+   representative. **Implemented in #14** with **Ward-style linkage**: merging clusters
+   A and B costs `wA·wB / (wA + wB) · ΔE(repA, repB)²`, pixel counts as weights. That
+   weight factor is precisely what enforces "used once doesn't survive at the expense of
+   used 500 times" — absorbing a 1-pixel cluster costs ≈1× its ΔE², fusing two 500-pixel
+   clusters ≈250×. Each group's representative is its **pixel-weighted medoid** (the
+   member floss minimising `Σ wⱼ·ΔE`), so merged pixels reassign to the thread that
+   already covered most of them, not to the group's geometric middle.
 4. Feed the resulting palette into the preview (§5.4) immediately — this step needs to
    be fast enough to re-run live as the user drags a colour-count slider.
 
@@ -218,6 +224,15 @@ palette changes incrementally and monotonically rather than re-clustering from s
 This is naturally warm-startable (agglomerative merges nest) and inherently more stable
 than re-seeding k-means each step: no colour jumps to a visually different value on a
 one-step slider move.
+
+**Implemented in #14** as a two-phase split that makes the nesting *structural* rather
+than emergent: `planReduction(sprite)` runs the agglomerative merge once and records the
+whole sequence as a dendrogram; `reduceTo(plan, k)` replays its first `n − k` steps. Every
+`k` is therefore a cut of one shared sequence, so `k − 1` is provably `k` with exactly two
+entries merged. Measured on real 72×72 sprites (n = 11–31 distinct floss): **~0.3–0.9 ms**
+to build the plan, **~0.1 ms** per cut — a full sweep of every `k` costs 1–3 ms. Live
+re-run on slider drag is comfortably affordable; this measurement informs #17's
+compute-location call (main process vs renderer worker).
 
 **One honest tradeoff:** mapping-first can band slightly harder on smooth gradients
 (many near shades all snap to one floss, where free k-means might place an in-between
