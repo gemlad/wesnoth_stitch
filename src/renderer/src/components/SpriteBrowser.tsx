@@ -4,6 +4,8 @@ import { SpriteThumb } from './SpriteThumb'
 
 interface Props {
   sprites: SpriteSummary[]
+  selectedId: string | null
+  onSelect: (sprite: SpriteSummary) => void
 }
 
 /** Label for sprites that sit directly under the root with no faction folder. */
@@ -14,7 +16,7 @@ const UNGROUPED = '(ungrouped)'
  * list is already sorted by folder then name (see scanSprites), so grouping just
  * needs a stable bucket-by-folder pass.
  */
-export function SpriteBrowser({ sprites }: Props): React.JSX.Element {
+export function SpriteBrowser({ sprites, selectedId, onSelect }: Props): React.JSX.Element {
   const groups = useMemo(() => {
     const byFolder = new Map<string, SpriteSummary[]>()
     for (const sprite of sprites) {
@@ -36,7 +38,12 @@ export function SpriteBrowser({ sprites }: Props): React.JSX.Element {
           </h2>
           <div className="sprite-grid">
             {items.map((sprite) => (
-              <SpriteThumb key={sprite.id} sprite={sprite} />
+              <SpriteThumb
+                key={sprite.id}
+                sprite={sprite}
+                selected={sprite.id === selectedId}
+                onSelect={onSelect}
+              />
             ))}
           </div>
         </section>

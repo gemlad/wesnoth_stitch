@@ -30,22 +30,6 @@ function resolveSpritePath(id: string): string {
   return abs
 }
 
-/** A solid-colour RGBA image so the renderer has something real-shaped to render. */
-function solidImage(
-  width: number,
-  height: number,
-  [r, g, b, a]: [number, number, number, number]
-): DecodedImage {
-  const data = new Uint8Array(width * height * 4)
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = r
-    data[i + 1] = g
-    data[i + 2] = b
-    data[i + 3] = a
-  }
-  return { width, height, data }
-}
-
 /**
  * Register every IPC handler. Called once from the main entrypoint after the app
  * is ready. Handlers return placeholder data for now (#2); #3/#4/#6 swap in real
@@ -66,8 +50,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(IpcChannels.getFullImage, async (_event, id: string): Promise<DecodedImage> => {
-    // #6 wires this into the preview pane; for now, a 72×72 swatch.
-    void id
-    return solidImage(72, 72, [180, 120, 90, 255])
+    // Full-resolution decode for the preview pane (§5.4) — no downscale.
+    return decodeImage(resolveSpritePath(id))
   })
 }

@@ -3,6 +3,8 @@ import type { DecodedImage, SpriteSummary } from '../../../shared/ipc'
 
 interface Props {
   sprite: SpriteSummary
+  selected: boolean
+  onSelect: (sprite: SpriteSummary) => void
 }
 
 /**
@@ -11,7 +13,7 @@ interface Props {
  * can't request every thumbnail up front. The decoded RGBA is painted to a
  * canvas at its natural size and left crisp via `image-rendering: pixelated`.
  */
-export function SpriteThumb({ sprite }: Props): React.JSX.Element {
+export function SpriteThumb({ sprite, selected, onSelect }: Props): React.JSX.Element {
   const cellRef = useRef<HTMLButtonElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [visible, setVisible] = useState(false)
@@ -58,7 +60,14 @@ export function SpriteThumb({ sprite }: Props): React.JSX.Element {
   }, [visible, sprite.id])
 
   return (
-    <button ref={cellRef} className="sprite-thumb" type="button" title={sprite.name}>
+    <button
+      ref={cellRef}
+      className={selected ? 'sprite-thumb is-selected' : 'sprite-thumb'}
+      type="button"
+      title={sprite.name}
+      aria-pressed={selected}
+      onClick={() => onSelect(sprite)}
+    >
       <span className="sprite-thumb__frame">
         {failed ? (
           <span className="sprite-thumb__error" aria-label="failed to load">

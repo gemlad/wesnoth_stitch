@@ -134,7 +134,9 @@ directory, not a unit-database browser:
   `image-rendering: pixelated`) and **lazy-loads** thumbnails as cells scroll into
   view (IntersectionObserver), so it doesn't fire ~7k IPC requests up front. Full
   row virtualization is deferred — lazy image loading keeps it responsive at M1 scale.
-- Clicking a thumbnail loads it into the preview pane at full resolution.
+- Clicking a thumbnail loads it into the preview pane at full resolution (#6/#7):
+  the selected sprite is fetched via `getFullImage` (undownscaled) and painted 1:1
+  onto a `<canvas>`, with its name/folder/dimensions shown. Zoom is deferred (§5.4).
 
 This is a deliberate simplification: it gets you a working, pixel-accurate browser
 immediately, and folder names are already reasonably human-readable. Nicer names via
