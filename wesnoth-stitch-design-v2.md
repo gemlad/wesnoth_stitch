@@ -210,13 +210,30 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
 4. Feed the resulting palette into the preview (§5.4) immediately — this step needs to
    be fast enough to re-run live as the user drags a colour-count slider.
 
-**Default colour count (Req. 6):** = the distinct-DMC count from step 2, capped at a
-sensible ceiling (proposing 40). All Wesnoth sprites are hand-crafted pixel art, not
-photographic/antialiased source images, so distinct-DMC counts should stay naturally
-low and reduction shouldn't need to kick in for most sprites at default — the cap is a
-safety ceiling for outliers (e.g. a sprite with unusually rich shading), not something
-expected to bind routinely. **Open question — see §8:** confirm 40 is actually generous
-enough once the pipeline is built and can be run against real sprites.
+**Default colour count (Req. 6):** = the distinct-DMC count from step 2, capped at
+`MAX_COLOUR_COUNT` (§5.3). The cap is **37**, the size of the legible stitch-symbol set —
+not a number chosen here. A chart cannot show more colours than it has symbols to name,
+so the symbol set is what binds.
+
+**Census (#16), over all 7,116 sprites in the checkout** — the original guess of 40 was
+made blind, so it is worth recording what the data actually says:
+
+| | distinct-DMC count |
+|---|---|
+| median | 24 |
+| p90 | 35 |
+| p99 | 47 |
+| max | 94 (`merfolk/citizen.png`) |
+
+Full palette fits under the cap — i.e. no reduction at default — for **93.2%** of sprites
+at 37, against 95.8% at the originally-proposed 40. So lowering the ceiling to buy
+legibility costs 2.6 points of coverage, or 188 extra sprites that reduce.
+
+This corrects an assumption above: reduction is **not** a rare safety net for outliers.
+Roughly one sprite in fifteen exceeds the cap, and the long tail (merfolk, yeti death
+frames, the jinn) runs to 94 distinct floss — those are heavily shaded and anti-aliased
+despite being pixel art. Reduction is a routine, load-bearing part of the pipeline, which
+is a good argument for the care taken over its stability in step 3.
 
 **Stability while dragging the slider:** reduction over the fixed DMC-mapped base is a
 **merge** — lowering `k` just merges the next-closest pair of floss colours, so the
@@ -249,9 +266,92 @@ construction, §5.2) is assigned a stitch symbol for the chart.
 **Symbol collisions (resolves §8):** cap the colour-count slider's maximum at the
 size of the legible stitch-symbol set, rather than allowing colour count to exceed
 it. Guarantees every colour on a printed (including black-and-white) chart stays
-visually distinguishable by symbol alone. The exact symbol-set size depends on the
-font/glyph set chosen for the chart — pin that down alongside the PDF export design
-(§5.5), since it determines the real ceiling.
+visually distinguishable by symbol alone.
+
+**The set, pinned down (#16).** `STITCH_SYMBOLS` holds **37 glyphs**, ordered by
+*distinctness* rather than codepoint. Symbols are handed out in array order and the
+palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top of
+the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
+Five tiers:
+
+1. **Solid geometrics** (4) — separable by silhouette alone: `● ■ ▲ ◆`
+2. **Outline counterparts** (5) — same silhouettes, inverted fill: `○ □ △ ◇ ☆`
+3. **Half fill** (1) — a third fill state: `◐`
+4. **Strokes** (4) — a different visual class, thin and open: `+ × # =`
+5. **Letters** (23) — the fallback commercial charts have always used: A–Z less `O` and
+   `Q` (confusable with `○`) and `X` (with `×`, which reads better small).
+
+**Two rules decide membership**, both learned from rendering the set at chart scale
+rather than reasoning about it on paper:
+
+- **One orientation per shape family.** A rotated glyph is not a new glyph: the eye reads
+  `▲ ▼ ◀ ▶` as one symbol pointing four ways and has to *decode* the direction, which is
+  exactly the work a chart symbol exists to avoid. Only the upward triangle survives, and
+  only one half-filled circle, so it has no mirror twin to be confused against.
+- **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled area
+  and little else, so `★` and `◆` become the same dark lozenge. The star is kept in
+  outline only, where its points register.
+
+The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`) the
+prototype shipped. Digits are dropped wholesale: `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`,
+`6`/`G`, `8`/`B` and `9`/`P` all collide with letters already in the set, and salvaging
+`3 4 7` is not worth a mixed-class rule. Every surviving glyph is a single BMP code point
+from Basic Latin, Latin-1, Geometric Shapes, or the outline star — ranges with
+near-universal font coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font
+(§5.5) falls back to tofu. Asking for a symbol past the end throws rather than wrapping;
+the prototype's `i % len` silently aliased two colours onto one glyph.
+
+`MAX_COLOUR_COUNT = 37` is therefore the slider's **hard maximum** (read by #19), and
+since it sits below the 40 §5.2 proposed, *it* is the effective colour cap — see the
+census in §5.2. If #20 wants a higher cap, **the symbol set must grow first**: a chart
+cannot show more colours than it has symbols to name.
+
+#### Limitations of the hard limit
+
+The ceiling is a real constraint with real costs, and they should be understood before
+anyone tries to raise it:
+
+- **It is a limit on charting, not on stitching.** Nothing stops you stitching 94 floss
+  colours. The 37 exists because a *printed black-and-white chart* must name each colour
+  with a glyph you can tell apart from the other 36. That is the most demanding consumer
+  of the palette, and it sets the budget for everything upstream.
+- **485 sprites (6.8%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
+  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 94 distinct floss
+  and loses 57 of them. Reduction is designed to make that loss principled rather than
+  arbitrary, but it is still a loss.
+- **The cap is imposed on the preview by the export.** The on-screen colour preview
+  (§5.4) and the PNG export need no symbols and could carry far more colours. The slider
+  is capped globally anyway, so that what you preview is always what you can export. A
+  preview you cannot turn into a chart would be worse than a lower ceiling.
+- **Raising it is not cheap.** The glyph pool that survives both rules inside font-safe
+  ranges is close to exhausted. Every obvious remaining candidate breaks something:
+  digits collide with letters, lowercase collides with uppercase, and arrows, dingbats
+  and box-drawing characters either reintroduce rotation families or risk font fallback
+  in a bundled PDF font (§5.5). Growing the set means either accepting a font dependency
+  or accepting worse glyphs.
+- **The rules are heuristics, and they have not met paper.** Both were validated by
+  rendering a real chart at 9px on screen — which is how the rotation variants and the
+  `★`/`◆` blob collision were caught — but not yet at 5pt in the actual export font.
+  `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
+  drops by one for each glyph removed; the two numbers are the same number (#20).
+- **Symbols are assigned by palette index, so they are stable only for a fixed `k`.**
+  This is the sharpest limitation, and it partly undercuts §5.2's stability story.
+  Reduction keeps *colours* stable as the slider moves, but the palette reorders by pixel
+  count, so a colour that survives a merge can still be handed a different glyph.
+  Measured on the dwarvish scout (31 distinct floss): **22 of the 30 slider steps
+  reassign at least one surviving colour's symbol**, 124 reassignments in total — and not
+  subtly, e.g. DMC 918 goes `◆` → `○` on a one-step move. So dragging the slider with the
+  symbol overlay on (#18) will visibly churn even though the colours beneath do not.
+
+  This is tolerable because an exported chart is produced at one chosen `k`, and within
+  that chart every glyph is unique and stable. But it means a chart's symbol assignment
+  is meaningful only alongside the colour count it was exported with, and two charts of
+  the same sprite at different `k` are not glyph-comparable. If the churn proves
+  distracting in the live preview, the fix is to assign symbols against the *base*
+  palette's ordering rather than the reduced one — every reduced colour is a base colour
+  (its medoid), so the mapping exists — at the cost that a low-`k` chart would no longer
+  be guaranteed the most distinctive glyphs. That trade is deliberately not taken here;
+  revisit under #18/#19 once the overlay is real enough to judge.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
@@ -347,12 +447,23 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 
 ## 8. Open Questions
 
-- **Colour-count ceiling:** is 40 the right default cap (§5.2), or should this be
-  checked against a few real high-colour sprites first? Left open deliberately —
-  validate during Milestone 2 (§9) once quantization exists to test against.
-- **Symbol-set size:** §5.3 caps the colour-count slider at the legible stitch-symbol
-  set size, but that size depends on the font/glyph set used for the PDF chart,
-  which isn't chosen yet. Pin down alongside export design (§5.5).
+- ~~**Symbol-set size:**~~ **Resolved (#16).** 37 glyphs — solid geometrics, their
+  outline counterparts, one half fill, four strokes, then letters — all inside font-safe
+  Unicode ranges, so the choice no longer waits on the PDF font (§5.5). The count is set
+  by what stays legible at ~9px, under two rules: one orientation per shape family, and
+  no two glyphs sharing an ink blob. See §5.3.
+- ~~**Colour-count ceiling:**~~ **Resolved (#16), and not the way §5.2 guessed.** The cap
+  is not a free choice: it *is* the symbol-set size, because a chart cannot show more
+  colours than it has symbols to name. So `MAX_COLOUR_COUNT = 37`. A census over all
+  7,116 sprites (§5.2) shows the full palette fits under it 93.2% of the time (95.8% at
+  the old 40), with a median of 24 and a long tail to 94. The original framing — a safety
+  ceiling for rare outliers — was wrong: about one sprite in fifteen exceeds the cap, so
+  reduction runs routinely.
+- **Still open for #20:** whether 37 glyphs *actually* read at print scale. The set was
+  checked by rendering a real chart (dwarvish scout at `k=20`) in black and white at
+  9px, which is what caught the rotation variants and the `★`/`◆` blob collision. The
+  remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any fails on paper,
+  dropping it lowers the cap by one — the two are the same number.
 
 ## 9. Milestones
 
