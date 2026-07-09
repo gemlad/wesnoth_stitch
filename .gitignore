@@ -11,5 +11,8 @@ __pycache__/
 wesnoth_cache/
 output/
 
+# Fetched Wesnoth mainline unit sprites (not vendored; refetch via sparse clone)
+wesnoth-sprites/
+
 # OS
 .DS_Store

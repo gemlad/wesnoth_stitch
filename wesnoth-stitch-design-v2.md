@@ -116,6 +116,16 @@ This is a deliberate simplification: it gets you a working, pixel-accurate brows
 immediately, and folder names are already reasonably human-readable. Nicer names via
 WML parsing is a plausible v1.5 addition, not a blocker.
 
+> **Note (dev sprite set):** a standalone copy of the mainline unit sprites has been
+> fetched into `wesnoth-sprites/units/` at the repo root (gitignored — see
+> `.gitignore`; refetch via a blobless sparse clone of `wesnoth/wesnoth`, path
+> `data/core/images/units`). This is *not* a full repo checkout — only the `units/`
+> subtree, ~7,100 files / ~9 MB. So the sprite root should be a **configurable
+> constant** (e.g. `SPRITE_ROOT = 'wesnoth-sprites/units'`), not code that assumes the
+> full `data/core/images/units` layout. `wesnoth-sprites/` plays the role the doc's
+> "checkout" plays; `units/` is the scan target and its subfolders are the categories.
+> The folder-picker flow above still stands for real user checkouts.
+
 ### 5.2 Colour Quantization (Req. 5, 6)
 
 This is the part the prototype got wrong, so it's worth being explicit about *why* it

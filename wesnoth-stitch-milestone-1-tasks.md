@@ -15,10 +15,16 @@ picker yet. §5.1's folder-picker UX is out of scope until it's revisited, eithe
 as an M1 stretch task or a follow-up. Flagging this now so it isn't assumed done
 when M1 gets checked off.
 
+The hardcoded path should point at the gitignored dev sprite set now in the repo:
+`wesnoth-sprites/units/` (see §5.1 note in `wesnoth-stitch-design-v2.md` — ~7,100
+files, refetch via a blobless sparse clone of `wesnoth/wesnoth`). Use a single
+configurable `SPRITE_ROOT` constant rather than assuming the full
+`data/core/images/units` repo layout.
+
 ## Tasks
 
-### 1. Electron + Vite + React scaffold
-- Branch: `scaffold/electron-vite-react`
+### 1. Electron + Vite + React scaffold ✅ Done
+- Branch: `scaffold/electron-vite-react` (merged in `1b952aa`, commit `c4fe3ac`)
 - Set up electron-vite with TypeScript, React, main/renderer/preload split per §4.
 - App launches to a blank window in dev mode.
 - No IPC, no business logic yet — just confirming the toolchain boots.
@@ -35,12 +41,12 @@ when M1 gets checked off.
 
 ### 3. Asset scanning (main process)
 - Branch: `feature/asset-scan`
-- Recursively scan the hardcoded `images/units/` path, group results by subfolder
-  (§5.1), return `SpriteAsset[]` (path + folder) over the real `getSpriteList`
-  handler from task 2.
-- Surface a clear error to the renderer if the hardcoded path or `images/units/`
-  doesn't exist — worth handling explicitly since a hardcoded path is exactly the
-  kind of thing that breaks silently the moment someone else checks this out.
+- Recursively scan the hardcoded `SPRITE_ROOT` (`wesnoth-sprites/units/`), group
+  results by subfolder (§5.1), return `SpriteAsset[]` (path + folder) over the real
+  `getSpriteList` handler from task 2.
+- Surface a clear error to the renderer if `SPRITE_ROOT` doesn't exist — worth
+  handling explicitly since the folder is gitignored, so a fresh clone won't have
+  it until someone refetches the sprite set.
 - Depends on: 2
 
 ### 4. Thumbnail generation (main process)
@@ -67,15 +73,15 @@ when M1 gets checked off.
 ### 7. Wire up click-to-preview end-to-end
 - Branch: `feature/browser-preview-integration`
 - Connect sprite browser (5) selection state to the preview pane (6); confirm the
-  full click-through flow works against a real local Wesnoth checkout, not just
-  each piece in isolation.
+  full click-through flow works against the real `wesnoth-sprites/units/` sprite set,
+  not just each piece in isolation.
 - This is the task where M1's "click-to-preview at full res" criterion actually
   gets verified live.
 - Depends on: 5, 6
 
 ## Definition of done for Milestone 1
 
-- App launches, shows a thumbnail grid scanned from a hardcoded `images/units/`
-  path, grouped by subfolder.
+- App launches, shows a thumbnail grid scanned from the hardcoded `SPRITE_ROOT`
+  (`wesnoth-sprites/units/`), grouped by subfolder.
 - Clicking any thumbnail shows that sprite at full resolution in a preview pane.
 - No quantization, no DMC mapping, no export — those are Milestone 2+.
