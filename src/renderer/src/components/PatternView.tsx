@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ConvertedSprite, SpriteSummary } from '../../../shared/ipc'
 import { MIN_SYMBOL_SCALE } from '../pattern/draw'
+import { latestOnly } from '../pattern/latest-only'
 import {
   cssToRgb,
   rgbToCss,
@@ -44,10 +45,14 @@ function useElementSize(): [
 
 /**
  * The pattern preview (§5.4): converts the selected sprite over IPC (#17) and hands the
- * result to the Konva grid, plus the controls that decide how it's drawn.
+ * result to the Konva grid, plus the controls that decide how it's drawn — including the
+ * colour-count slider (#19), which re-runs the pipeline live on every step.
  *
- * Colour count is left at the Req. 6 default — the live slider is #19. This component is
- * where that slider lands, because it already owns the `convertSprite` call.
+ * The slider is only rendered once the first conversion has returned, which is also what
+ * makes dragging cheap: that first call is the cold one (~48 ms on a rich sprite) and it
+ * populates the main process's per-sprite plan cache, so every slider step afterwards is
+ * a warm ~1.9 ms re-cut of the same merge sequence (§5.2). Selecting a sprite is
+ * therefore the prewarm the design asks for; no separate one is needed.
  */
 export function PatternView({ sprite }: Props): React.JSX.Element {
   const [converted, setConverted] = useState<ConvertedSprite | null>(null)
@@ -58,23 +63,37 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   const [viewEpoch, setViewEpoch] = useState(0)
   const [stageRef, stageSize] = useElementSize()
 
+  /**
+   * The `k` the slider is on. Held separately from `converted.palette.colourCount` so the
+   * control tracks the pointer at once, without waiting for its round-trip — and so it
+   * stays put when a sprite's palette is smaller than the `k` that was asked for.
+   */
+  const [colourCount, setColourCount] = useState<number | null>(null)
+
+  // Conversions overlap while dragging, and IPC replies are not ordered. See latest-only.
+  const requests = useRef(latestOnly<ConvertedSprite>())
+  useEffect(() => {
+    const inFlight = requests.current
+    return () => inFlight.cancel()
+  }, [])
+
+  const convert = useCallback((id: string, k?: number) => {
+    requests.current.run(
+      () => window.api.convertSprite(id, k),
+      (result) => {
+        setConverted(result)
+        // The first conversion has no `k` to echo: adopt the Req. 6 default it chose.
+        setColourCount((current) => current ?? result.palette.colourCount)
+      },
+      (e: unknown) => setError(e instanceof Error ? e.message : String(e))
+    )
+  }, [])
+
   // App keys this component by sprite id, so each selection remounts it with fresh state
   // — no need to clear `converted`/`error` synchronously here.
   useEffect(() => {
-    if (!sprite) return
-    let cancelled = false
-    window.api
-      .convertSprite(sprite.id)
-      .then((result) => {
-        if (!cancelled) setConverted(result)
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e))
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [sprite])
+    if (sprite) convert(sprite.id)
+  }, [sprite, convert])
 
   if (!sprite) {
     return (
@@ -85,6 +104,23 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   }
 
   const symbolsHidden = settings.symbolDisplay !== 'colour' && scale > 0 && scale < MIN_SYMBOL_SCALE
+
+  /**
+   * The slider stops at the sprite's own distinct-DMC count, not at the symbol-set
+   * ceiling. `convertSprite` treats "more colours than the sprite has" as a no-op rather
+   * than an error, so a wider slider would have a dead zone at the top where dragging
+   * changed nothing and the readout disagreed with the handle. Where the sprite outruns
+   * the ceiling (~1 sprite in 15), the ceiling binds instead.
+   */
+  const sliderMax = converted
+    ? Math.min(converted.palette.sourceColourCount, converted.maxColourCount)
+    : 0
+
+  const onColourCount = (k: number): void => {
+    if (k === colourCount) return // a drag fires an event per pixel, not per step
+    setColourCount(k)
+    convert(sprite.id, k)
+  }
 
   return (
     <section className="pattern-view">
@@ -128,6 +164,27 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
         </button>
 
         <span className="pattern-controls__spacer" />
+
+        {/* A sprite with no opaque pixels has no palette to slice, so there is no k to pick. */}
+        {converted && colourCount !== null && sliderMax > 0 && (
+          <label className="pattern-controls__field pattern-controls__field--slider">
+            Colours
+            <input
+              type="range"
+              className="pattern-controls__slider"
+              min={1}
+              max={sliderMax}
+              step={1}
+              value={colourCount}
+              aria-valuetext={`${colourCount} of ${sliderMax} floss colours`}
+              onChange={(e) => onColourCount(Number(e.target.value))}
+            />
+            <output className="pattern-controls__count">
+              {colourCount}
+              <span className="pattern-controls__count-max">/{sliderMax}</span>
+            </output>
+          </label>
+        )}
         {/* `scale` is px per source pixel, so it reads directly as a zoom factor. */}
         {scale > 0 && (
           <span className="pattern-controls__zoom">{Math.round(scale * 10) / 10}×</span>

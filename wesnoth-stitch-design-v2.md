@@ -291,6 +291,11 @@ to build the plan, **~0.1 ms** per cut — a full sweep of every `k` costs 1–3
 re-run on slider drag is comfortably affordable; this measurement informs #17's
 compute-location call (main process vs renderer worker).
 
+**Confirmed against the live slider (#19):** stepping `merfolk/citizen.png` from `k = 12`
+to `k = 11` in the running app leaves all 11 of the surviving floss codes exactly as they
+were, and introduces **no** code that was not already in the `k = 12` palette. The palette
+really does only merge. Glyphs are the exception, and churn — see §5.3.
+
 **One honest tradeoff:** mapping-first can band slightly harder on smooth gradients
 (many near shades all snap to one floss, where free k-means might place an in-between
 centroid). But you can't *stitch* an in-between colour anyway, so that loss is inherent
@@ -443,6 +448,52 @@ both layers redraw in **1.0 ms** at fit zoom and **0.3 ms** zoomed in (culling),
 Those loops live in `src/renderer/src/pattern/draw.ts` as pure functions over a structural
 `DrawContext` rather than behind Konva's types, so they unit-test against a recording fake
 with no jsdom and no canvas.
+
+#### The colour-count slider (#19)
+
+The slider runs from 1 to **the sprite's own distinct-DMC count, capped at
+`MAX_COLOUR_COUNT`** — not to the symbol-set ceiling unconditionally. `convertSprite`
+treats "more colours than the sprite has" as a no-op rather than an error, so a slider
+that always ran to 37 would have a dead zone at the top of every simple sprite, where
+dragging changed nothing and the readout disagreed with the handle. Its default position
+is its maximum, which is exactly what makes Req. 6 visible: a 13-floss bat opens at 13/13,
+and `merfolk/citizen.png` opens at 37/37 with "reduced from 94".
+
+**Requests overlap, and IPC replies are not ordered.** `ipcMain.handle` services calls
+concurrently, so nothing stops the reply for `k = 18` landing after the reply for `k = 17`
+and repainting the grid at a colour count the slider has left. Serialising the calls would
+cost a whole round-trip of lag per step, so instead every request carries a sequence number
+and only the newest may land (`pattern/latest-only.ts`). Verified in the running app: 40
+overlapping conversions fired back-to-back with out-of-order `k`s leave the grid on exactly
+the final `k`, with all 814 stitched cells matching that palette.
+
+**No prewarm is needed.** Selecting a sprite already converts it at the default `k`, and
+that call populates the main process's per-sprite plan cache (§4). The slider only appears
+once it returns, so the first drag step is always warm — which answers the prewarm question
+`convert.ts` left open.
+
+**A slider step costs ~4 ms end to end.** Measured in the running app on the worst sprite
+in the checkout (94 distinct floss):
+
+| | ms |
+|---|---|
+| `convertSprite` round-trip, warm | 1.6 (p95 2.9) |
+| `structuredClone` of the whole payload | 0.7 |
+| both Konva layers redrawn | 0.6 (p95 0.9) |
+| **input event → grid repainted** | **4.2** (p95 31) |
+
+The p95 is one display refresh, not work: an IPC reply that misses the current frame waits
+for the next paint. Payload size is not the constraint — a 13-floss sprite costs the same
+as the 94-floss one, and a trivial IPC call on the same wire costs 1.8 ms, so the round
+trip is at the floor of IPC latency rather than dominated by serialization.
+
+**Rejected for now: flattening `StitchPattern.cells` to an `Int16Array`.** `convert.ts`
+names this as the lever if the grid outgrows the budget, and it does work — cloning the
+5,184-cell nested `(number | null)[][]` costs 0.6 ms, the equivalent flat `Int16Array`
+costs 0.0 ms (41 KB → 10 KB). But that is 0.6 ms off a 4.2 ms step, bought with a change to
+a shared type that the pipeline, the IPC contract, the grid and their tests all speak. Not
+worth it at this size. Revisit if a larger grid (§7.4) or export (§5.5) makes the payload
+the constraint it currently is not.
 
 ### 5.5 Export
 

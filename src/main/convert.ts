@@ -27,6 +27,13 @@
  * `StitchPattern.cells` — a flat `Int16Array` (with `-1` for no-stitch) clones far more
  * cheaply than `(number | null)[][]` — not moving the compute. Not worth doing at 1.9 ms.
  *
+ * #19 priced that lever rather than guessing: cloning the 5,184-cell nested array costs
+ * 0.6 ms against 0.0 ms for the equivalent `Int16Array` (41 KB → 10 KB). Real, but it is
+ * 0.6 ms off a 4.2 ms slider step, paid for with a change to a type the pipeline, the IPC
+ * contract, the grid and their tests all speak. Still not worth doing. The round trip is
+ * at the *floor* of IPC latency, not above it: a trivial call on the same wire costs
+ * 1.8 ms.
+ *
  * **What is cached, and why it has to be.** The cold path is dominated by `mapToDmc`,
  * which does a nearest-floss search per *distinct source colour*: ~2 ms for a simple
  * sprite, but 48.6 ms end-to-end for `merfolk/citizen.png` (94 distinct floss). Running
@@ -37,8 +44,10 @@
  * start across IPC calls.
  *
  * That cold cost is a real hitch on selecting a rich sprite, and it is not hidden: the
- * preview pane (§5.4) already has the raw image on screen while it runs. #19 may want to
- * prewarm on selection rather than on first slider touch.
+ * preview pane (§5.4) already has the raw image on screen while it runs. #19 needed no
+ * separate prewarm in the end: selecting a sprite converts it at the default `k`, which
+ * fills this cache, and the slider only appears once that returns — so the first drag
+ * step is already warm.
  */
 import {
   MAX_COLOUR_COUNT,

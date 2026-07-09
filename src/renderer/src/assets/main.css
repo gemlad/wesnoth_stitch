@@ -319,6 +319,47 @@ body {
   flex: 1;
 }
 
+/* Colour-count slider (#19) */
+
+.pattern-controls__field--slider {
+  gap: 8px;
+}
+
+.pattern-controls__slider {
+  width: 140px;
+  height: 4px;
+  padding: 0;
+  border-radius: 2px;
+  background: var(--ev-c-gray-3);
+  appearance: none;
+  cursor: pointer;
+}
+
+.pattern-controls__slider::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: var(--ev-c-text-2);
+  appearance: none;
+}
+
+.pattern-controls__slider:hover::-webkit-slider-thumb {
+  background: var(--ev-c-text-1);
+}
+
+.pattern-controls__count {
+  /* Fixed width and tabular figures: the number changes every frame of a drag, and the
+     controls beside it must not shuffle sideways as it goes 9 → 10 → 9. */
+  min-width: 44px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ev-c-text-1);
+}
+
+.pattern-controls__count-max {
+  color: var(--ev-c-text-3);
+}
+
 .pattern-controls__zoom {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
