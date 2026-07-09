@@ -11,11 +11,14 @@
  * real filesystem scanning and image decoding land in #3 and #4.
  */
 
+import type { QuantizedPalette, StitchPattern, StitchSymbol } from './pipeline'
+
 /** Channel names. Kept as string-literal consts so both processes agree. */
 export const IpcChannels = {
   getSpriteList: 'sprites:list',
   getThumbnail: 'sprites:thumbnail',
-  getFullImage: 'sprites:full-image'
+  getFullImage: 'sprites:full-image',
+  convertSprite: 'sprites:convert'
 } as const
 
 /** A single unit sprite as surfaced to the browser grid (§5.1). */
@@ -43,6 +46,26 @@ export interface DecodedImage {
 }
 
 /**
+ * A sprite run through the whole conversion pipeline (§5.2): mapped to DMC floss,
+ * reduced to the requested colour count, and assigned chart symbols (§5.3).
+ *
+ * `palette.sourceColourCount` is the sprite's own distinct-DMC count (the Req. 6
+ * default before capping); `palette.colourCount` is the `k` actually used.
+ */
+export interface ConvertedSprite {
+  palette: QuantizedPalette
+  pattern: StitchPattern
+  /** One chart symbol per palette colour, index-aligned with `palette.colours`. */
+  symbols: StitchSymbol[]
+  /**
+   * The slider's hard maximum (§5.3). Carried in the payload rather than imported by
+   * the renderer: `MAX_COLOUR_COUNT` lives beside the pipeline, and importing it would
+   * pull the 392-entry DMC dataset into the renderer bundle for a single integer.
+   */
+  maxColourCount: number
+}
+
+/**
  * The typed surface exposed on `window.api` in the renderer (see preload).
  * Every method is async because it round-trips to the main process over IPC.
  */
@@ -53,4 +76,15 @@ export interface SpriteApi {
   getThumbnail(id: string): Promise<DecodedImage>
   /** Decoded full-resolution image for one sprite id, for the preview pane (#6). */
   getFullImage(id: string): Promise<DecodedImage>
+  /**
+   * Convert one sprite to a stitch pattern at `colourCount` floss colours (#17).
+   *
+   * Omit `colourCount` for the Req. 6 default — the sprite's own distinct-DMC count,
+   * capped at `maxColourCount`. Safe to call on every slider frame: the expensive
+   * per-sprite work (decode → map → merge plan) is cached in the main process, so a
+   * repeat call for the same `id` only re-cuts the plan (§4).
+   *
+   * Rejects if `colourCount` is not an integer in `1..maxColourCount`.
+   */
+  convertSprite(id: string, colourCount?: number): Promise<ConvertedSprite>
 }

@@ -95,10 +95,10 @@ receives already-decoded pixel data / thumbnails over IPC. This keeps the render
 free to just be a UI layer, and means the export pipeline can be reused headlessly
 later for batch processing (§7.2) without touching UI code.
 
-**IPC contract (implemented in #2).** The renderer↔main surface is three channels —
-`getSpriteList`, `getThumbnail`, `getFullImage` — with channel names and payload
-types defined once in `src/shared/ipc.ts` and imported by both processes so a handler
-can't silently drift from its caller. Two shape decisions worth recording:
+**IPC contract (implemented in #2, extended in #17).** The renderer↔main surface is four
+channels — `getSpriteList`, `getThumbnail`, `getFullImage`, `convertSprite` — with channel
+names and payload types defined once in `src/shared/ipc.ts` and imported by both processes
+so a handler can't silently drift from its caller. Two shape decisions worth recording:
 
 - **Images cross as raw RGBA**, not encoded PNG bytes. Both `getThumbnail` and
   `getFullImage` return `DecodedImage = { width, height, data: Uint8Array }` (row-major
@@ -110,6 +110,46 @@ can't silently drift from its caller. Two shape decisions worth recording:
   `getThumbnail`, *not* bundled into the list. This avoids shipping thousands of image
   buffers up front just to populate the grid. It's a deliberate split of the §6
   `SpriteAsset` sketch (which bundled `thumbnail`) — see the note there.
+
+**Where the pipeline runs — decided in #17, on measurement.** `convertSprite(id,
+colourCount?)` runs the whole of §5.2/§5.3 (decode → map to DMC → reduce over floss →
+assign symbols) and returns `ConvertedSprite = { palette, pattern, symbols,
+maxColourCount }`. Because the preview re-runs live as the slider drags, the open question
+was main process (per this section) vs a renderer web worker. Measured through real IPC in
+the running app — 72×72 scout, `k=20`, steady state:
+
+| | ms |
+|---|---|
+| IPC round-trip, trivial payload | 0.157 |
+| main-process compute (`reduceTo` + `symbolsFor`, warm) | **0.077** |
+| renderer-observed warm tick | 1.877 |
+| ⇒ payload serialization | **1.643** |
+| cold sprite (`merfolk/citizen`, 94 floss: decode + map + plan) | 48.6 |
+
+**Compute is 4% of a slider frame; serialising the palette and the 5,184-cell grid is
+88%.** A web worker would pay that same serialization on `postMessage`, so moving compute
+off the main process buys back at most 0.077 ms — nothing. The decision is therefore free
+to be made on architecture, and this section already wants the pipeline in main so export
+(§5.5) and batch processing (§7.2) can reuse it headlessly. **So: main process.**
+
+Two consequences worth carrying forward:
+
+- **A per-sprite `ReductionPlan` cache (LRU, 12) is what makes the slider affordable.**
+  The cold path is dominated by `mapToDmc`, which searches per *distinct source colour* —
+  48.6 ms on the worst sprite, 25× the frame budget, and entirely independent of `k`.
+  Caching decode + map + merge plan per sprite id means a slider frame only re-cuts the
+  plan. This is exactly the `planReduction`/`reduceTo` split from §5.2 step 3, turned into
+  a warm start across IPC calls. That cold cost is still a visible hitch when selecting a
+  rich sprite; #19 may want to prewarm on selection rather than on first slider touch.
+- **The payload is dominated by the grid, not the palette.** A 13-floss sprite costs the
+  same 1.6 ms as a 31-floss one. If a future grid outgrows the budget, the lever is
+  `StitchPattern.cells`: a flat `Int16Array` (with `-1` for no-stitch) clones far more
+  cheaply than `(number | null)[][]`. Not worth the churn through §6, #14 and #18 at
+  1.9 ms per tick.
+
+Caveat on those numbers: they are steady-state. The same call measured ~14 ms when issued
+immediately after page load, competing with app startup, JIT and the initial sprite scan.
+A first slider drag right after launch will be slower than a later one.
 
 ## 5. Core Workflows
 

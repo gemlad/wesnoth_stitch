@@ -1,8 +1,14 @@
 import { app, ipcMain } from 'electron'
 import { resolve, sep } from 'node:path'
-import { IpcChannels, type DecodedImage, type SpriteSummary } from '../shared/ipc'
+import {
+  IpcChannels,
+  type ConvertedSprite,
+  type DecodedImage,
+  type SpriteSummary
+} from '../shared/ipc'
 import { scanSprites } from './sprites'
 import { decodeImage, makeThumbnail } from './images'
+import { convertSprite } from './convert'
 
 /**
  * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
@@ -53,4 +59,14 @@ export function registerIpcHandlers(): void {
     // Full-resolution decode for the preview pane (§5.4) — no downscale.
     return decodeImage(resolveSpritePath(id))
   })
+
+  ipcMain.handle(
+    IpcChannels.convertSprite,
+    async (_event, id: string, colourCount?: number): Promise<ConvertedSprite> => {
+      // The whole pipeline (§5.2/§5.3). Called on every slider frame (#19), so the
+      // per-sprite decode + merge plan is cached inside convertSprite; a repeat call for
+      // the same id only re-cuts the plan. A bad colourCount rejects the invoke.
+      return convertSprite(id, resolveSpritePath(id), colourCount)
+    }
+  )
 }

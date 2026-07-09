@@ -8,7 +8,8 @@ import { IpcChannels, type SpriteApi } from '../shared/ipc'
 const api: SpriteApi = {
   getSpriteList: () => ipcRenderer.invoke(IpcChannels.getSpriteList),
   getThumbnail: (id) => ipcRenderer.invoke(IpcChannels.getThumbnail, id),
-  getFullImage: (id) => ipcRenderer.invoke(IpcChannels.getFullImage, id)
+  getFullImage: (id) => ipcRenderer.invoke(IpcChannels.getFullImage, id),
+  convertSprite: (id, colourCount) => ipcRenderer.invoke(IpcChannels.convertSprite, id, colourCount)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
