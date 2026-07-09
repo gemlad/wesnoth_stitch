@@ -103,6 +103,12 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
  * so it, not that proposal, is what binds. Across all 7,116 Wesnoth sprites the full
  * distinct-DMC palette fits under it about 93% of the time; the rest reduce (#14), which
  * is exactly what reduction is for.
+ *
+ * **Before raising this,** read "Limitations of the hard limit" in §5.3. In short: it
+ * caps charting, not stitching; 485 sprites already exceed it; and the glyph pool that
+ * survives both legibility rules inside font-safe ranges is close to exhausted, so
+ * growing the set means accepting either a font dependency or worse glyphs. The number
+ * cannot be raised on its own — it *is* `STITCH_SYMBOLS.length`.
  */
 export const MAX_COLOUR_COUNT = STITCH_SYMBOLS.length
 
@@ -126,6 +132,14 @@ export function symbolAt(index: number): StitchSymbol {
  *
  * Kept out of `PaletteColour` itself (§6): symbols are chart presentation, not part of
  * the colour data, and the pipeline stages stay pure without them.
+ *
+ * **Stable only for a fixed `k`.** Reduction keeps *colours* stable as the slider moves
+ * (§5.2), but the palette reorders by pixel count, so a colour that survives a merge can
+ * still be handed a different glyph. Measured on the dwarvish scout, 22 of 30 slider
+ * steps reassign at least one surviving colour's symbol. Within any single `k` every
+ * glyph is unique and stable, which is all an exported chart needs — but do not treat a
+ * glyph as a colour's identity across colour counts, and do not persist one expecting it
+ * to survive a re-quantization. See "Limitations of the hard limit" in §5.3.
  *
  * @throws RangeError if the palette holds more colours than the symbol set can name.
  */

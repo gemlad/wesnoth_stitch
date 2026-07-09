@@ -306,6 +306,53 @@ since it sits below the 40 §5.2 proposed, *it* is the effective colour cap — 
 census in §5.2. If #20 wants a higher cap, **the symbol set must grow first**: a chart
 cannot show more colours than it has symbols to name.
 
+#### Limitations of the hard limit
+
+The ceiling is a real constraint with real costs, and they should be understood before
+anyone tries to raise it:
+
+- **It is a limit on charting, not on stitching.** Nothing stops you stitching 94 floss
+  colours. The 37 exists because a *printed black-and-white chart* must name each colour
+  with a glyph you can tell apart from the other 36. That is the most demanding consumer
+  of the palette, and it sets the budget for everything upstream.
+- **485 sprites (6.8%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
+  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 94 distinct floss
+  and loses 57 of them. Reduction is designed to make that loss principled rather than
+  arbitrary, but it is still a loss.
+- **The cap is imposed on the preview by the export.** The on-screen colour preview
+  (§5.4) and the PNG export need no symbols and could carry far more colours. The slider
+  is capped globally anyway, so that what you preview is always what you can export. A
+  preview you cannot turn into a chart would be worse than a lower ceiling.
+- **Raising it is not cheap.** The glyph pool that survives both rules inside font-safe
+  ranges is close to exhausted. Every obvious remaining candidate breaks something:
+  digits collide with letters, lowercase collides with uppercase, and arrows, dingbats
+  and box-drawing characters either reintroduce rotation families or risk font fallback
+  in a bundled PDF font (§5.5). Growing the set means either accepting a font dependency
+  or accepting worse glyphs.
+- **The rules are heuristics, and they have not met paper.** Both were validated by
+  rendering a real chart at 9px on screen — which is how the rotation variants and the
+  `★`/`◆` blob collision were caught — but not yet at 5pt in the actual export font.
+  `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
+  drops by one for each glyph removed; the two numbers are the same number (#20).
+- **Symbols are assigned by palette index, so they are stable only for a fixed `k`.**
+  This is the sharpest limitation, and it partly undercuts §5.2's stability story.
+  Reduction keeps *colours* stable as the slider moves, but the palette reorders by pixel
+  count, so a colour that survives a merge can still be handed a different glyph.
+  Measured on the dwarvish scout (31 distinct floss): **22 of the 30 slider steps
+  reassign at least one surviving colour's symbol**, 124 reassignments in total — and not
+  subtly, e.g. DMC 918 goes `◆` → `○` on a one-step move. So dragging the slider with the
+  symbol overlay on (#18) will visibly churn even though the colours beneath do not.
+
+  This is tolerable because an exported chart is produced at one chosen `k`, and within
+  that chart every glyph is unique and stable. But it means a chart's symbol assignment
+  is meaningful only alongside the colour count it was exported with, and two charts of
+  the same sprite at different `k` are not glyph-comparable. If the churn proves
+  distracting in the live preview, the fix is to assign symbols against the *base*
+  palette's ordering rather than the reduced one — every reduced colour is a base colour
+  (its medoid), so the mapping exists — at the cost that a low-`k` chart would no longer
+  be guaranteed the most distinctive glyphs. That trade is deliberately not taken here;
+  revisit under #18/#19 once the overlay is real enough to judge.
+
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
 - Konva `Stage`, one `Layer` of `Rect`s — one rect per source pixel, 1:1, filled with
