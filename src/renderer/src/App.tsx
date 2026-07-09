@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { SpriteSummary } from '../../shared/ipc'
 import { SpriteBrowser } from './components/SpriteBrowser'
+import { PreviewPane } from './components/PreviewPane'
 
 function App(): React.JSX.Element {
   const [sprites, setSprites] = useState<SpriteSummary[] | null>(null)
+  const [selected, setSelected] = useState<SpriteSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -22,7 +24,12 @@ function App(): React.JSX.Element {
 
       {error && <p className="app-status app-status--error">Couldn’t load sprites: {error}</p>}
       {!error && !sprites && <p className="app-status">Loading sprites…</p>}
-      {sprites && <SpriteBrowser sprites={sprites} />}
+      {sprites && (
+        <div className="app-body">
+          <SpriteBrowser sprites={sprites} selectedId={selected?.id ?? null} onSelect={setSelected} />
+          <PreviewPane key={selected?.id ?? 'none'} sprite={selected} />
+        </div>
+      )}
     </div>
   )
 }
