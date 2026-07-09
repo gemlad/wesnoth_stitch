@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { registerIpcHandlers } from './ipc'
 
 function createWindow(): void {
   // Create the browser window.
@@ -48,6 +49,10 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  // Register the main-process IPC handlers before the first window loads so the
+  // renderer's initial calls always have a handler waiting (§4).
+  registerIpcHandlers()
 
   createWindow()
 

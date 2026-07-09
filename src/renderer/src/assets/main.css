@@ -35,3 +35,15 @@ body {
   font-weight: 600;
   margin: 0;
 }
+
+.app-shell .ipc-status {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ev-c-text-3);
+  margin: 16px 0 0;
+  font-family: monospace;
+}
+
+.app-shell .ipc-status--error {
+  color: #d73a4a;
+}
