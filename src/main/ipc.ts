@@ -1,15 +1,15 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
+import { resolve } from 'node:path'
 import { IpcChannels, type DecodedImage, type SpriteSummary } from '../shared/ipc'
+import { scanSprites } from './sprites'
 
 /**
- * Placeholder sprite list — real scanning of SPRITE_ROOT arrives in #3. The
- * shapes here are exactly what the renderer keeps consuming once the data is real.
+ * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
+ * sprite set at <repo>/wesnoth-sprites/units. `app.getAppPath()` is the project
+ * root in dev; a real folder-picker + packaging-aware path is future work, since
+ * this folder is deliberately not vendored/packaged.
  */
-const PLACEHOLDER_SPRITES: SpriteSummary[] = [
-  { id: 'human-loyalists/spearman.png', folder: 'human-loyalists', name: 'spearman' },
-  { id: 'human-loyalists/bowman.png', folder: 'human-loyalists', name: 'bowman' },
-  { id: 'undead/skeleton.png', folder: 'undead', name: 'skeleton' }
-]
+const SPRITE_ROOT = resolve(app.getAppPath(), 'wesnoth-sprites', 'units')
 
 /** A solid-colour RGBA image so the renderer has something real-shaped to render. */
 function solidImage(
@@ -34,7 +34,9 @@ function solidImage(
  */
 export function registerIpcHandlers(): void {
   ipcMain.handle(IpcChannels.getSpriteList, async (): Promise<SpriteSummary[]> => {
-    return PLACEHOLDER_SPRITES
+    // Errors (e.g. the sprite folder missing) reject the invoke and surface to
+    // the renderer, which shows the message — see App.tsx / SpriteRootMissingError.
+    return scanSprites(SPRITE_ROOT)
   })
 
   ipcMain.handle(IpcChannels.getThumbnail, async (_event, id: string): Promise<DecodedImage> => {
