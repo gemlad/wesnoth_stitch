@@ -23,8 +23,9 @@ function App(): React.JSX.Element {
       {error && <p className="ipc-status ipc-status--error">IPC error: {error}</p>}
       {sprites && (
         <p className="ipc-status">
-          IPC OK — main returned {sprites.length} sprite{sprites.length === 1 ? '' : 's'}:{' '}
-          {sprites.map((s) => s.name).join(', ')}
+          IPC OK — scanned {sprites.length} sprite{sprites.length === 1 ? '' : 's'} across{' '}
+          {new Set(sprites.map((s) => s.folder)).size} folder
+          {new Set(sprites.map((s) => s.folder)).size === 1 ? '' : 's'}
         </p>
       )}
     </div>
