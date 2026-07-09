@@ -94,6 +94,22 @@ receives already-decoded pixel data / thumbnails over IPC. This keeps the render
 free to just be a UI layer, and means the export pipeline can be reused headlessly
 later for batch processing (§7.2) without touching UI code.
 
+**IPC contract (implemented in #2).** The renderer↔main surface is three channels —
+`getSpriteList`, `getThumbnail`, `getFullImage` — with channel names and payload
+types defined once in `src/shared/ipc.ts` and imported by both processes so a handler
+can't silently drift from its caller. Two shape decisions worth recording:
+
+- **Images cross as raw RGBA**, not encoded PNG bytes. Both `getThumbnail` and
+  `getFullImage` return `DecodedImage = { width, height, data: Uint8Array }` (row-major
+  RGBA). Raw RGBA is the canonical form the renderer consumes — a canvas paints it
+  directly and the quantizer (§5.2) needs it anyway — so decoding stays in the main
+  process and the renderer never re-decodes.
+- **The sprite list is metadata-only.** `getSpriteList` returns
+  `SpriteSummary = { id, folder, name }`; thumbnails are fetched per-sprite via
+  `getThumbnail`, *not* bundled into the list. This avoids shipping thousands of image
+  buffers up front just to populate the grid. It's a deliberate split of the §6
+  `SpriteAsset` sketch (which bundled `thumbnail`) — see the note there.
+
 ## 5. Core Workflows
 
 ### 5.1 Sprite Browsing & Selection (Req. 1)
@@ -208,6 +224,10 @@ interface SpriteAsset {
   folder: string;         // e.g. "human-loyalists"
   thumbnail: Buffer;
 }
+// Note (#2): the IPC contract splits this sketch in two. The sprite list carries
+// metadata only — SpriteSummary = { id, folder, name } — and the thumbnail is
+// fetched separately via getThumbnail (returning a raw-RGBA DecodedImage, not a
+// Buffer), so the grid doesn't ship thousands of buffers up front. See §4.
 
 interface QuantizedPalette {
   colours: { lab: LabColor; rgb: RGB; dmc: DMCEntry; pixelCount: number }[];
