@@ -183,6 +183,12 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
 1. Convert every opaque pixel to Lab colour space (`culori`). Lab is designed so that
    Euclidean distance approximates *perceived* colour difference — this is the fix.
    Transparent pixels are excluded entirely and stay transparent (they're not stitches).
+   "Opaque" is thresholded, not strict: a pixel counts as a stitch when its alpha is
+   ≥ **128** (a tunable `alphaThreshold`), so anti-aliased edge fringe — mostly
+   transparent pixels with blended colours — is left unstitched rather than becoming a
+   full stitch of a colour that isn't really in the sprite. Cross-stitch can't do
+   partial coverage, so the choice is binary. **#20 validates the default** against real
+   sprites (implemented in #15).
 2. **Map each opaque pixel to its nearest DMC floss** by Lab (ΔE) distance against the
    reference table (§5.3, #13). Dedupe by exact colour first so this is
    (distinct sprite colours × DMC) distance calcs, not per-pixel — cheap at 64–144px.
