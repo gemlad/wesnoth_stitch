@@ -1,7 +1,8 @@
 import { app, ipcMain } from 'electron'
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import { IpcChannels, type DecodedImage, type SpriteSummary } from '../shared/ipc'
 import { scanSprites } from './sprites'
+import { decodeImage, makeThumbnail } from './images'
 
 /**
  * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
@@ -10,6 +11,24 @@ import { scanSprites } from './sprites'
  * this folder is deliberately not vendored/packaged.
  */
 const SPRITE_ROOT = resolve(app.getAppPath(), 'wesnoth-sprites', 'units')
+
+/** Longest-side cap for browser-grid thumbnails (§5.1). Sprites are ~64–144px,
+ * so this trims IPC payload while staying crisp under nearest-neighbour. */
+const THUMBNAIL_MAX_PX = 64
+
+/**
+ * Resolve a renderer-supplied sprite id to an absolute path, refusing anything
+ * that escapes SPRITE_ROOT. The id always originates from getSpriteList, but it
+ * crosses a trust boundary (the renderer), so a `..` traversal must not be able
+ * to read arbitrary files off disk.
+ */
+function resolveSpritePath(id: string): string {
+  const abs = resolve(SPRITE_ROOT, id)
+  if (abs !== SPRITE_ROOT && !abs.startsWith(SPRITE_ROOT + sep)) {
+    throw new Error(`Refusing to read outside the sprite root: "${id}"`)
+  }
+  return abs
+}
 
 /** A solid-colour RGBA image so the renderer has something real-shaped to render. */
 function solidImage(
@@ -40,9 +59,10 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(IpcChannels.getThumbnail, async (_event, id: string): Promise<DecodedImage> => {
-    // #4 decodes the real PNG at SPRITE_ROOT/id; for now, a 32×32 swatch.
-    void id
-    return solidImage(32, 32, [90, 120, 180, 255])
+    // Decode the PNG at SPRITE_ROOT/id and downscale for the grid. A missing or
+    // malformed file rejects the invoke and surfaces to the renderer.
+    const full = await decodeImage(resolveSpritePath(id))
+    return makeThumbnail(full, THUMBNAIL_MAX_PX)
   })
 
   ipcMain.handle(IpcChannels.getFullImage, async (_event, id: string): Promise<DecodedImage> => {
