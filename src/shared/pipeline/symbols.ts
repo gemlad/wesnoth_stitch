@@ -11,27 +11,32 @@
  * the top of the list: bold, unmistakable silhouettes. Detail degrades gracefully as `k`
  * climbs rather than every chart drawing from the same undifferentiated pool.
  *
- * The tiers, in order:
+ * **Two rules decide what gets in**, both learned from glyphs that failed when the set
+ * was actually rendered at chart scale:
  *
- * 1. **Solid geometrics** — separable by silhouette alone, the strongest cue there is.
- * 2. **Outline counterparts** — same silhouettes, inverted fill; a second strong cue.
- * 3. **Strokes** — a different visual class again (thin, open, no enclosed area).
- * 4. **Letters** — the fallback commercial charts have always used. A–Z minus `I` and
- *    `O` (confusable with digits and with `○`), `Q` (with `O`), and `X` (with `×`,
- *    which is already in tier 3 and reads better small).
+ * 1. **One orientation per shape family.** A rotated glyph is not a new glyph. The eye
+ *    reads `▲ ▼ ◀ ▶` as one symbol pointing four ways and has to *decode* the direction,
+ *    which is precisely the work a chart symbol exists to avoid. Only the upward
+ *    triangle survives; likewise a single half-filled circle, with no mirror twin to be
+ *    confused against.
+ * 2. **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled
+ *    area and little else, so `★` and `◆` become the same dark lozenge. The star is
+ *    kept only in outline, where its points actually register.
  *
- * **Why these glyphs and no others.** Each is a single BMP code point drawn from Basic
- * Latin, Latin-1, Geometric Shapes, or the two star characters — ranges with near-
- * universal font coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font
- * (§5.5) falls back to tofu. Deliberately excluded: size variants (`▲`/`▴`, `■`/`▪`),
- * weight variants (`+`/`✚`), and mirrored halves (`◐`/`◑`) — all of which the prototype
- * shipped and none of which survive being printed at 5pt.
+ * The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`)
+ * the prototype shipped. Letters and digits are exempt from rule 2 — they are drawn by
+ * type designers specifically to stay distinct at small sizes — but digits are dropped
+ * wholesale, because `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`, `6`/`G`, `8`/`B` and `9`/`P`
+ * all collide with letters already in the set, and salvaging `3 4 7` is not worth a
+ * mixed-class rule.
  *
- * **Resolves §8's symbol-set question:** the set holds `MAX_COLOUR_COUNT` = 40 glyphs,
- * which is exactly the colour cap §5.2 proposes. The two ceilings agree, so neither
- * silently binds before the other. If #20 finds the colour cap should rise above 40,
- * this set must grow *first* — it is the hard limit, and a chart cannot show more
- * colours than it has symbols to name them with.
+ * **Why these code points.** Each is a single BMP code point drawn from Basic Latin,
+ * Latin-1, Geometric Shapes, or the outline star — ranges with near-universal font
+ * coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font (§5.5) falls back
+ * to tofu.
+ *
+ * **Resolves §8's symbol-set question:** `MAX_COLOUR_COUNT` = 37. See §5.3 for what that
+ * costs — measured against all 7,116 sprites, not guessed.
  */
 import type { QuantizedPalette } from './types'
 
@@ -42,28 +47,27 @@ export interface StitchSymbol {
 }
 
 export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
-  // 1. Solid geometrics — distinct by silhouette.
+  // 1. Solid geometrics — distinct by silhouette, the strongest cue there is.
   { glyph: '●', name: 'filled circle' },
   { glyph: '■', name: 'filled square' },
-  { glyph: '▲', name: 'filled triangle up' },
-  { glyph: '▼', name: 'filled triangle down' },
+  { glyph: '▲', name: 'filled triangle' },
   { glyph: '◆', name: 'filled diamond' },
-  { glyph: '★', name: 'filled star' },
-  { glyph: '◀', name: 'filled triangle left' },
-  { glyph: '▶', name: 'filled triangle right' },
-  // 2. Outline counterparts — same silhouettes, inverted fill.
+  // 2. Outline counterparts — same silhouettes, inverted fill. The star lives here
+  //    only: filled, its points close up into the same blob as the diamond.
   { glyph: '○', name: 'open circle' },
   { glyph: '□', name: 'open square' },
-  { glyph: '△', name: 'open triangle up' },
-  { glyph: '▽', name: 'open triangle down' },
+  { glyph: '△', name: 'open triangle' },
   { glyph: '◇', name: 'open diamond' },
   { glyph: '☆', name: 'open star' },
-  { glyph: '◁', name: 'open triangle left' },
-  { glyph: '▷', name: 'open triangle right' },
-  // 3. Strokes — thin and open, no enclosed area.
+  // 3. Half fill — a third fill state, and no mirror twin to confuse it with.
+  { glyph: '◐', name: 'half-filled circle' },
+  // 4. Strokes — thin and open, no enclosed area: a different visual class again.
   { glyph: '+', name: 'plus' },
   { glyph: '×', name: 'cross' },
-  // 4. Letters — A–Z less I, O, Q, X.
+  { glyph: '#', name: 'hash' },
+  { glyph: '=', name: 'equals' },
+  // 5. Letters — the fallback commercial charts have always used. A–Z less O and Q
+  //    (against the open circle) and X (against the cross, which reads better small).
   { glyph: 'A', name: 'letter A' },
   { glyph: 'B', name: 'letter B' },
   { glyph: 'C', name: 'letter C' },
@@ -72,6 +76,7 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
   { glyph: 'F', name: 'letter F' },
   { glyph: 'G', name: 'letter G' },
   { glyph: 'H', name: 'letter H' },
+  { glyph: 'I', name: 'letter I' },
   { glyph: 'J', name: 'letter J' },
   { glyph: 'K', name: 'letter K' },
   { glyph: 'L', name: 'letter L' },
@@ -93,6 +98,11 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
  *
  * Not a stylistic preference: past this, two floss colours would have to share a glyph
  * and a black-and-white chart would become ambiguous. The slider must not offer it.
+ *
+ * This is also the effective colour cap for Req. 6 — it sits below the 40 §5.2 proposed,
+ * so it, not that proposal, is what binds. Across all 7,116 Wesnoth sprites the full
+ * distinct-DMC palette fits under it about 93% of the time; the rest reduce (#14), which
+ * is exactly what reduction is for.
  */
 export const MAX_COLOUR_COUNT = STITCH_SYMBOLS.length
 

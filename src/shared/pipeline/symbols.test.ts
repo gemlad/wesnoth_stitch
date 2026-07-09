@@ -22,8 +22,8 @@ function imageOf(colours: readonly { r: number; g: number; b: number }[]): Decod
 }
 
 describe('STITCH_SYMBOLS', () => {
-  it('caps the slider at 40 — the colour cap §5.2 proposes, so neither ceiling binds first', () => {
-    expect(MAX_COLOUR_COUNT).toBe(40)
+  it('caps the slider at 37 — legibility sets the count, and it binds below §5.2’s 40', () => {
+    expect(MAX_COLOUR_COUNT).toBe(37)
     expect(STITCH_SYMBOLS.length).toBe(MAX_COLOUR_COUNT)
   })
 
@@ -45,13 +45,9 @@ describe('STITCH_SYMBOLS', () => {
   })
 
   it('stays inside font-safe Unicode ranges, so no glyph falls back to tofu', () => {
-    // Basic Latin, the Latin-1 multiplication sign, Geometric Shapes, and the two stars.
+    // Basic Latin, the Latin-1 multiplication sign, Geometric Shapes, the outline star.
     const safe = (c: number): boolean =>
-      (c >= 0x20 && c <= 0x7e) ||
-      c === 0x00d7 ||
-      (c >= 0x25a0 && c <= 0x25ff) ||
-      c === 0x2605 ||
-      c === 0x2606
+      (c >= 0x20 && c <= 0x7e) || c === 0x00d7 || (c >= 0x25a0 && c <= 0x25ff) || c === 0x2606
     for (const g of glyphs) {
       expect(
         safe(codepoint(g)),
@@ -60,25 +56,46 @@ describe('STITCH_SYMBOLS', () => {
     }
   })
 
+  it('rule 1: carries one orientation per shape family — a rotation is not a new glyph', () => {
+    // Only the upward triangle. Down/left/right are the same symbol pointing elsewhere,
+    // and the reader has to decode the direction instead of recognising the shape.
+    expect(glyphs).toContain('▲')
+    expect(glyphs).toContain('△')
+    for (const rotated of ['▼', '◀', '▶', '▽', '◁', '▷']) expect(glyphs).not.toContain(rotated)
+    // One half-filled circle, so it has no mirror twin to be confused against.
+    expect(glyphs.filter((g) => ['◐', '◑', '◒', '◓'].includes(g))).toEqual(['◐'])
+  })
+
+  it('rule 2: no two solid glyphs share an ink blob at chart size', () => {
+    // A filled star closes up into the same dark lozenge as a filled diamond at 9px,
+    // so the star is kept in outline only, where its points actually register.
+    expect(glyphs).toContain('◆')
+    expect(glyphs).not.toContain('★')
+    expect(glyphs).toContain('☆')
+  })
+
   it('excludes glyphs that collide at chart size', () => {
     // Letter X vs the multiplication sign: identical at 5pt, so only × survives.
     expect(glyphs).toContain('×')
     expect(glyphs).not.toContain('X')
-    // O/Q against the open circle, I against digit one.
-    for (const banned of ['O', 'Q', 'I']) expect(glyphs).not.toContain(banned)
-    // Size, weight, and mirror variants the prototype shipped — indistinguishable printed.
-    for (const banned of ['▴', '▪', '✚', '◐', '◑']) expect(glyphs).not.toContain(banned)
+    // O and Q against the open circle.
+    for (const banned of ['O', 'Q']) expect(glyphs).not.toContain(banned)
+    // Digits are dropped wholesale — each collides with a letter already in the set.
+    expect(glyphs.some((g) => /[0-9]/.test(g))).toBe(false)
+    // Size and weight variants the prototype shipped — indistinguishable printed.
+    for (const banned of ['▴', '▪', '✚']) expect(glyphs).not.toContain(banned)
   })
 
   it('spends its most distinctive glyphs first, so low colour counts read clearly', () => {
-    // The first 16 are geometric shapes (solid, then outline) — silhouette + fill cues.
-    for (const g of glyphs.slice(0, 16)) expect(codepoint(g)).toBeGreaterThanOrEqual(0x25a0)
-    // Then the two strokes, then letters all the way out.
-    expect(glyphs.slice(16, 18)).toEqual(['+', '×'])
-    expect(glyphs.slice(18).every((g) => /[A-Z]/.test(g))).toBe(true)
+    // The first 10 are geometric shapes (solid, outline, half) — silhouette + fill cues.
+    for (const g of glyphs.slice(0, 10)) expect(codepoint(g)).toBeGreaterThanOrEqual(0x25a0)
+    // Then the strokes, then letters all the way out.
+    expect(glyphs.slice(10, 14)).toEqual(['+', '×', '#', '='])
+    expect(glyphs.slice(14).every((g) => /[A-Z]/.test(g))).toBe(true)
     // Solid before outline: a filled circle outranks an open one.
     expect(glyphs.indexOf('●')).toBeLessThan(glyphs.indexOf('○'))
     expect(glyphs.indexOf('■')).toBeLessThan(glyphs.indexOf('□'))
+    expect(glyphs.indexOf('◆')).toBeLessThan(glyphs.indexOf('◇'))
   })
 })
 
