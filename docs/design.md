@@ -69,6 +69,8 @@ coloured cells + a symbol-overlay layer better than Fabric's object-manipulation
 quantization and DMC matching |
 | Image decoding | `pngjs` | pure-JS, deterministic RGBA decode in the main process (added #4); chosen over Electron's `nativeImage` to avoid platform BGRA/byte-order quirks and a native rebuild, and to keep exact source pixels for the quantizer (§5.2) |
 | DMC floss data | reuse the prototype's dataset | prototype stores this as `dmc_colors.csv` (code, name, hex columns) — convert to JSON at build time or load the CSV directly, no need to re-source the data itself |
+| PDF export | `pdf-lib` + `@pdf-lib/fontkit` (#34) | chosen over Chromium's `printToPDF` and over `jsPDF`. The chart's whole legibility argument (§5.3) rests on an exact **physical** cell size and on glyphs being **embedded vector text** — `printToPDF` renders through Chromium's font stack rather than an embedded face, which is precisely the gap #28 complains about, and `jsPDF`-from-canvas rasterises the glyphs. `pdf-lib` runs headless in the main process, so the export module is unit-testable like the rest of the pipeline |
+| Chart/PDF font | **DejaVu Sans** (OFL), bundled (#32) | the set was constrained to font-safe ranges so *any* of DejaVu/Segoe/Arial would do (§8) — but the export embeds one anyway, so a chart renders identically on a machine that has never heard of Wesnoth. DejaVu is picked for **coverage headroom**: it carries the dingbat and box-drawing ranges the current set deliberately avoids, so §5.3's glyph pool can be reopened later (#30, D4) without also changing fonts |
 | Persistence | flat JSON files (recent sources, last settings) | no need for a DB at this scale |
 | Packaging | electron-builder | app is intended to be distributable to others eventually (not just personal/dev use), so an installer target is in scope even if early builds stay personal-use |
 
@@ -574,10 +576,38 @@ the constraint it currently is not.
 
 ### 5.5 Export
 
-Not a v1 focus for this doc — the prototype already produces PNG previews and
-DMC-keyed PDF charts, and that logic is portable rather than something to redesign.
-Main change: it now runs against the new pixel-grid + palette data structures instead
-of the old flattened-image path.
+Still not a redesign — the prototype already produces PNG previews and DMC-keyed PDF
+charts, and that logic is portable. The main change is what it runs against: the
+`StitchPattern` / `QuantizedPalette` structures (§6) instead of the old flattened-image
+path. Milestone 3; broken down in `milestone-3-tasks.md`.
+
+**PNG.** One block of N×N pixels per stitch, written with `pngjs` in the main process (no
+canvas needed — it is already the decoder). "No stitch" cells take
+`PatternSettings.backgroundColour`, not the prototype's hardcoded cream.
+
+**PDF.** Multi-page, via `pdf-lib` (§3): a cover/stats page (dimensions, colour count,
+finished size at Aida 11/14/16/18, and the Wesnoth artwork attribution the licence asks
+for), floss key page(s) — swatch, glyph, DMC code and name, stitch count — then tiled
+chart pages with gridlines bold every 10th.
+
+**Two things the port must get right, both of which the prototype gets wrong:**
+
+- **Cells are sized in millimetres, not in figure-relative units.** The prototype tiles at
+  55 stitches per US-Letter page and lets the glyph size fall out of that. But §5.3's
+  entire legibility case is stated in physical units — **2.36 mm per cell**, a 72-cell
+  sprite across A4's printable width, putting a glyph at ~4.8pt. If the export does not
+  lay out to a real physical size, "legible at 5pt" is unfalsifiable and #28's verdict
+  means nothing.
+- **Glyphs come from `symbolsFor()`, and running out is an error.** `chart.py:57` does
+  `SYMBOLS[i % len(SYMBOLS)]` — it silently hands two floss colours the same glyph once it
+  passes the end of its list, which is exactly the ambiguity a chart exists to prevent, and
+  exactly why `symbolAt()` throws instead. Port the page layout; do not port that line.
+
+The glyph font is **embedded, not assumed** (§3). §5.3 kept the set inside font-safe ranges
+so the export would not be *blocked* on a font decision — but the export still bundles
+DejaVu Sans, so that a chart prints the same everywhere, and so #28 can be judged against
+the face the user actually gets. A test asserts every codepoint in the set resolves to a
+real glyph rather than tofu (#32).
 
 ## 6. Data Model (sketch)
 

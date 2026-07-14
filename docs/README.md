@@ -4,7 +4,8 @@
 | --- | --- |
 | [design.md](design.md) | **The** design document. Architecture, the conversion pipeline, and the decisions behind it — including the measurements those decisions were made from. Section numbers (§5.2, §5.3, …) are referenced from code comments and issues, so they're worth keeping stable. |
 | [milestone-1-tasks.md](milestone-1-tasks.md) | Task breakdown for Milestone 1 (Electron + Vite + React scaffold, sprite browser). Complete. |
-| [milestone-2-tasks.md](milestone-2-tasks.md) | Task breakdown for Milestone 2 (conversion pipeline: DMC mapping, colour reduction, Konva preview). In progress. |
+| [milestone-2-tasks.md](milestone-2-tasks.md) | Task breakdown for Milestone 2 (conversion pipeline: DMC mapping, colour reduction, Konva preview). Complete bar the symbol spike (#30). |
+| [milestone-3-tasks.md](milestone-3-tasks.md) | Task breakdown for Milestone 3 (export: PNG + printable PDF chart with floss key). In progress. |
 | [archive/design-v1.md](archive/design-v1.md) | The superseded Python-prototype-era design doc. History only. |
 
 ## Conventions
