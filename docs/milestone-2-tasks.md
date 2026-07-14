@@ -1,6 +1,6 @@
 # Milestone 2 — Task Breakdown
 
-Source: §9 Milestone 2 of `wesnoth-stitch-design-v2.md` — "Quantization pipeline
+Source: §9 Milestone 2 of `design.md` — "Quantization pipeline
 (Lab k-means, seeded for slider stability — §5.2) + DMC mapping + live 1:1 Konva
 grid preview with colour-count slider. Validate the 40-colour default cap (§8)
 against a few real sprites here … Pin down the stitch-symbol set and its size
