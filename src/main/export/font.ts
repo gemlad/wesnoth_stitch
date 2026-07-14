@@ -20,26 +20,20 @@
  * unmodified, so that does not bite.
  */
 import { readFileSync } from 'node:fs'
-import fontkit from '@pdf-lib/fontkit'
-import type { PDFDocument, PDFFont } from 'pdf-lib'
 import fontPath from '../../../resources/fonts/DejaVuSans.ttf?asset'
 
-/** Absolute path to the bundled face, resolved by electron-vite in dev and when packaged. */
+/**
+ * Absolute path to the bundled face, resolved by electron-vite in dev and when packaged.
+ *
+ * **This module is the edge, and nothing below it may import this.** The `?asset` specifier
+ * is understood only by electron-vite: under plain-Node vitest it survives into the string,
+ * so you get `…/DejaVuSans.ttf?asset` and an ENOENT. Anything that wants the font takes
+ * *bytes* (see `buildChartPdf`), so the export stays testable outside Electron — which is
+ * the entire reason §3 chose `pdf-lib` over `printToPDF`.
+ */
 export const EXPORT_FONT_PATH: string = fontPath
 
 /** The bundled face's bytes. Read from disk — Electron's `fs` reads through asar. */
 export function loadExportFont(): Uint8Array {
   return readFileSync(EXPORT_FONT_PATH)
-}
-
-/**
- * Embed the export font in `pdf` and hand back the `PDFFont` the chart draws glyphs with.
- *
- * Registers `fontkit` on the document first — `pdf-lib` cannot embed a custom face without
- * it, and the failure mode is a runtime throw rather than a silent fallback, which is what
- * we want: a chart drawn in the *wrong* font is worse than one that refuses to be drawn.
- */
-export async function embedExportFont(pdf: PDFDocument): Promise<PDFFont> {
-  pdf.registerFontkit(fontkit)
-  return pdf.embedFont(loadExportFont(), { subset: true })
 }

@@ -7,6 +7,10 @@ since Milestone 2.
 Roughly in order of how much they matter. Tick things off as they're decided, and move the
 outcome into `design.md` — this file is a queue, not a record.
 
+> **Everything you need to look at is in [`../uat/`](../uat/), and `uat/README.md` tells you
+> what to do with it.** You should never need to dig through a chat log to pick this up.
+> Regenerate the artefacts any time with `npm run uat`.
+
 ---
 
 ## 1. The symbol set doesn't work, and the fix is a design choice — [#30]
@@ -42,10 +46,17 @@ succeeded individually and the chart still came out wrong.
 
 ## 2. The print test — needs a printer and your eyes — [#28]
 
-**Now unblocked, and the artefacts exist.** `uat/chart-symbol.pdf` is a real
-black-and-white chart from the real export path: embedded DejaVu, real A4, 2.361 mm cells,
-4.82 pt glyphs. Print it at **100% / Actual Size** and #28 is takeable. (`npm run uat:chart`
-regenerates it; `uat/README.md` says what to look for.)
+**Now unblocked, and everything you need is sitting in `uat/`:**
+
+- **`uat/chart-symbol.pdf`** — a real black-and-white chart from the real export path:
+  embedded DejaVu, real A4, 2.361 mm cells, 4.82 pt glyphs. **This is the authoritative one.**
+- **`uat/glyph-legibility-test.pdf`** — the systematic drill: a 100mm calibration ruler, the
+  set at four sizes, the marginal pairs side-by-side *and* separated, a blind test with a key.
+  Predates the export, so it renders in Chromium's fonts — treat it as the drill, not the
+  authority.
+
+**Print at 100% / Actual Size.** Anything else rescales the page and voids the whole exercise.
+`uat/README.md` walks through what to judge.
 
 Three letter pairs are unvalidated on paper: **`C`/`G`, `E`/`F`, `P`/`R`.**
 
@@ -103,5 +114,12 @@ larger sprites.
 ## Where things stand
 
 - **Milestone 2:** done, bar the symbol spike (#30).
-- **Milestone 3:** #32 (export font), #33 (PNG export), #34 (chart pages) built.
-  Remaining: #35 (cover + floss key), #36 (export over IPC), then #28.
+- **Milestone 3:** #32 (export font), #33 (PNG export), #34 (chart pages) and #35 (cover +
+  floss key) built — the PDF is a complete document. Remaining: **#36** (export over IPC +
+  save dialog), which puts an export button in the app, and then **#28**.
+
+## Convention
+
+Anything needing a human verdict gets an artefact in **`uat/`**, regenerable with
+`npm run uat`, and a line in this file. Neither should ever require reading a chat log to
+make sense of.

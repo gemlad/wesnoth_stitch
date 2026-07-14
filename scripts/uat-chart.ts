@@ -10,12 +10,12 @@
  *   npm run uat:chart                       # default sprite
  *   npm run uat:chart -- path/to/sprite.png
  */
-import fontkit from '@pdf-lib/fontkit'
+import { basename } from 'node:path'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { PDFDocument } from 'pdf-lib'
 import { PNG } from 'pngjs'
-import { drawChartPages } from '../src/main/export/pdf-chart'
+import { buildChartPdf } from '../src/main/export/pdf'
 import { DEFAULT_CELL_MM, glyphSizePt } from '../src/main/export/pdf-layout'
+import { renderPatternPng } from '../src/main/export/png'
 import { MAX_COLOUR_COUNT, mapSpriteToDmc, reduceSprite } from '../src/shared/pipeline'
 import type { SymbolDisplay } from '../src/shared/ipc'
 
@@ -45,21 +45,29 @@ console.log(
 
 mkdirSync(OUT_DIR, { recursive: true })
 
-for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
-  const pdf = await PDFDocument.create()
-  pdf.registerFontkit(fontkit)
-  const font = await pdf.embedFont(readFileSync('resources/fonts/DejaVuSans.ttf'), {
-    subset: true
-  })
+// The PNG export (#33) — the "quick look" artefact, and the one that shows what the fabric
+// colour actually does to a pattern. Judged by eye like everything else in here.
+const png = renderPatternPng(reduced.pattern, reduced.palette, { backgroundColour: FABRIC })
+writeFileSync(`${OUT_DIR}/preview.png`, png)
+console.log(`  preview → ${OUT_DIR}/preview.png`)
 
-  const pages = drawChartPages(pdf, reduced.pattern, reduced.palette, font, {
-    backgroundColour: FABRIC,
-    symbolDisplay
-  })
+const fontBytes = readFileSync('resources/fonts/DejaVuSans.ttf')
+const title = basename(sprite, '.png')
+
+for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
+  // Drives `buildChartPdf` — the very entry point the app's IPC handler will call (#36) —
+  // so what gets printed and judged is the artefact the app produces, not a lookalike
+  // assembled by a script. That is the whole point of #28 being taken against the real path.
+  const bytes = await buildChartPdf(
+    reduced.pattern,
+    reduced.palette,
+    { title, width: src.width, height: src.height },
+    { backgroundColour: FABRIC, symbolDisplay, fontBytes }
+  )
 
   const out = `${OUT_DIR}/chart-${symbolDisplay}.pdf`
-  writeFileSync(out, await pdf.save())
-  console.log(`  ${symbolDisplay.padEnd(6)} → ${out}  (${pages.length} page${pages.length === 1 ? '' : 's'})`)
+  writeFileSync(out, bytes)
+  console.log(`  ${symbolDisplay.padEnd(6)} → ${out}`)
 }
 
 console.log('\nPrint at 100% / Actual Size. Anything else and the scale — the whole point — is void.')

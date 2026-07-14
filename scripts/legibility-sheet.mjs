@@ -5,7 +5,9 @@
  * physical size, so the marginal pairs — `C`/`G`, `E`/`F`, `P`/`R` — can finally be judged
  * on paper rather than on a screen at 9px.
  *
- *   npm run legibility:sheet         (after npm run validate:cap, which writes chart-data.json)
+ *   npm run uat:legibility           (runs validate:cap first, which writes chart-data.json)
+ *
+ * The sheet lands in `uat/` with the other things needing a human verdict — see uat/README.md.
  *
  * **Why a PDF and not an HTML page.** Legibility here is a question about physical
  * millimetres, and "open it in a browser and hit print" leaves the scale at the mercy of
@@ -20,18 +22,29 @@
  * brackets it with 1.8mm (14-count Aida, i.e. stitched size — a deliberately unfair
  * worst case) up to 3.0mm (a chart printed across two pages).
  *
- * **Caveat this sheet cannot remove.** The PDF export (§5.5) does not exist yet, so this
- * renders through Chromium with the app's own font stack. It tests the glyph *shapes* at
- * print size, not the eventual embedded PDF font. If §5.5 later bundles a different face,
- * the marginal pairs are worth re-checking.
+ * **Read this before trusting the sheet.** It renders through Chromium's font stack, not
+ * through the export's embedded face. When it was written (#20) that was the only option,
+ * because §5.5 did not exist. It does now: `uat/chart-symbol.pdf` is a real chart from the
+ * real export path, in the bundled DejaVu (#32), at the real 2.36mm geometry (#34).
+ *
+ * So **the chart is the authority and this sheet is the drill.** The sheet still earns its
+ * place — it is the only thing that isolates the marginal pairs side-by-side *and*
+ * separated, brackets four cell sizes, and offers a blind identification task with a key,
+ * none of which a chart of one dwarf can do. But where the two disagree, believe the chart.
  */
 import { app, BrowserWindow } from 'electron'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const REPO = resolve(import.meta.dirname, '..')
+/** Intermediates — gitignored build spill. */
 const OUT_DIR = resolve(REPO, 'out', 'legibility')
 const DATA = resolve(OUT_DIR, 'chart-data.json')
+/**
+ * The deliverable. Everything that needs a human verdict lands in `uat/`, tracked, so it
+ * can be found months later without digging through `out/` or a chat log — see `uat/README.md`.
+ */
+const UAT_DIR = resolve(REPO, 'uat')
 
 const FONT = 'DejaVu Sans, Segoe UI Symbol, Arial, sans-serif'
 const GLYPH_RATIO = 0.72 // matches src/renderer/src/pattern/draw.ts
@@ -311,6 +324,7 @@ app.whenReady().then(async () => {
   }
 
   mkdirSync(OUT_DIR, { recursive: true })
+  mkdirSync(UAT_DIR, { recursive: true })
   const htmlPath = resolve(OUT_DIR, 'glyph-legibility-test.html')
   writeFileSync(htmlPath, buildHtml(data))
 
@@ -324,9 +338,9 @@ app.whenReady().then(async () => {
     preferCSSPageSize: true, // honour @page { size: A4 } → CSS mm map to PDF mm exactly
     scale: 1
   })
-  const pdfPath = resolve(OUT_DIR, 'glyph-legibility-test.pdf')
+  const pdfPath = resolve(UAT_DIR, 'glyph-legibility-test.pdf')
   writeFileSync(pdfPath, pdf)
   console.log(`Wrote ${pdfPath} (${(pdf.length / 1024).toFixed(0)} KB)`)
-  console.log(`      ${htmlPath}`)
+  console.log(`      ${htmlPath}  (intermediate)`)
   app.exit(0)
 })
