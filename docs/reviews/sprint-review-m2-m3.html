@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Sprint review — Wesnoth Stitch, Milestones 2 & 3.
+
+  Self-contained: no external CSS, fonts, scripts or images (the sprite is an inline data
+  URI), so it opens from a checkout with no build step and no network. Double-click it.
+
+  Also published as an artifact:
+  https://claude.ai/code/artifact/60197792-7ded-4c97-b2f6-9365953d64e4
+-->
+<title>Sprint Review — Milestones 2 &amp; 3</title>
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --paper: #f4f6f9;
+    --panel: #ffffff;
+    --panel-2: #fbfcfe;
+    --ink: #161b22;
+    --ink-soft: #47515f;
+    --ink-faint: #8a94a3;
+    --line: #e1e6ed;
+    --thread: #c05a4d;   /* floss coral — signature accent */
+    --indigo: #2f5d9e;   /* interactive / emphasis */
+    --good: #3e8e5a;     /* semantic: done */
+    --good-bg: rgba(62,142,90,0.10);
+    --good-br: rgba(62,142,90,0.28);
+    --warn: #a76a1c;     /* semantic: needs you */
+    --warn-bg: rgba(167,106,28,0.10);
+    --warn-br: rgba(167,106,28,0.30);
+    --grid: #e8ecf2;
+    --shadow: rgba(22,27,34,0.06);
+
+    --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'Consolas', 'SF Mono', ui-monospace, 'Liberation Mono', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #12161c;
+      --panel: #191f27;
+      --panel-2: #1d242d;
+      --ink: #e8edf3;
+      --ink-soft: #a9b4c2;
+      --ink-faint: #75808f;
+      --line: #2a323d;
+      --thread: #e08776;
+      --indigo: #7aa9e8;
+      --good: #6bbd88;
+      --good-bg: rgba(107,189,136,0.12);
+      --good-br: rgba(107,189,136,0.30);
+      --warn: #d99a4e;
+      --warn-bg: rgba(217,154,78,0.12);
+      --warn-br: rgba(217,154,78,0.32);
+      --grid: #222a34;
+      --shadow: rgba(0,0,0,0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #12161c;
+    --panel: #191f27;
+    --panel-2: #1d242d;
+    --ink: #e8edf3;
+    --ink-soft: #a9b4c2;
+    --ink-faint: #75808f;
+    --line: #2a323d;
+    --thread: #e08776;
+    --indigo: #7aa9e8;
+    --good: #6bbd88;
+    --good-bg: rgba(107,189,136,0.12);
+    --good-br: rgba(107,189,136,0.30);
+    --warn: #d99a4e;
+    --warn-bg: rgba(217,154,78,0.12);
+    --warn-br: rgba(217,154,78,0.32);
+    --grid: #222a34;
+    --shadow: rgba(0,0,0,0.35);
+  }
+
+  :root[data-theme="light"] {
+    --paper: #f4f6f9;
+    --panel: #ffffff;
+    --panel-2: #fbfcfe;
+    --ink: #161b22;
+    --ink-soft: #47515f;
+    --ink-faint: #8a94a3;
+    --line: #e1e6ed;
+    --thread: #c05a4d;
+    --indigo: #2f5d9e;
+    --good: #3e8e5a;
+    --good-bg: rgba(62,142,90,0.10);
+    --good-br: rgba(62,142,90,0.28);
+    --warn: #a76a1c;
+    --warn-bg: rgba(167,106,28,0.10);
+    --warn-br: rgba(167,106,28,0.30);
+    --grid: #e8ecf2;
+    --shadow: rgba(22,27,34,0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px 96px; }
+
+  /* --- Header ----------------------------------------------------------- */
+  .masthead {
+    margin: 0 -28px 40px;
+    padding: 44px 28px 34px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--panel) 90%, transparent), color-mix(in srgb, var(--panel) 50%, transparent)),
+      repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 15px),
+      repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 15px);
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--thread);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .eyebrow .x { font-weight: 700; }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 38px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .dek { font-size: 17px; color: var(--ink-soft); max-width: 60ch; margin: 0 0 22px; }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 8px 22px;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-faint);
+  }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+  .meta-row code { font-family: var(--mono); }
+
+  /* --- Sections --------------------------------------------------------- */
+  section { margin-top: 46px; }
+  h2 {
+    font-family: var(--serif);
+    font-size: 23px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 15px; margin: 0 0 6px; color: var(--ink);
+  }
+  .sec-label {
+    font-family: var(--mono);
+    font-size: 11.5px; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--thread);
+    margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stitch {
+    height: 3px; margin: 26px 0 0;
+    background: repeating-linear-gradient(90deg, var(--line) 0 11px, transparent 11px 20px);
+  }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  a { color: var(--indigo); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--indigo) 35%, transparent); }
+  a:hover { border-bottom-color: var(--indigo); }
+  a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; border-radius: 2px; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+
+  /* --- Goal callout ------------------------------------------------------ */
+  .goal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--thread);
+    padding: 20px 24px;
+    border-radius: 4px;
+  }
+  .goal .k {
+    font-family: var(--mono);
+    font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-faint); display: block; margin-bottom: 6px;
+  }
+  .goal p { font-size: 17px; margin: 0 0 10px; max-width: none; }
+  .goal p:last-of-type { margin-bottom: 0; }
+  .verdict {
+    margin-top: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    color: var(--good);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; }
+
+  /* --- Stat tiles -------------------------------------------------------- */
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .tile .num {
+    font-family: var(--mono);
+    font-size: 30px; font-weight: 600; line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .tile .num .unit { font-size: 15px; color: var(--ink-faint); margin-left: 2px; }
+  .tile.flag .num { color: var(--warn); }
+  .tile .cap { margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+
+  /* --- Demo figure ------------------------------------------------------- */
+  figure {
+    margin: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 1px 2px var(--shadow), 0 8px 24px var(--shadow);
+  }
+  figure img {
+    display: block; width: 100%; height: auto;
+    border-radius: 3px; border: 1px solid var(--line);
+    image-rendering: pixelated;
+  }
+  figcaption { font-size: 13px; color: var(--ink-soft); padding: 11px 6px 3px; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .can-do { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+  .can-do li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; }
+  .can-do .x { color: var(--thread); font-family: var(--mono); font-weight: 700; line-height: 1.5; }
+
+  /* --- Stories table ----------------------------------------------------- */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600;
+    padding: 0 14px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 13px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td .id { font-family: var(--mono); color: var(--ink-faint); font-size: 13px; font-variant-numeric: tabular-nums; }
+  td .story { font-weight: 600; color: var(--ink); }
+  td .story small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    padding: 3px 9px; border-radius: 100px; white-space: nowrap;
+    color: var(--good); background: var(--good-bg); border: 1px solid var(--good-br);
+  }
+  .chip.needs { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-br); }
+
+  /* --- Cards -------------------------------------------------------------- */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .card p { font-size: 14px; color: var(--ink-soft); margin: 0; max-width: none; }
+  .card .why { display: block; margin-top: 8px; font-size: 13px; color: var(--ink-faint); }
+  .card .why b { color: var(--thread); font-weight: 600; }
+
+  /* --- Measurements ------------------------------------------------------- */
+  .measures { display: grid; gap: 10px; margin-top: 4px; }
+  .measure {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 18px;
+    align-items: baseline;
+    padding: 14px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--indigo);
+    border-radius: 4px;
+  }
+  .measure .val {
+    font-family: var(--mono);
+    font-size: 19px; font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .measure .val small { display: block; font-size: 11px; font-weight: 400; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
+  .measure .txt { font-size: 14.5px; color: var(--ink-soft); }
+  .measure .txt b { color: var(--ink); font-weight: 600; }
+
+  /* --- The ask ------------------------------------------------------------ */
+  .ask {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .ask ol { margin: 0; padding-left: 20px; display: grid; gap: 14px; }
+  .ask li { padding-left: 4px; }
+  .ask li b { color: var(--ink); }
+  .ask li p { margin: 4px 0 0; font-size: 14.5px; color: var(--ink-soft); max-width: none; }
+
+  footer {
+    margin-top: 54px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 30px; }
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .cards { grid-template-columns: 1fr; }
+    .measure { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow"><span class="x">&#10007;</span> Sprint Review &middot; Milestones 2 &amp; 3</p>
+    <h1>Wesnoth Stitch &mdash; from sprite to stitchable chart</h1>
+    <p class="dek">
+      Two sprints in one review. Milestone 2 turned a sprite into a live, correct pattern on
+      screen. Milestone 3 turned that pattern into files you can print and stitch from.
+      The app now does the whole job end to end.
+    </p>
+    <div class="meta-row">
+      <span><b>Sprints</b> M2 &mdash; Conversion pipeline &middot; M3 &mdash; Export</span>
+      <span><b>Review date</b> 14 Jul 2026</span>
+      <span><b>For</b> Product stakeholder</span>
+      <span><b>Increment</b> merged to <code>main</code></span>
+    </div>
+  </header>
+
+  <section style="margin-top:8px">
+    <div class="goal">
+      <span class="k">Sprint goals</span>
+      <p>
+        <b>M2</b> &mdash; map a sprite&rsquo;s colours to real DMC floss, reduce them perceptually
+        to a count the user chooses, and render the result as a live 1:1 stitch grid.
+      </p>
+      <p>
+        <b>M3</b> &mdash; export that pattern: a PNG preview, and a printable PDF chart with a
+        floss key, at a real physical size.
+      </p>
+      <span class="verdict"><span class="dot"></span> Both goals met &mdash; 13 of 13 stories accepted</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> At a glance</p>
+    <div class="tiles">
+      <div class="tile"><div class="num">13<span class="unit">/ 13</span></div><div class="cap">Stories completed &amp; accepted</div></div>
+      <div class="tile"><div class="num">20</div><div class="cap">Pull requests merged, reviewed</div></div>
+      <div class="tile"><div class="num">165</div><div class="cap">Tests passing, 0 lint errors</div></div>
+      <div class="tile"><div class="num">37</div><div class="cap">Floss colours a chart can name</div></div>
+      <div class="tile"><div class="num">7,118</div><div class="cap">Sprites the cap was measured against</div></div>
+      <div class="tile flag"><div class="num">2</div><div class="cap">Open items &mdash; both need <b>you</b>, not code</div></div>
+    </div>
+  </section>
+
+  <div class="stitch"></div>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> The increment</p>
+    <h2>What you can do in the app today</h2>
+    <p>
+      Pick a sprite, drag a slider to choose how many floss colours it uses, watch the chart
+      re-quantize live, then hit <b>Chart PDF</b> and get something you can take to a printer.
+      This is merged software, not a mockup &mdash; the image below is a real export.
+    </p>
+
+    <figure>
+      <img alt="Exported PNG of the dwarvish fighter sprite rendered as a cross-stitch pattern at 31 DMC floss colours, on unbleached Aida cream fabric" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA2AAAANgCAYAAABKkgukAAAfWUlEQVR4AezBcewfBHkn4A8vXTPqjfuNIV5oPH6JjUonUAKcFiLOwQxEcM04pzNuauDqjEiDwoRF7tQS6cRNQTxiT3LRLe7m1h0ZGI0H02FKMUIoshXMiilbyk3tsPYOMF0aL1ly/53J3gvf1xae5znqwL7dPw4AAAALVwEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEAAGBEBQAAgBEVAAAARlQAAAAYUQEA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/GIWadVxq9Nx2uknp2PH3Xel4/S/25mOb6Zn49rlLNIzh5bScWDf/TmcHNi3Ox0XX3FjOu64+coAh4cKAAAAIyoAAACMqAAAADCiAgAAwIgKAAAAIyoAAACMqAAAADCiAgAAwIgKAAAAIyoAAACMqAAAADBiRYDDxsa1yzmcnLN+ZTq+9YK3p+PU17wtHVd/7vJ0/NzTZ6TjnDycju07Dqbj7JPScs76len47C0H0/HpG5fT8dnsScf6885Px46703JietasOzMdT7xvSxbp6Sf3puOhB9Oy/rzz03HU576Wjo/+5nIWafcDadm6a086PpYj2x03XxngyFQBAABgRAUAAIARFQAAAEZUAAAAGFEBAABgRAUAAIARFQAAAEZUAAAAGFEBAABgRAUAAIARFQAAAEasCHDEetFTe7JI23ccTMcJP/NkOq7+3OXp+Lkf/kM6tm3blo73nvfSdOx+ID1vzmHl3sefyCI99OAj6Vh13Op0fOPBvel4z/UfSsffL708PY+m45tfvj0dZ12wIR077t6bjtMPLaVj78796fj1d52QnoPp2HT0UjqOPX5NOg7s2x2AZ0MFAACAERUAAABGVAAAABhRAQAAYEQFAACAERUAAABGVAAAABhRAQAAYEQFAACAERUAAABGVAAAABixIsBhY+uuPel42+Mr03H2SSdmkd524l+k444f/kI6tm3blo6P/uZyFumYo/dnkbbvOJgj2Wmnn5yOHXfflY5Vx61Oxzce3JuOVcetziId2Lc7HccevyaLdPYpS+lYvW4pHdt3HEzH3p370/HMoaX07A/AT0MFAACAERUAAABGVAAAABhRAQAAYEQFAACAERUAAABGVAAAABhRAQAAYEQFAACAERUAAABGVAAAABixIsBhY+Pa5XRs33EwPU+kY+/O/Wl5c1ree97D6XjlquV0nLN+ZY5kux9Iy5oz0rJ9x8F0HHP0/nQc8+pXpOP9F1+Ujvv370nH3R/8RDr+6vOfSsfvnviqdGw59a3p+N0TX5WOjzxxXzqeObSURdq7c386njm0lI6tu/ak48C+3QH4aagAAAAwogIAAMCICgAAACMqAAAAjKgAAAAwogIAAMCICgAAACMqAAAAjKgAAAAwogIAAMCICgAAACNWBDhsfOyeu9Jx1bnnp+Oc9WlZvW4pR7KzTzoxHfc+/kQ6Vq9bSse9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" />
+      <figcaption>
+        <b>A real export.</b> The dwarvish fighter at its own 31 distinct DMC colours, one stitch
+        per source pixel. The cream is the <b>fabric</b>, not white &mdash; transparent pixels take your
+        chosen Aida colour. The purple-grey under his boots is Wesnoth&rsquo;s drop shadow, correctly
+        read as a <i>grey</i> rather than as black (see the measurements below).
+      </figcaption>
+    </figure>
+
+    <ul class="can-do">
+      <li><span class="x">&#10007;</span><span>Browse 7,118 unit sprites and pick one.</span></li>
+      <li><span class="x">&#10007;</span><span>See it as a stitch grid, 1:1, in real DMC floss colours &mdash; every colour a thread you can actually buy.</span></li>
+      <li><span class="x">&#10007;</span><span>Drag the colour slider and watch it re-quantize live, without the colours jumping around.</span></li>
+      <li><span class="x">&#10007;</span><span>Switch between colour, symbol, and both &mdash; the third is the chart you stitch from.</span></li>
+      <li><span class="x">&#10007;</span><span>Set the fabric colour, and see the pattern on <i>your</i> Aida rather than on white.</span></li>
+      <li><span class="x">&#10007;</span><span>Export a PNG, or a printable PDF chart: cover, floss key, chart pages.</span></li>
+    </ul>
+  </section>
+
+  <div class="stitch"></div>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> Milestone 2 &mdash; conversion pipeline</p>
+    <h2>Getting the colour right before getting it small</h2>
+    <p>
+      The prototype flattened the image and then snapped to floss, which loses fidelity twice.
+      This pipeline inverts that: <b>map every pixel to real DMC floss first</b>, then reduce by
+      merging the perceptually closest threads. Every colour you see is a real skein, and the
+      slider only ever merges &mdash; it never re-clusters, which is why dragging it stays stable.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Story</th><th>What it delivered</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">#13</td>
+            <td><span class="story">DMC floss dataset + colour maths<small>The thread catalogue, and Lab colour distance &mdash; perceptual, not naive RGB.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#15</td>
+            <td><span class="story">Map every pixel to real floss<small>Fidelity first. The sprite&rsquo;s own distinct-DMC count becomes the honest default.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#14</td>
+            <td><span class="story">Reduce colours over floss<small>Merges nearest real threads. No averaged centroids, no second snap, no drift.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#16</td>
+            <td><span class="story">The stitch-symbol set<small>37 glyphs, ordered by distinctness. This number became the colour cap.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#17</td>
+            <td><span class="story">Conversion over IPC<small>Pipeline runs in the main process, cached, fast enough to drive a slider.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#18</td>
+            <td><span class="story">The Konva pattern grid<small>1:1 stitch preview, with a symbol overlay and a configurable fabric colour.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#19</td>
+            <td><span class="story">Live colour-count slider<small>Re-quantizes as you drag. Colours stay put; only the merge changes.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#20</td>
+            <td><span class="story">Validate the cap against reality<small>A census over every sprite in the checkout, rather than a guess.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> What the measurements settled</p>
+    <h2>Four numbers that changed the design</h2>
+    <p>
+      The house rule this sprint was <i>measure, don&rsquo;t assert</i>. Each of these overturned
+      something we believed at the start.
+    </p>
+
+    <div class="measures">
+      <div class="measure">
+        <div class="val">37<small>colour cap</small></div>
+        <div class="txt">
+          The cap <b>is</b> the number of legible glyphs &mdash; not a taste call. A chart can&rsquo;t show
+          more colours than it has symbols to name them with. We&rsquo;d guessed 40; the glyphs decided otherwise.
+        </div>
+      </div>
+      <div class="measure">
+        <div class="val">1.14 &Delta;E<small>cost of the cap</small></div>
+        <div class="txt">
+          Squeezing the richest sprites down to 37 colours moves the average pixel about
+          <b>half a just-noticeable difference</b>. <b>Colour fidelity was never the binding constraint</b> &mdash;
+          glyph legibility is, and it&rsquo;s the only thing holding the number down.
+        </div>
+      </div>
+      <div class="measure">
+        <div class="val">12.57%<small>of every stitched cell</small></div>
+        <div class="txt">
+          The half-transparent pixels aren&rsquo;t anti-aliasing fringe &mdash; they&rsquo;re Wesnoth&rsquo;s <b>drop shadow</b>,
+          under 90% of sprites. Taken at face value they charted as <b>solid black</b>. Composited over the
+          fabric, they become the grey they look like. This one was visible to the naked eye and nobody had checked.
+        </div>
+      </div>
+      <div class="measure">
+        <div class="val">93.0%<small>of sprites fit</small></div>
+        <div class="txt">
+          Most sprites fit under the cap with no reduction at all (median: 24 floss colours).
+          But <b>497 sprites &mdash; 1 in 14 &mdash; exceed it</b> and must reduce. Reduction isn&rsquo;t a rare safety
+          net for outliers, as we&rsquo;d framed it. It runs routinely.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stitch"></div>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> Milestone 3 &mdash; export</p>
+    <h2>A chart that knows how big it is</h2>
+    <p>
+      The prototype laid out chart pages as &ldquo;55 stitches to a page&rdquo; &mdash; a chart with no physical
+      size at all. That matters more than it sounds: the whole legibility argument is stated in
+      <i>millimetres</i>, so a chart that doesn&rsquo;t know its own size is a chart whose legibility
+      can&rsquo;t be tested. Every cell is now laid out in real millimetres, and the glyphs are
+      embedded vector text in a bundled font &mdash; so a chart prints the same on any machine.
+    </p>
+
+    <div class="measures" style="margin-bottom:20px">
+      <div class="measure">
+        <div class="val">2.361 mm<small>per stitch cell</small></div>
+        <div class="txt">
+          Not a magic number &mdash; a <b>consequence</b>. A4, minus 20&thinsp;mm margins, divided by a 72-cell
+          Wesnoth sprite. It puts each glyph at <b>4.82&thinsp;pt</b>, which is where &ldquo;legible at ~5&thinsp;pt&rdquo; comes from,
+          and it means a standard sprite is exactly <b>one chart page</b>.
+        </div>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Story</th><th>What it delivered</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">#32</td>
+            <td><span class="story">Bundle the chart font<small>DejaVu Sans, embedded &mdash; plus a test proving it can draw every glyph, so none print as empty boxes.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#33</td>
+            <td><span class="story">PNG export<small>The quick look. Honours your fabric colour rather than assuming white.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#34</td>
+            <td><span class="story">The chart pages<small>Real millimetres, gridlines bold every 10, glyphs as vector text.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#35</td>
+            <td><span class="story">Cover + floss key<small>What to buy and how big it finishes, on 11/14/16/18-count Aida. Plus the Wesnoth artwork credit the licence asks for.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#36</td>
+            <td><span class="story">The export button<small>Save dialog, wired to the app. Cancelling is treated as a normal thing to do, not an error.</small></span></td>
+            <td><span class="chip">Accepted</span></td>
+          </tr>
+          <tr>
+            <td class="id">#28</td>
+            <td><span class="story">Judge the glyphs in print<small>Moved into this sprint &mdash; it was never doable before, because there was no print path to test against. Now there is.</small></span></td>
+            <td><span class="chip needs">Needs you</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="stitch"></div>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> Honest notes</p>
+    <h2>Four things that nearly went wrong</h2>
+    <p>Worth recording, because in each case the thing that caught it is the thing worth keeping.</p>
+
+    <div class="cards">
+      <div class="card">
+        <h3>A handover doc that would have undone the symbol set</h3>
+        <p>
+          A note proposed replacing the 37-glyph set with a 52-glyph one. It re-introduced every
+          collision the merged work had already found by rendering real charts &mdash; rotated triangles,
+          a star that blurs into a diamond, digits that collide with letters &mdash; and would have raised
+          the colour cap past what&rsquo;s legible.
+        </p>
+        <span class="why"><b>Caught by:</b> reading the merged code before trusting the document.</span>
+      </div>
+
+      <div class="card">
+        <h3>The floss key didn&rsquo;t fit on one page</h3>
+        <p>
+          We&rsquo;d asserted a full 37-colour key was a single sheet. It was 34 rows. You&rsquo;d have been
+          turning a page mid-key while threading a needle, to save a millimetre of leading.
+        </p>
+        <span class="why"><b>Caught by:</b> a test that checked the claim instead of repeating it.</span>
+      </div>
+
+      <div class="card">
+        <h3>The chart font resolved to nothing outside the app</h3>
+        <p>
+          The way the font was loaded worked when built, but silently produced a broken path
+          anywhere else &mdash; meaning the export could be <i>built</i> but never <i>tested</i>. Being testable
+          outside the app is the entire reason we picked this PDF approach, so it was restructured.
+        </p>
+        <span class="why"><b>Caught by:</b> writing a test for the assembled document.</span>
+      </div>
+
+      <div class="card">
+        <h3>The print test was hidden in a folder git ignores</h3>
+        <p>
+          The one artefact <b>#28</b> has always needed &mdash; the glyph test sheet &mdash; was being written into
+          a build folder that&rsquo;s wiped on every clean and never committed. It probably explains why
+          that issue has sat open. It now lives in <code>uat/</code>, tracked.
+        </p>
+        <span class="why"><b>Caught by:</b> asking where the artefacts actually go.</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="stitch"></div>
+
+  <section>
+    <p class="sec-label"><span>&#10007;</span> What we need from you</p>
+    <h2>The build isn&rsquo;t blocked. These are.</h2>
+    <p>
+      Everything you need is in <code>uat/</code> &mdash; regenerate it any time with <code>npm run uat</code>, and
+      <code>uat/README.md</code> tells you what to look at. The running list lives in
+      <code>docs/decisions-pending.md</code>.
+    </p>
+
+    <div class="ask">
+      <ol>
+        <li>
+          <b>Print the chart and judge three letter pairs.</b>
+          <p>
+            <code>C</code>/<code>G</code>, <code>E</code>/<code>F</code>, <code>P</code>/<code>R</code>
+            are the unvalidated survivors of the symbol set. Print <code>uat/chart-symbol.pdf</code>
+            at <b>100% / Actual Size</b> &mdash; anything else rescales the page and voids the test.
+            <b>If a pair fails, the colour cap drops by one for each glyph we lose</b>: the glyph count and
+            the colour cap are the same number. <i>(&#35;28)</i>
+          </p>
+        </li>
+        <li>
+          <b>Tell us what actually failed UAT on the symbols.</b>
+          <p>
+            You&rsquo;ve said the set isn&rsquo;t right, and the spike is open and waiting on a direction rather
+            than an opinion. The likeliest culprit is already identified: the boldest glyphs are handed
+            to the <i>largest</i> colour areas, so the densest parts of a chart go darkest and it reads as a
+            smudge. The fix is a design choice &mdash; possibly the exact opposite rule. <i>(&#35;30)</i>
+          </p>
+        </li>
+        <li>
+          <b>Is the default colour count what you&rsquo;d actually stitch?</b>
+          <p>
+            Today a pattern defaults to <i>as many colours as the sprite really uses</i>. You&rsquo;d asked
+            whether a small fixed palette would suit you better. It shipped one way and was never
+            actually decided &mdash; and a 30-colour project is a very different evening from a 12-colour one.
+          </p>
+        </li>
+        <li>
+          <b>When do you want something installable?</b>
+          <p>
+            This doesn&rsquo;t change what gets built, only what comes next: whether packaging gets pulled
+            forward, or whether dev builds are fine for now.
+          </p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <span>Wesnoth Stitch &middot; Sprint Review &middot; Milestones 2 &amp; 3</span>
+    <span>13 / 13 stories accepted &middot; 165 tests green</span>
+  </footer>
+</div>
+
+</body>
+</html>
