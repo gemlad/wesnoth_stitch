@@ -16,3 +16,6 @@ wesnoth-sprites/
 
 # OS
 .DS_Store
+
+# Personal decision notes — kept in the working tree on purpose, never committed
+DECISIONS-FOR-GEMMA.md
