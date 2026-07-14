@@ -6,6 +6,7 @@
 | [milestone-1-tasks.md](milestone-1-tasks.md) | Task breakdown for Milestone 1 (Electron + Vite + React scaffold, sprite browser). Complete. |
 | [milestone-2-tasks.md](milestone-2-tasks.md) | Task breakdown for Milestone 2 (conversion pipeline: DMC mapping, colour reduction, Konva preview). Complete bar the symbol spike (#30). |
 | [milestone-3-tasks.md](milestone-3-tasks.md) | Task breakdown for Milestone 3 (export: PNG + printable PDF chart with floss key). In progress. |
+| [decisions-pending.md](decisions-pending.md) | The queue of calls that need a human, not code. Nothing in it blocks the build; it's what the build is waiting on to be *finished*. A queue, not a record — decided things move into `design.md`. |
 | [archive/design-v1.md](archive/design-v1.md) | The superseded Python-prototype-era design doc. History only. |
 
 ## Conventions
