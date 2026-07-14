@@ -54,9 +54,13 @@ Two guard rails so M3 does not accidentally foreclose #30's remaining options:
 
 ### 1. Export font: bundle it, prove it covers the set (#32)
 - Branch: `feature/export-font`
-- Bundle **DejaVu Sans** (OFL, redistributable in a desktop app) under `resources/fonts/`,
-  and embed it in the PDF via `pdf-lib` + `@pdf-lib/fontkit`. Record the licence and
-  attribution alongside the asset.
+- Bundle **DejaVu Sans** under `resources/fonts/`, and embed it in the PDF via `pdf-lib` +
+  `@pdf-lib/fontkit`. Ship its licence alongside the asset.
+- **Licence, corrected:** DejaVu is under the **Bitstream Vera Fonts License**, *not* the
+  OFL — an earlier handover note in this repo claimed OFL and it was wrong. The conclusion
+  survives (redistribution and bundling are permitted); only the name was off. The one
+  condition worth knowing is that *modified* faces may not keep the DejaVu/Vera names, and
+  we ship it unmodified.
 - **Add the font-coverage test:** load the bundled face and assert every codepoint in
   `STITCH_SYMBOLS` resolves to a real glyph rather than `.notdef` (tofu). §5.3 has always
   warned that a missing codepoint renders as a box; until now nothing checked. Cheap,
