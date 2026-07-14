@@ -9,7 +9,11 @@ sources**: if the chart code changes, regenerate rather than trusting these.
 ## The charts
 
 Both are the dwarvish fighter (`units/dwarves/fighter.png`), 72×72, at its own 31 distinct
-DMC colours — one A4 page, **2.361 mm per cell, 4.82 pt glyphs**.
+DMC colours. Each is a **complete three-page document** — cover/stats, floss key, then the
+chart page — at **2.361 mm per cell, 4.82 pt glyphs**.
+
+They come out of `buildChartPdf`, the same entry point the app's export button will call, so
+what you're judging is the artefact the app produces rather than a lookalike.
 
 | File | What it is |
 | --- | --- |
