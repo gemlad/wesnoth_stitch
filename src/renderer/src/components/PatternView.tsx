@@ -70,6 +70,15 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
    */
   const [colourCount, setColourCount] = useState<number | null>(null)
 
+  /**
+   * Which export is running, if any. Building a chart takes long enough to notice, and a
+   * second click while the save dialog is already up would open a second dialog — so the
+   * buttons disable rather than queue.
+   */
+  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null)
+  /** Last export outcome, shown briefly. `null` after a cancel — that is not worth saying. */
+  const [exported, setExported] = useState<string | null>(null)
+
   // Conversions overlap while dragging, and IPC replies are not ordered. See latest-only.
   const requests = useRef(latestOnly<ConvertedSprite>())
   useEffect(() => {
@@ -115,6 +124,34 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   const sliderMax = converted
     ? Math.min(converted.palette.sourceColourCount, converted.maxColourCount)
     : 0
+
+  /**
+   * Export the pattern as it is on screen.
+   *
+   * Main re-derives the pattern from `(id, colourCount)` — see `ExportRequest`. What is sent
+   * is the *current* `k` and settings, so what lands on disk is what you are looking at.
+   */
+  const onExport = async (kind: 'png' | 'pdf'): Promise<void> => {
+    if (exporting || !sprite) return
+    setExporting(kind)
+    setExported(null)
+    try {
+      const request = {
+        id: sprite.id,
+        ...(colourCount === null ? {} : { colourCount }),
+        settings
+      }
+      const outcome =
+        kind === 'pdf' ? await window.api.exportPdf(request) : await window.api.exportPng(request)
+
+      // Cancelling is not a failure — say nothing at all.
+      if (outcome.status === 'saved') setExported(outcome.path)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setExporting(null)
+    }
+  }
 
   const onColourCount = (k: number): void => {
     if (k === colourCount) return // a drag fires an event per pixel, not per step
@@ -189,6 +226,30 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
         {scale > 0 && (
           <span className="pattern-controls__zoom">{Math.round(scale * 10) / 10}×</span>
         )}
+
+        {/* Export is only meaningful once there is a pattern to export (§5.5). */}
+        {converted && (
+          <div className="pattern-controls__group" role="group" aria-label="Export">
+            <button
+              type="button"
+              className="pattern-controls__button"
+              title="Save the pattern as a PNG image"
+              disabled={exporting !== null}
+              onClick={() => void onExport('png')}
+            >
+              {exporting === 'png' ? 'Saving…' : 'PNG'}
+            </button>
+            <button
+              type="button"
+              className="pattern-controls__button"
+              title="Save the printable chart: cover, floss key, and chart pages"
+              disabled={exporting !== null}
+              onClick={() => void onExport('pdf')}
+            >
+              {exporting === 'pdf' ? 'Building…' : 'Chart PDF'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="pattern-view__stage" ref={stageRef}>
@@ -209,7 +270,10 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
       </div>
 
       <div className="pattern-view__meta">
-        {symbolsHidden ? (
+        {exported ? (
+          // Where it went. Otherwise a save dialog closes and nothing visibly happens.
+          <span className="pattern-view__hint">Saved to {exported}</span>
+        ) : symbolsHidden ? (
           <span className="pattern-view__hint">Zoom in to read the symbols.</span>
         ) : (
           converted && (

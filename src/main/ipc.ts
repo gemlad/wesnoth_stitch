@@ -1,14 +1,20 @@
-import { app, ipcMain } from 'electron'
-import { resolve, sep } from 'node:path'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { writeFile } from 'node:fs/promises'
+import { basename, resolve, sep } from 'node:path'
 import {
   IpcChannels,
   type ConvertedSprite,
   type DecodedImage,
+  type ExportOutcome,
+  type ExportRequest,
   type SpriteSummary
 } from '../shared/ipc'
 import { scanSprites } from './sprites'
 import { decodeImage, makeThumbnail } from './images'
 import { convertSprite } from './convert'
+import { loadExportFont } from './export/font'
+import { buildChartPdf } from './export/pdf'
+import { renderPatternPng } from './export/png'
 
 /**
  * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
@@ -34,6 +40,41 @@ function resolveSpritePath(id: string): string {
     throw new Error(`Refusing to read outside the sprite root: "${id}"`)
   }
   return abs
+}
+
+/** The sprite's own name — "fighter" from "dwarves/fighter.png" — for filenames and titles. */
+function spriteName(id: string): string {
+  return basename(id, '.png')
+}
+
+/**
+ * Ask where to save, then run `write` if the user says yes.
+ *
+ * **Cancelling is a normal outcome, not an error.** It resolves rather than rejects, so the
+ * renderer can stay quiet instead of showing "export failed" to someone who simply changed
+ * their mind. The file is only written *after* the dialog returns a path, so backing out
+ * leaves nothing behind.
+ */
+async function saveThrough(
+  event: Electron.IpcMainInvokeEvent,
+  { defaultName, extension, description }: { defaultName: string; extension: string; description: string },
+  write: (path: string) => Promise<void>
+): Promise<ExportOutcome> {
+  const window = BrowserWindow.fromWebContents(event.sender)
+  const options: Electron.SaveDialogOptions = {
+    defaultPath: `${defaultName}.${extension}`,
+    filters: [{ name: description, extensions: [extension] }]
+  }
+
+  // Parent the dialog to the window that asked, so it is modal to it rather than floating.
+  const { canceled, filePath } = window
+    ? await dialog.showSaveDialog(window, options)
+    : await dialog.showSaveDialog(options)
+
+  if (canceled || !filePath) return { status: 'cancelled' }
+
+  await write(filePath)
+  return { status: 'saved', path: filePath }
 }
 
 /**
@@ -67,6 +108,50 @@ export function registerIpcHandlers(): void {
       // per-sprite decode + merge plan is cached inside convertSprite; a repeat call for
       // the same id only re-cuts the plan. A bad colourCount rejects the invoke.
       return convertSprite(id, resolveSpritePath(id), colourCount)
+    }
+  )
+
+  // Both export handlers re-derive the pattern from (id, colourCount) rather than take it
+  // from the renderer. convertSprite's cache makes that free, and it means the exported
+  // file and the preview it came from are the *same* conversion — they cannot disagree.
+
+  ipcMain.handle(
+    IpcChannels.exportPng,
+    async (event, { id, colourCount, settings }: ExportRequest): Promise<ExportOutcome> => {
+      const { palette, pattern } = await convertSprite(id, resolveSpritePath(id), colourCount)
+
+      return saveThrough(
+        event,
+        { defaultName: spriteName(id), extension: 'png', description: 'PNG image' },
+        async (path) => {
+          const png = renderPatternPng(pattern, palette, {
+            backgroundColour: settings.backgroundColour
+          })
+          await writeFile(path, png)
+        }
+      )
+    }
+  )
+
+  ipcMain.handle(
+    IpcChannels.exportPdf,
+    async (event, { id, colourCount, settings }: ExportRequest): Promise<ExportOutcome> => {
+      const { palette, pattern } = await convertSprite(id, resolveSpritePath(id), colourCount)
+      const name = spriteName(id)
+
+      return saveThrough(
+        event,
+        { defaultName: `${name}-chart`, extension: 'pdf', description: 'Printable chart' },
+        async (path) => {
+          const pdf = await buildChartPdf(
+            pattern,
+            palette,
+            { title: name, width: pattern.width, height: pattern.height },
+            { ...settings, fontBytes: loadExportFont() }
+          )
+          await writeFile(path, pdf)
+        }
+      )
     }
   )
 }
