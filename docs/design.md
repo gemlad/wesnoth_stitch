@@ -449,8 +449,8 @@ anyone tries to raise it:
   `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
   drops by one for each glyph removed; the two numbers are the same number.
 
-  **#20 built the test but could not take it.** `npm run legibility:sheet` renders
-  `out/legibility/glyph-legibility-test.pdf`: seven A4 pages at exact physical size —
+  **#20 built the test but could not take it.** `npm run uat:legibility` renders
+  `uat/glyph-legibility-test.pdf`: seven A4 pages at exact physical size —
   a 100mm calibration ruler, the whole set at four cell sizes, a side-by-side and
   *separated* drill on the marginal pairs, a blind identification task, and two real
   charts (dwarvish scout at `k=20`, merfolk citizen at `k=37`). The scale that matters is
@@ -724,7 +724,7 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   black and white at 9px, which is what caught the rotation variants and the `★`/`◆` blob
   collision. The remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any
   fails on paper, dropping it lowers the cap by one — the two are the same number. #20
-  built the test sheet (`npm run legibility:sheet`, §5.3) but the verdict is a human
+  built the test sheet (`npm run uat:legibility`, §5.3) but the verdict is a human
   judgement, so it is tracked as its own issue (#28).
 
 ## 9. Milestones

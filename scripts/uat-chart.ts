@@ -15,6 +15,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { PNG } from 'pngjs'
 import { buildChartPdf } from '../src/main/export/pdf'
 import { DEFAULT_CELL_MM, glyphSizePt } from '../src/main/export/pdf-layout'
+import { renderPatternPng } from '../src/main/export/png'
 import { MAX_COLOUR_COUNT, mapSpriteToDmc, reduceSprite } from '../src/shared/pipeline'
 import type { SymbolDisplay } from '../src/shared/ipc'
 
@@ -43,6 +44,12 @@ console.log(
 )
 
 mkdirSync(OUT_DIR, { recursive: true })
+
+// The PNG export (#33) — the "quick look" artefact, and the one that shows what the fabric
+// colour actually does to a pattern. Judged by eye like everything else in here.
+const png = renderPatternPng(reduced.pattern, reduced.palette, { backgroundColour: FABRIC })
+writeFileSync(`${OUT_DIR}/preview.png`, png)
+console.log(`  preview → ${OUT_DIR}/preview.png`)
 
 const fontBytes = readFileSync('resources/fonts/DejaVuSans.ttf')
 const title = basename(sprite, '.png')
