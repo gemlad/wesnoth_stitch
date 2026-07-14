@@ -27,7 +27,6 @@
  * is what lets them be unit-tested against a recording fake in the existing node-env
  * vitest — no jsdom, no canvas, no component harness.
  */
-import type { RGB } from '../../../shared/colour'
 import type { StitchPattern } from '../../../shared/pipeline'
 
 /**
@@ -218,25 +217,9 @@ function drawGrid(ctx: DrawContext, o: OverlayOptions): void {
 }
 
 /**
- * Black or white, whichever a glyph needs to stay readable on `bg`.
- *
- * A chart symbol is the only thing distinguishing two floss colours on a black-and-white
- * print (§5.3), so it cannot be allowed to disappear into a dark navy or a pale cream.
- * Compares WCAG contrast ratios against the two ink choices rather than thresholding
- * luminance, which gets the near-mid greys right.
+ * Moved to `shared/colour` (#34): the PDF chart needs the same answer as the preview, and
+ * two copies of this would eventually disagree — meaning an exported chart drawn in an ink
+ * the preview would not have chosen. Re-exported here so the preview's callers keep their
+ * existing import.
  */
-export function contrastInk(bg: RGB): string {
-  const l = relativeLuminance(bg)
-  const onWhite = 1.05 / (l + 0.05)
-  const onBlack = (l + 0.05) / 0.05
-  return onBlack >= onWhite ? '#000000' : '#ffffff'
-}
-
-/** WCAG 2.x relative luminance of an 8-bit sRGB colour. */
-function relativeLuminance({ r, g, b }: RGB): number {
-  const lin = (c: number): number => {
-    const s = c / 255
-    return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
-  }
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-}
+export { contrastInk } from '../../../shared/colour'

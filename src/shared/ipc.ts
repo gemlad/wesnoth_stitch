@@ -11,7 +11,32 @@
  * real filesystem scanning and image decoding land in #3 and #4.
  */
 
+import type { RGB } from './colour'
 import type { QuantizedPalette, StitchPattern, StitchSymbol } from './pipeline'
+
+/**
+ * Which layers of the chart are drawn (§5.4). `colour` is the on-screen preview, `symbol`
+ * is what a black-and-white printed chart looks like, `both` is the working chart you
+ * stitch from.
+ */
+export type SymbolDisplay = 'colour' | 'symbol' | 'both'
+
+/**
+ * Presentation settings for a pattern (§6's `PatternSettings`).
+ *
+ * **Why this lives here now.** §6 said it would: *"it moves to `shared/ipc.ts` if and when
+ * export runs in the main process and it actually has to cross a process boundary."* That
+ * moment arrived with the PDF chart (#34) — the export needs the fabric colour and the
+ * symbol-display mode, and it runs in main. Nothing in the *pipeline* reads it, though, so
+ * it still does not belong in `pipeline/types.ts`: `mapSpriteToDmc`, `reduceTo` and
+ * `symbolsFor` are pure functions of pixels and floss and do not care what colour the
+ * fabric is.
+ */
+export interface PatternSettings {
+  /** Fabric colour. "No stitch" cells render as this, rather than assumed-white Aida (§8). */
+  backgroundColour: RGB
+  symbolDisplay: SymbolDisplay
+}
 
 /** Channel names. Kept as string-literal consts so both processes agree. */
 export const IpcChannels = {
