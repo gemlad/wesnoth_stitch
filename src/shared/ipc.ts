@@ -43,8 +43,35 @@ export const IpcChannels = {
   getSpriteList: 'sprites:list',
   getThumbnail: 'sprites:thumbnail',
   getFullImage: 'sprites:full-image',
-  convertSprite: 'sprites:convert'
+  convertSprite: 'sprites:convert',
+  exportPng: 'export:png',
+  exportPdf: 'export:pdf'
 } as const
+
+/**
+ * What the renderer sends to export (#36).
+ *
+ * **It sends the sprite's identity, not its pixels.** The renderer is holding a whole
+ * `ConvertedSprite` and it would be the obvious thing to ship straight back — but main can
+ * re-derive it from `(id, colourCount)` for free, because `convertSprite` already caches the
+ * expensive per-sprite work (§4, #17). Passing the pattern back would copy a 5,000-cell grid
+ * across the process boundary to tell main something it already knows, and — worse — it
+ * would make it *possible* for an exported chart to disagree with the preview it came from.
+ * Deriving both from the same cached conversion means they cannot.
+ */
+export interface ExportRequest {
+  id: string
+  /** Omit for the Req. 6 default, exactly as `convertSprite` treats it. */
+  colourCount?: number
+  settings: PatternSettings
+}
+
+/**
+ * How an export ended. Cancelling the save dialog is a **normal outcome, not an error** —
+ * the renderer should say nothing and carry on, so it must be able to tell "you changed your
+ * mind" apart from "the export failed", which a rejected promise alone could not express.
+ */
+export type ExportOutcome = { status: 'saved'; path: string } | { status: 'cancelled' }
 
 /** A single unit sprite as surfaced to the browser grid (§5.1). */
 export interface SpriteSummary {
@@ -112,4 +139,20 @@ export interface SpriteApi {
    * Rejects if `colourCount` is not an integer in `1..maxColourCount`.
    */
   convertSprite(id: string, colourCount?: number): Promise<ConvertedSprite>
+
+  /**
+   * Export the pattern as a PNG (§5.5, #33) — the quick look, no glyphs, no gridlines.
+   *
+   * Opens a save dialog. Resolves `{ status: 'cancelled' }` if the user backs out.
+   */
+  exportPng(request: ExportRequest): Promise<ExportOutcome>
+
+  /**
+   * Export the printable chart as a PDF (§5.5, #34/#35) — cover, floss key, chart pages.
+   *
+   * Opens a save dialog. Resolves `{ status: 'cancelled' }` if the user backs out.
+   * Rejects if the palette holds more colours than the symbol set can name — but the
+   * slider is capped at `maxColourCount`, so that is a bug, not a thing a user can do.
+   */
+  exportPdf(request: ExportRequest): Promise<ExportOutcome>
 }

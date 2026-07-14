@@ -9,7 +9,10 @@ const api: SpriteApi = {
   getSpriteList: () => ipcRenderer.invoke(IpcChannels.getSpriteList),
   getThumbnail: (id) => ipcRenderer.invoke(IpcChannels.getThumbnail, id),
   getFullImage: (id) => ipcRenderer.invoke(IpcChannels.getFullImage, id),
-  convertSprite: (id, colourCount) => ipcRenderer.invoke(IpcChannels.convertSprite, id, colourCount)
+  convertSprite: (id, colourCount) =>
+    ipcRenderer.invoke(IpcChannels.convertSprite, id, colourCount),
+  exportPng: (request) => ipcRenderer.invoke(IpcChannels.exportPng, request),
+  exportPdf: (request) => ipcRenderer.invoke(IpcChannels.exportPdf, request)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
