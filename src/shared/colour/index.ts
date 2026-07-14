@@ -4,4 +4,5 @@
  */
 export type { RGB, LabColor, DMCEntry } from './types'
 export { srgbToLab, labDistance } from './convert'
+export { contrastInk } from './contrast'
 export { DMC_COLORS, DMC_REFERENCE, nearestDmc, nearestDmcToRgb, type DMCReference } from './dmc'

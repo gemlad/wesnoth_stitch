@@ -1,30 +1,21 @@
 /**
- * Presentation settings for a pattern (§6's `PatternSettings`).
+ * Pattern presentation settings — the renderer's view of them.
  *
- * **Why this lives in the renderer, not `shared/pipeline/types.ts`.** Design §6 sketches
- * `PatternSettings` alongside `QuantizedPalette` and `StitchPattern`, but nothing in the
- * pipeline reads or produces it: `mapSpriteToDmc`, `reduceTo` and `symbolsFor` are pure
- * functions of pixels and floss, and none of them care what colour the fabric is. Putting
- * a view setting in `pipeline/types.ts` would sit UI state inside the one module whose
- * selling point is being headless and reusable. Both fields here are consumed by the
- * preview (§5.4) and, later, by export (§5.5) — never by conversion. If export ends up
- * running in the main process it moves to `shared/ipc.ts` then, when it actually has to
- * cross a process boundary, and not before.
+ * **The types moved to `shared/ipc.ts` (#34).** They used to be declared here, on the
+ * reasoning that nothing outside the renderer consumed them: the preview read them, the
+ * pipeline did not, and a view setting had no business sitting in a headless module. That
+ * reasoning carried an explicit expiry — §6 said the types move to `shared/ipc.ts` *"if and
+ * when export runs in the main process and it actually has to cross a process boundary"*.
+ * The PDF chart is that export, so they have moved, and they are re-exported here so the
+ * preview's callers keep their existing import.
+ *
+ * What stays renderer-side is what is genuinely renderer-side: the default, and the
+ * `<input type="color">` ↔ `RGB` conversions.
  */
 import type { RGB } from '../../../shared/colour'
 
-/**
- * Which layers of the chart are drawn (§5.4). `colour` is the on-screen preview,
- * `symbol` is what a black-and-white printed chart looks like, `both` is the working
- * chart you stitch from.
- */
-export type SymbolDisplay = 'colour' | 'symbol' | 'both'
-
-export interface PatternSettings {
-  /** Fabric colour. "No stitch" cells render as this, rather than assumed-white Aida (§8). */
-  backgroundColour: RGB
-  symbolDisplay: SymbolDisplay
-}
+export type { PatternSettings, SymbolDisplay } from '../../../shared/ipc'
+import type { PatternSettings } from '../../../shared/ipc'
 
 /** Unbleached Aida — the default fabric, and visibly not white, so the setting is discoverable. */
 export const DEFAULT_PATTERN_SETTINGS: PatternSettings = {

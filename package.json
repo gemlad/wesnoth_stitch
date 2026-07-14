@@ -22,7 +22,8 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "validate:cap": "node scripts/run-ts.mjs scripts/validate-cap.ts",
-    "legibility:sheet": "electron scripts/legibility-sheet.mjs"
+    "legibility:sheet": "electron scripts/legibility-sheet.mjs",
+    "uat:chart": "node scripts/run-ts.mjs scripts/uat-chart.ts"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
