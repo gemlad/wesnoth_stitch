@@ -113,10 +113,19 @@ larger sprites.
 
 ## Where things stand
 
-- **Milestone 2:** done, bar the symbol spike (#30).
-- **Milestone 3:** #32 (export font), #33 (PNG export), #34 (chart pages) and #35 (cover +
-  floss key) built — the PDF is a complete document. Remaining: **#36** (export over IPC +
-  save dialog), which puts an export button in the app, and then **#28**.
+**Milestones 2 and 3 are built.** Every coding task is merged; the app browses sprites,
+converts them to DMC floss, reduces the palette live on a slider, and exports both a PNG and
+a printable PDF chart. See the [sprint review](reviews/sprint-review-m2-m3.html).
+
+The only two things still open are **the two in this file that need a person**:
+
+| | | |
+| --- | --- | --- |
+| **#28** | Print the chart, judge `C`/`G`, `E`/`F`, `P`/`R` | needs a printer and your eyes |
+| **#30** | Decide what the symbol-assignment rule should optimise for | needs a direction, not a program |
+
+Next up after those: **Milestone 4 — packaging** (an installer). Not started, and not blocked
+by either of the above.
 
 ## Convention
 
