@@ -10,11 +10,10 @@ and a DMC floss key.
 This Python script is the working prototype, now moved into [prototype/](prototype/).
 It's being rewritten from scratch as an Electron + TypeScript desktop app with an
 interactive in-app pattern preview, proper perceptual colour quantization, and a
-real GUI instead of a CLI — see [wesnoth-stitch-design-v2.md](wesnoth-stitch-design-v2.md)
-for the full design and [wesnoth-stitch-milestone-1-tasks.md](wesnoth-stitch-milestone-1-tasks.md)
-for the current in-progress milestone. The instructions below still describe this
-Python prototype, which remains the only runnable version until the rewrite reaches
-export parity (Milestone 3).
+real GUI instead of a CLI — see [docs/](docs/) for the full design and the milestone
+task breakdowns. The instructions below still describe this Python prototype, which
+remains the only runnable version until the rewrite reaches export parity
+(Milestone 3).
 
 ## Setup
 

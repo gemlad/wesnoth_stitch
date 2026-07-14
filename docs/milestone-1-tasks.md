@@ -1,6 +1,6 @@
 # Milestone 1 — Task Breakdown
 
-Source: §9 Milestone 1 of `wesnoth-stitch-design-v2.md` — "Electron + Vite + React
+Source: §9 Milestone 1 of `design.md` — "Electron + Vite + React
 scaffold; sprite browser over a single hardcoded checkout path; click-to-preview at
 full res. No quantization yet."
 
@@ -24,7 +24,7 @@ as an M1 stretch task or a follow-up. Flagging this now so it isn't assumed done
 when M1 gets checked off.
 
 The hardcoded path should point at the gitignored dev sprite set now in the repo:
-`wesnoth-sprites/units/` (see §5.1 note in `wesnoth-stitch-design-v2.md` — ~7,100
+`wesnoth-sprites/units/` (see §5.1 note in `design.md` — ~7,100
 files, refetch via a blobless sparse clone of `wesnoth/wesnoth`). Use a single
 configurable `SPRITE_ROOT` constant rather than assuming the full
 `data/core/images/units` repo layout.

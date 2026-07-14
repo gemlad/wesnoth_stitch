@@ -1,4 +1,9 @@
-# Wesnoth Stitch — design doc
+# Wesnoth Stitch — design doc (v1, superseded)
+
+> **Archived.** This is the Python-prototype-era design doc, kept for history.
+> It was written before the Electron + TypeScript rewrite and is superseded by
+> [design.md](../design.md), which restates the plan from scratch. Where the two
+> disagree, `design.md` wins. Do not plan work from this file.
 
 ## Purpose of this doc
 This is a planning reference for rebuilding the Wesnoth Stitch prototype as a desktop application, to be used as project context when working with Claude Code. It captures the current state, the target architecture, the feature set for v1, and open questions to resolve during build.
