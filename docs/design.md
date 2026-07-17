@@ -425,9 +425,19 @@ them now would pre-empt that.
 8. **Print marks** (4) — typographic, drawn to stay distinct small: `† ‡ § ¶`
 9. **Restored numerals** (3) — the three digits with no letter twin: `3 4 7`
 
-**Two rules decide membership**, both learned from rendering the set at chart scale
+**Three rules decide membership**, all learned from rendering the set at chart scale
 rather than reasoning about it on paper:
 
+- **Distinguish by shape, not by shade (Gemma's decision, 2026-07-17).** A symbol earns its
+  place by being a *different mark*, not by laying down more or less of the same one. Distinct
+  fills are allowed where each reads as its own thing — solid vs outline (`●`/`○`), the
+  half-fill `◐`, the crosshatch square `▦` — because those are recognised, not measured. What
+  is **rejected** is a graded *ink ramp*: a scale like `░ ▒ ▓ █`, or circle fill-states
+  `◔ ◑ ◕` used as a series, where you tell one glyph from the next by *how much* ink it has.
+  Reading amount-of-ink off a 2.36 mm cell while counting stitches is exactly the work a
+  symbol should save you. This closes the "ordered ink ramp" idea floated for #30/D1 and
+  question 3, and it means value-shading (glyph ink standing in for the colour's darkness) is
+  out. See the ramp demonstration that settled it, logged in `decisions-pending.md`.
 - **One orientation per shape family.** A rotated glyph is not a new glyph: the eye reads
   `▲ ▼ ◀ ▶` as one symbol pointing four ways and has to *decode* the direction, which is
   exactly the work a chart symbol exists to avoid. Only the upward triangle survives, and
@@ -477,12 +487,13 @@ anyone tries to raise it:
   preview you cannot turn into a chart would be worse than a lower ceiling.
 - **Raising it further is not cheap, and part of the pool is provisional.** The bundled
   font (#32) reopened the ranges the original 37 avoided, which is where the 12 additions
-  came from — but each new glyph still has to earn its place against the two rules *and* the
-  print test. The current additions are candidates, not survivors: `♦` and `♠` in
+  came from — but each new glyph still has to earn its place against the three rules *and*
+  the print test. The current additions are candidates, not survivors: `♦` and `♠` in
   particular are expected to fail against `◆` and `▲` on paper. Beyond them the remaining
-  distinct silhouettes thin out fast, and the ordered-ink-ramp glyphs (shades, circle
-  fills) only pay off if the assignment rule changes to map ink to area — which is #30/D1,
-  not a free addition.
+  distinct silhouettes thin out fast, and the obvious large seam — the shade/fill ramps
+  (`░ ▒ ▓`, circle fill-states) — is **ruled out**: they differ by amount of ink, not shape,
+  which the first membership rule forbids (Gemma's decision). So growth from here is a slow
+  hunt for genuinely distinct marks, not a ramp waiting to be switched on.
 - **The rules are heuristics, and the widened set has not met paper.** The original 37 were
   validated by rendering a real chart at 9px on screen — which caught the rotation variants
   and the `★`/`◆` blob collision — but not yet at ~5pt in the actual export font. The
@@ -580,11 +591,15 @@ leans harder on the grid. That is a judgement for the eye, not the metric — he
 artifact (real charts, export font, true cell size, B&W symbol-only). **Which rule to adopt
 is Gemma's call from that; §5.3 gets the verdict once it's made.**
 
-This also feeds back into the glyph pool (question 3): if inverse-density reads too faint,
-the fix is not interleaving but an **ordered ink ramp** at the light end (the shaded blocks
-`░ ▒ ▓` held out of D3), which would give the big areas glyphs that are faint *and* mutually
-distinct. Stability across `k` (glyph churn, #30/D2) is a separate axis Gemma deprioritised;
-it is invisible on a single chart and not built here.
+**The ink-ramp escape hatch is closed (Gemma's decision, 2026-07-17).** It was tempting to
+say "if inverse-density reads too faint, give the big areas an ordered ink ramp (`░ ▒ ▓`) so
+they are faint *and* mutually distinct." A dedicated demonstration put that idea in front of
+Gemma and the verdict was no: shade ramps are bad to stitch from — symbols must differ by
+shape, not by amount of ink (§5.3, rule 1). So inverse-density has to stand on its own faint,
+shape-based glyphs, with no ramp to lean on. That sharpens the D1 choice rather than adding a
+fourth option: it is distinctness vs inverse-density vs interleaved, full stop. Stability
+across `k` (glyph churn, #30/D2) is a separate axis Gemma deprioritised; it is invisible on a
+single chart and not built here.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 

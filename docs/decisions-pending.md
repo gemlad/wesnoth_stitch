@@ -52,14 +52,37 @@ succeeded individually and the chart still came out wrong.
 
  What failed UAT: we are not happy with the range of glyphs - it should be bigger but still distinct. I think this is dealt with in question 3.
 
-**Status: D1 now needs your eyes.** D2, D3 and D5 are decided (folded into `design.md`
-§5.3). **D1 is built and measured** — the three rules (distinctness / inverse-density /
-interleaved) are implemented and rendered on the real citizen and scout charts in the
-export font. The measurement is clear: **inverse-density is the only one that flattens the
-black field** (~2.4× on citizen); interleaved keeps a bold anchor but doesn't fix the worst
-block. What the numbers can't settle is whether inverse-density's faint glyphs on the big
-areas are still comfortable to *stitch from* — that's the UAT. **The verdict is yours after
-looking at the comparison artifact.** Regenerate with `npm run assign:compare`.
+**Status:** D2, D3, D5 decided; the **shade-ramp idea is now rejected** (see 1.B); **D1 is
+the one open call** (see 1.C).
+
+### 1.B Decided — no shade ramps (2026-07-17)
+
+**We are not using different shades as symbols.** Symbols must be told apart by **shape**.
+Distinct *fills* are fine when each reads as its own mark (solid vs outline, half-fill `◐`,
+crosshatch `▦`), but a graded ink ramp — `░ ▒ ▓ █`, or circle fill-states used as a scale —
+is out: reading *how much* ink a cell has while counting stitches is exactly the work a
+symbol should save. This also kills value-shading (glyph darkness standing in for the
+colour). A demonstration is what settled it. Logged in `design.md` §5.3 (membership rule 1).
+Consequence: inverse-density (below) can't lean on a ramp to fix its faint glyphs — it stands
+or falls on the shape glyphs it already has.
+
+### 1.C ▶ OPEN DECISION — which assignment rule? (D1)
+
+Built, measured and rendered on the real citizen (k=49) and scout (k=20) charts, in the
+export font, at true cell size. **Pick one:**
+
+| option | what it does | measured (citizen, worst 10×10 block) | the catch |
+| --- | --- | --- | --- |
+| **distinctness** (today) | boldest glyph → biggest area | 0.239 — the blob | crisp per-glyph, but rich sprites go solid-black |
+| **inverse-density** | faintest glyph → biggest area | **0.099** (~2.4× flatter) | big areas get faint, letter-like glyphs that are less distinct from each other |
+| **interleaved** | most-distinct, then least-dense, alternating | 0.302 — no better | keeps a bold anchor but doesn't fix the worst block |
+
+The metric favours **inverse-density**; the open question is whether its faint glyphs stay
+comfortable to *stitch from* now that the ramp fallback is gone. That's an eyes-on judgement
+— the comparison artifact is the thing to look at. Regenerate the data with
+`npm run assign:compare`.
+
+**Your call:** _______________  ·  _(my recommendation: inverse-density, but it's your chart)_
 
 ---
 
@@ -119,9 +142,14 @@ We would like to see more glyphs, as it makes the stitching project more enjoyab
 `3 4 7`, card suits `♥ ♣ ♦ ♠`, one hatched square `▦`, print marks `† ‡ § ¶`), which lifted
 default coverage from 93.0% to 99.4% of sprites. Added generously on the understanding that
 the print test (#28) culls the blob-collisions (`♦`/`◆`, `♠`/`▲`) later. The interactive
-glyph‑pool explorer that informed the picks is the artefact from this session. **Still open:**
-D1's comparative assignment‑rule renders (inverse‑density / stability / interleaved), which
-is the next piece. Tracked on #30.
+glyph‑pool explorer that informed the picks is the artefact from this session.
+
+**Ruled out (2026-07-17): shade/ink ramps.** The other big seam the bundled font opened was
+graded ramps (`░ ▒ ▓ █`, circle fill-states). Gemma has rejected these — symbols must differ
+by shape, not by amount of ink (see 1.B). So the remaining growth is a slow hunt for
+genuinely distinct marks, not a ramp switch. **What's left open here** is only whether to keep
+hunting for more distinct silhouettes, which can wait for the print test (#28) to first tell
+us which of the current 49 survive.
 
 ---
 
