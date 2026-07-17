@@ -25,18 +25,29 @@
  *
  * The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`)
  * the prototype shipped. Letters and digits are exempt from rule 2 — they are drawn by
- * type designers specifically to stay distinct at small sizes — but digits are dropped
- * wholesale, because `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`, `6`/`G`, `8`/`B` and `9`/`P`
- * all collide with letters already in the set, and salvaging `3 4 7` is not worth a
- * mixed-class rule.
+ * type designers specifically to stay distinct at small sizes. Most digits stay out
+ * because they collide with a letter already in the set (`0`/`O`, `1`/`I`, `2`/`Z`,
+ * `5`/`S`, `6`/`G`, `8`/`B`, `9`/`P`) — but `3 4 7` have no letter twin and are kept
+ * (#30 / D3).
  *
- * **Why these code points.** Each is a single BMP code point drawn from Basic Latin,
- * Latin-1, Geometric Shapes, or the outline star — ranges with near-universal font
- * coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font (§5.5) falls back
- * to tofu.
+ * **Provisional additions (#30 / D3).** Beyond the original 37, a widened block appended
+ * below reaches for card suits, print marks, one textured square and the three digits
+ * above. These are used only above `k = 37` and are deliberately generous: the print test
+ * (#28) is expected to remove the ones that blob-collide on paper (e.g. `♦` against `◆`,
+ * `♠` against `▲`). Until it does, they raise the cap rather than being held back.
  *
- * **Resolves §8's symbol-set question:** `MAX_COLOUR_COUNT` = 37. See §5.3 for what that
- * costs — measured against all 7,116 sprites, not guessed.
+ * **Why these code points.** Every glyph is a single BMP code point. The original 37 were
+ * kept inside near-universal ranges (Basic Latin, Latin-1, Geometric Shapes, the outline
+ * star) so the set survived *any* font. The provisional additions reach into
+ * Miscellaneous Symbols and General Punctuation, which are **not** universal — that is now
+ * safe because the export bundles and embeds DejaVu Sans (#32, §5.5) and
+ * `font-coverage.test.ts` asserts every codepoint here resolves in it rather than falling
+ * back to tofu. The bundled font, not the range, is the guarantee (#30 / D4).
+ *
+ * **§8's symbol-set question, revisited.** The set opened at 37 (the count that stays
+ * legible in font-safe ranges); it is **provisionally 49** after #30 / D3 widened the pool
+ * over the bundled font. `MAX_COLOUR_COUNT` tracks the array length either way, so the
+ * print test can knock it back down one glyph at a time. See §5.3.
  */
 import type { QuantizedPalette } from './types'
 
@@ -90,7 +101,30 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
   { glyph: 'V', name: 'letter V' },
   { glyph: 'W', name: 'letter W' },
   { glyph: 'Y', name: 'letter Y' },
-  { glyph: 'Z', name: 'letter Z' }
+  { glyph: 'Z', name: 'letter Z' },
+  // ── Provisional additions (#30 / D3 — Gemma's call, 2026-07-17) ──────────────────
+  // Widening the pool now that a font is bundled (#32) and proven to cover it
+  // (font-coverage.test.ts). Appended, not interleaved: the 37 above keep their validated
+  // distinctness ranking, and the assignment/ordering rule is itself under review
+  // (#30 / D1), so imposing a new ranking on these would be premature. They are used only
+  // above k=37, and are deliberately generous — the print test (#28) is expected to cull
+  // the blob-collisions (♦↔◆, ♠↔▲). Ordered within the block by rough boldness.
+  // 6. Card suits — strong filled silhouettes; ♦/♠ are the expected #28 casualties.
+  { glyph: '♥', name: 'heart' },
+  { glyph: '♣', name: 'club' },
+  { glyph: '♦', name: 'diamond suit' },
+  { glyph: '♠', name: 'spade' },
+  // 7. Textured square — a fill state distinct from solid ■ and open □; reads as a weave.
+  { glyph: '▦', name: 'crosshatch square' },
+  // 8. Print marks — typographic, drawn to stay distinct small; unlike anything above.
+  { glyph: '†', name: 'dagger' },
+  { glyph: '‡', name: 'double dagger' },
+  { glyph: '§', name: 'section sign' },
+  { glyph: '¶', name: 'pilcrow' },
+  // 9. Restored numerals — the three digits with no letter twin in the set (#30 / D3).
+  { glyph: '3', name: 'digit three' },
+  { glyph: '4', name: 'digit four' },
+  { glyph: '7', name: 'digit seven' }
 ]
 
 /**
@@ -99,16 +133,16 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
  * Not a stylistic preference: past this, two floss colours would have to share a glyph
  * and a black-and-white chart would become ambiguous. The slider must not offer it.
  *
- * This is also the effective colour cap for Req. 6 — it sits below the 40 §5.2 proposed,
- * so it, not that proposal, is what binds. Across all 7,116 Wesnoth sprites the full
- * distinct-DMC palette fits under it about 93% of the time; the rest reduce (#14), which
- * is exactly what reduction is for.
+ * This is also the effective colour cap for Req. 6. It opened at 37 and is **provisionally
+ * 49** after #30 / D3 widened the glyph pool over the bundled font. Across all Wesnoth
+ * sprites the full distinct-DMC palette fits under 49 about 99% of the time; the rest
+ * reduce (#14), which is exactly what reduction is for. (Re-measured by
+ * `npm run validate:cap`, which now reports `coverageAtCap`.)
  *
- * **Before raising this,** read "Limitations of the hard limit" in §5.3. In short: it
- * caps charting, not stitching; 485 sprites already exceed it; and the glyph pool that
- * survives both legibility rules inside font-safe ranges is close to exhausted, so
- * growing the set means accepting either a font dependency or worse glyphs. The number
- * cannot be raised on its own — it *is* `STITCH_SYMBOLS.length`.
+ * **This number is not settled.** It stays legible only if every provisional glyph in the
+ * set survives the print test (#28); each one that fails is removed and the cap drops with
+ * it. Read "Limitations of the hard limit" in §5.3 before treating 49 as final. The number
+ * cannot be raised or lowered on its own — it *is* `STITCH_SYMBOLS.length`.
  */
 export const MAX_COLOUR_COUNT = STITCH_SYMBOLS.length
 

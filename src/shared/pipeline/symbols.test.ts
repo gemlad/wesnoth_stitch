@@ -22,8 +22,9 @@ function imageOf(colours: readonly { r: number; g: number; b: number }[]): Decod
 }
 
 describe('STITCH_SYMBOLS', () => {
-  it('caps the slider at 37 — legibility sets the count, and it binds below §5.2’s 40', () => {
-    expect(MAX_COLOUR_COUNT).toBe(37)
+  it('caps the slider at 49 — the original 37 plus the #30/D3 provisional additions', () => {
+    // Provisional: the print test (#28) may remove blob-collisions and lower this.
+    expect(MAX_COLOUR_COUNT).toBe(49)
     expect(STITCH_SYMBOLS.length).toBe(MAX_COLOUR_COUNT)
   })
 
@@ -44,16 +45,14 @@ describe('STITCH_SYMBOLS', () => {
     }
   })
 
-  it('stays inside font-safe Unicode ranges, so no glyph falls back to tofu', () => {
-    // Basic Latin, the Latin-1 multiplication sign, Geometric Shapes, the outline star.
-    const safe = (c: number): boolean =>
-      (c >= 0x20 && c <= 0x7e) || c === 0x00d7 || (c >= 0x25a0 && c <= 0x25ff) || c === 0x2606
-    for (const g of glyphs) {
-      expect(
-        safe(codepoint(g)),
-        `${g} (U+${codepoint(g).toString(16)}) outside font-safe ranges`
-      ).toBe(true)
-    }
+  it('restores 3/4/7 and the widened families (#30/D3), tofu-safety delegated to the font', () => {
+    // The original 37 stayed inside near-universal ranges; the provisional additions do
+    // not, so "font-safe by range" is retired. Coverage is now guaranteed against the
+    // actual bundled DejaVu Sans by font-coverage.test.ts, not asserted here by codepoint.
+    for (const g of ['3', '4', '7']) expect(glyphs).toContain(g)
+    for (const g of ['♥', '♣', '♦', '♠']) expect(glyphs).toContain(g)
+    for (const g of ['†', '‡', '§', '¶']) expect(glyphs).toContain(g)
+    expect(glyphs).toContain('▦')
   })
 
   it('rule 1: carries one orientation per shape family — a rotation is not a new glyph', () => {
@@ -80,8 +79,10 @@ describe('STITCH_SYMBOLS', () => {
     expect(glyphs).not.toContain('X')
     // O and Q against the open circle.
     for (const banned of ['O', 'Q']) expect(glyphs).not.toContain(banned)
-    // Digits are dropped wholesale — each collides with a letter already in the set.
-    expect(glyphs.some((g) => /[0-9]/.test(g))).toBe(false)
+    // The colliding digits stay out — each has a letter twin in the set.
+    for (const banned of ['0', '1', '2', '5', '6', '8', '9']) expect(glyphs).not.toContain(banned)
+    // …but the three without a twin are restored (#30/D3).
+    for (const kept of ['3', '4', '7']) expect(glyphs).toContain(kept)
     // Size and weight variants the prototype shipped — indistinguishable printed.
     for (const banned of ['▴', '▪', '✚']) expect(glyphs).not.toContain(banned)
   })
@@ -89,9 +90,24 @@ describe('STITCH_SYMBOLS', () => {
   it('spends its most distinctive glyphs first, so low colour counts read clearly', () => {
     // The first 10 are geometric shapes (solid, outline, half) — silhouette + fill cues.
     for (const g of glyphs.slice(0, 10)) expect(codepoint(g)).toBeGreaterThanOrEqual(0x25a0)
-    // Then the strokes, then letters all the way out.
+    // Then the strokes, then the original 23 letters.
     expect(glyphs.slice(10, 14)).toEqual(['+', '×', '#', '='])
-    expect(glyphs.slice(14).every((g) => /[A-Z]/.test(g))).toBe(true)
+    expect(glyphs.slice(14, 37).every((g) => /[A-Z]/.test(g))).toBe(true)
+    // The #30/D3 provisional block sits after the validated 37, in a fixed order.
+    expect(glyphs.slice(37)).toEqual([
+      '♥',
+      '♣',
+      '♦',
+      '♠',
+      '▦',
+      '†',
+      '‡',
+      '§',
+      '¶',
+      '3',
+      '4',
+      '7'
+    ])
     // Solid before outline: a filled circle outranks an open one.
     expect(glyphs.indexOf('●')).toBeLessThan(glyphs.indexOf('○'))
     expect(glyphs.indexOf('■')).toBeLessThan(glyphs.indexOf('□'))
@@ -130,7 +146,7 @@ describe('symbolsFor', () => {
     expect(symbols).toEqual(palette.colours.map((_, i) => symbolAt(i)))
   })
 
-  it('names a full 40-colour palette without running out', () => {
+  it('names a full palette at the cap without running out', () => {
     const symbols = symbolsFor(paletteOf(MAX_COLOUR_COUNT))
     expect(symbols.length).toBe(MAX_COLOUR_COUNT)
     expect(new Set(symbols.map((s) => s.glyph)).size).toBe(MAX_COLOUR_COUNT)

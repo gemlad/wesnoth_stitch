@@ -110,9 +110,14 @@ legibility is the only thing holding the number down.
 
 We would like to see more glyphs, as it makes the stitching project more enjoyable. If there is some design work that Claude can help with before going into coding that would be good for us to experiment with different ideas. If it's easier to code though rather than present mock-ups, then do that.
 
-**Status: still open — this is the next thing to work on.** Covers D1's comparative
-assignment-rule renders and D3/D4's wider glyph pool together, since both bear on the
-same chart. Tracked on #30.
+**Status: partly done.** The **D3 glyph additions are implemented** on branch
+`feature/widen-glyph-set` — the set grew from 37 to a provisional **49** (restored numerals
+`3 4 7`, card suits `♥ ♣ ♦ ♠`, one hatched square `▦`, print marks `† ‡ § ¶`), which lifted
+default coverage from 93.0% to 99.4% of sprites. Added generously on the understanding that
+the print test (#28) culls the blob-collisions (`♦`/`◆`, `♠`/`▲`) later. The interactive
+glyph‑pool explorer that informed the picks is the artefact from this session. **Still open:**
+D1's comparative assignment‑rule renders (inverse‑density / stability / interleaved), which
+is the next piece. Tracked on #30.
 
 ---
 

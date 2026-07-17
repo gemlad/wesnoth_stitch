@@ -256,9 +256,10 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
    be fast enough to re-run live as the user drags a colour-count slider.
 
 **Default colour count (Req. 6):** = the distinct-DMC count from step 2, capped at
-`MAX_COLOUR_COUNT` (§5.3). The cap is **37**, the size of the legible stitch-symbol set —
-not a number chosen here. A chart cannot show more colours than it has symbols to name,
-so the symbol set is what binds.
+`MAX_COLOUR_COUNT` (§5.3). The cap is the size of the legible stitch-symbol set — not a
+number chosen here. A chart cannot show more colours than it has symbols to name, so the
+symbol set is what binds. It opened at **37** and is **provisionally 49** after #30/D3
+widened the glyph pool over the bundled font (§5.3); the print test (#28) may lower it again.
 
 **Confirmed on purpose, not just in practice (decisions-pending.md §4).** This shipped in
 #19 before ever being asked as a question — the slider simply defaulted to "sprite's own
@@ -281,11 +282,21 @@ Full palette fits under the cap — i.e. no reduction at default — for **93.0%
 at 37, against 95.7% at the originally-proposed 40. So lowering the ceiling to buy
 legibility costs 2.7 points of coverage, or 189 extra sprites that reduce.
 
-This corrects an assumption above: reduction is **not** a rare safety net for outliers.
-Roughly one sprite in fourteen exceeds the cap, and the long tail (merfolk, yeti death
-frames, the jinn) runs to 95 distinct floss — those are heavily shaded and anti-aliased
-despite being pixel art. Reduction is a routine, load-bearing part of the pipeline, which
-is a good argument for the care taken over its stability in step 3.
+**Update (#30/D3): the cap is now provisionally 49**, and coverage jumps with it — the full
+palette fits under 49 for **99.4%** of sprites, leaving only **41 (0.6%)** that reduce at
+default, against 497 (7.0%) at 37. This did not come from deciding fidelity needed more
+colours (#20 settled that it does not — see below); it came from widening the *legible
+symbol set* now that a font is bundled (§5.3). Re-measure with `npm run validate:cap`, which
+now reports `coverageAtCap`. The paragraphs below are the original 37-cap analysis, kept
+because the fidelity argument they make is exactly why widening the *symbol* set — not the
+colour budget — was the right lever.
+
+This corrects an assumption above: reduction is **not** a rare safety net for outliers — at
+least it was not at 37. Roughly one sprite in fourteen exceeded the cap at 37 (one in ~170
+at 49), and the long tail (merfolk, yeti death frames, the jinn) runs to 95 distinct floss —
+those are heavily shaded and anti-aliased despite being pixel art. Reduction is still a
+load-bearing part of the pipeline for that tail, which is a good argument for the care taken
+over its stability in step 3.
 
 **What the cap actually costs, measured (#20).** Coverage says how *often* the cap binds,
 not how much it hurts when it does. So: for every opaque pixel of the twelve richest
@@ -387,11 +398,12 @@ size of the legible stitch-symbol set, rather than allowing colour count to exce
 it. Guarantees every colour on a printed (including black-and-white) chart stays
 visually distinguishable by symbol alone.
 
-**The set, pinned down (#16).** `STITCH_SYMBOLS` holds **37 glyphs**, ordered by
-*distinctness* rather than codepoint. Symbols are handed out in array order and the
-palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top of
-the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
-Five tiers:
+**The set, pinned down (#16), then widened (#30/D3).** `STITCH_SYMBOLS` holds
+**49 glyphs** — the original 37, plus a provisional block of 12 appended by #30/D3 (below).
+It is ordered by *distinctness* rather than codepoint. Symbols are handed out in array order
+and the palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top
+of the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
+The original nine tiers:
 
 1. **Solid geometrics** (4) — separable by silhouette alone: `● ■ ▲ ◆`
 2. **Outline counterparts** (5) — same silhouettes, inverted fill: `○ □ △ ◇ ☆`
@@ -399,6 +411,19 @@ Five tiers:
 4. **Strokes** (4) — a different visual class, thin and open: `+ × # =`
 5. **Letters** (23) — the fallback commercial charts have always used: A–Z less `O` and
    `Q` (confusable with `○`) and `X` (with `×`, which reads better small).
+
+**Provisional additions (#30/D3, 2026-07-17).** Appended after the validated 37 — so they
+are spent only above `k = 37` — and used unchanged in both the on-screen overlay and the
+printed chart (D5). They are *deliberately generous*: the print test (#28) is expected to
+remove the ones that blob-collide on paper (`♦` against `◆`, `♠` against `▲`), so the block
+adds candidates rather than a settled set. Appended rather than interleaved because the
+assignment/ordering rule is itself under review (#30/D1); imposing a distinctness rank on
+them now would pre-empt that.
+
+6. **Card suits** (4) — strong filled silhouettes: `♥ ♣ ♦ ♠` (♦/♠ the expected #28 casualties)
+7. **Textured square** (1) — a fill state distinct from solid `■` and open `□`: `▦`
+8. **Print marks** (4) — typographic, drawn to stay distinct small: `† ‡ § ¶`
+9. **Restored numerals** (3) — the three digits with no letter twin: `3 4 7`
 
 **Two rules decide membership**, both learned from rendering the set at chart scale
 rather than reasoning about it on paper:
@@ -412,18 +437,24 @@ rather than reasoning about it on paper:
   outline only, where its points register.
 
 The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`) the
-prototype shipped. Digits are dropped wholesale: `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`,
-`6`/`G`, `8`/`B` and `9`/`P` all collide with letters already in the set, and salvaging
-`3 4 7` is not worth a mixed-class rule. Every surviving glyph is a single BMP code point
-from Basic Latin, Latin-1, Geometric Shapes, or the outline star — ranges with
-near-universal font coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font
-(§5.5) falls back to tofu. Asking for a symbol past the end throws rather than wrapping;
-the prototype's `i % len` silently aliased two colours onto one glyph.
+prototype shipped. Most digits stay out — `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`, `6`/`G`,
+`8`/`B` and `9`/`P` all collide with letters — but `3 4 7` have no letter twin and are
+restored in tier 9 (#30/D3). On code points: the original 37 were each a single BMP code
+point from Basic Latin, Latin-1, Geometric Shapes, or the outline star — ranges with
+near-universal coverage, so the set survived *any* font. The provisional additions reach
+into Miscellaneous Symbols (`♥ ♣ ♦ ♠`) and General Punctuation (`† ‡ § ¶`), which are **not**
+universal; that is safe only because the export now bundles and embeds DejaVu Sans (#32,
+§5.5) and `font-coverage.test.ts` asserts every codepoint in the set resolves in it rather
+than falling back to tofu. The bundled font, not the range, is the guarantee (#30/D4).
+Asking for a symbol past the end throws rather than wrapping; the prototype's `i % len`
+silently aliased two colours onto one glyph.
 
-`MAX_COLOUR_COUNT = 37` is therefore the slider's **hard maximum** (read by #19), and
-since it sits below the 40 §5.2 proposed, *it* is the effective colour cap — see the
-census in §5.2. If #20 wants a higher cap, **the symbol set must grow first**: a chart
-cannot show more colours than it has symbols to name.
+`MAX_COLOUR_COUNT = STITCH_SYMBOLS.length` is the slider's **hard maximum** (read by #19)
+and the effective colour cap — see the census in §5.2. It opened at 37 and is
+**provisionally 49** after #30/D3. Raising it required exactly what §8 said it would: **the
+symbol set had to grow first**, and it could only grow past the font-safe ranges once a font
+was bundled. The number is not settled — every provisional glyph that fails the print test
+(#28) removes itself and drops the cap by one.
 
 #### Limitations of the hard limit
 
@@ -431,29 +462,33 @@ The ceiling is a real constraint with real costs, and they should be understood 
 anyone tries to raise it:
 
 - **It is a limit on charting, not on stitching.** Nothing stops you stitching 95 floss
-  colours. The 37 exists because a *printed black-and-white chart* must name each colour
-  with a glyph you can tell apart from the other 36. That is the most demanding consumer
+  colours. The cap exists because a *printed black-and-white chart* must name each colour
+  with a glyph you can tell apart from every other. That is the most demanding consumer
   of the palette, and it sets the budget for everything upstream.
-- **497 sprites (7.0%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
-  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 95 distinct floss
-  and loses 58 of them. #20 measured what that loss is worth: a pixel-weighted mean of
-  1.14 ΔE, half a just-noticeable difference. Reduction is designed to make that loss
-  principled rather than arbitrary, and by that measure it succeeds — but it is still a loss.
+- **At the provisional cap of 49, only 41 sprites (0.6%) cannot be charted at full
+  fidelity** — down from 497 (7.0%) at 37. They exceed 49 distinct DMC and must reduce
+  (§5.2). The extreme case, `merfolk/citizen.png`, has 95 distinct floss and still loses 46
+  of them. #20 measured what that loss is worth at 37: a pixel-weighted mean of 1.14 ΔE,
+  half a just-noticeable difference; widening the cap only shrinks it. Reduction is designed
+  to make that loss principled rather than arbitrary — but it is still a loss.
 - **The cap is imposed on the preview by the export.** The on-screen colour preview
   (§5.4) and the PNG export need no symbols and could carry far more colours. The slider
   is capped globally anyway, so that what you preview is always what you can export. A
   preview you cannot turn into a chart would be worse than a lower ceiling.
-- **Raising it is not cheap.** The glyph pool that survives both rules inside font-safe
-  ranges is close to exhausted. Every obvious remaining candidate breaks something:
-  digits collide with letters, lowercase collides with uppercase, and arrows, dingbats
-  and box-drawing characters either reintroduce rotation families or risk font fallback
-  in a bundled PDF font (§5.5). Growing the set means either accepting a font dependency
-  or accepting worse glyphs.
-- **The rules are heuristics, and they have not met paper.** Both were validated by
-  rendering a real chart at 9px on screen — which is how the rotation variants and the
-  `★`/`◆` blob collision were caught — but not yet at 5pt in the actual export font.
-  `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
-  drops by one for each glyph removed; the two numbers are the same number.
+- **Raising it further is not cheap, and part of the pool is provisional.** The bundled
+  font (#32) reopened the ranges the original 37 avoided, which is where the 12 additions
+  came from — but each new glyph still has to earn its place against the two rules *and* the
+  print test. The current additions are candidates, not survivors: `♦` and `♠` in
+  particular are expected to fail against `◆` and `▲` on paper. Beyond them the remaining
+  distinct silhouettes thin out fast, and the ordered-ink-ramp glyphs (shades, circle
+  fills) only pay off if the assignment rule changes to map ink to area — which is #30/D1,
+  not a free addition.
+- **The rules are heuristics, and the widened set has not met paper.** The original 37 were
+  validated by rendering a real chart at 9px on screen — which caught the rotation variants
+  and the `★`/`◆` blob collision — but not yet at ~5pt in the actual export font. The
+  marginal letter pairs `C`/`G`, `E`/`F`, `P`/`R` remain, and the 12 new glyphs join them as
+  unproven-in-print. If any fails, the cap drops by one for each glyph removed; the count and
+  the cap are the same number. This is #28, deliberately deferred until the set settles.
 
   **#20 built the test but could not take it.** `npm run uat:legibility` renders
   `uat/glyph-legibility-test.pdf`: seven A4 pages at exact physical size —
@@ -733,18 +768,21 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   no two glyphs sharing an ink blob. See §5.3.
 - ~~**Colour-count ceiling:**~~ **Resolved (#16), and not the way §5.2 guessed.** The cap
   is not a free choice: it *is* the symbol-set size, because a chart cannot show more
-  colours than it has symbols to name. So `MAX_COLOUR_COUNT = 37`. A census over all
-  7,118 sprites (§5.2) shows the full palette fits under it 93.0% of the time (95.7% at
-  the old 40), with a median of 24 and a long tail to 95. The original framing — a safety
-  ceiling for rare outliers — was wrong: about one sprite in fourteen exceeds the cap, so
-  reduction runs routinely.
+  colours than it has symbols to name. So `MAX_COLOUR_COUNT = STITCH_SYMBOLS.length`. A
+  census over all 7,118 sprites (§5.2) shows the full palette fits under 37 for 93.0% of
+  them (95.7% at the old 40), with a median of 24 and a long tail to 95. The original
+  framing — a safety ceiling for rare outliers — was wrong at 37: about one sprite in
+  fourteen exceeded it. **Update (#30/D3):** the symbol set has since been widened to a
+  provisional **49**, at which coverage is 99.4% and reduction is back to being rare (0.6%,
+  one sprite in ~170). See §5.3.
 - ~~**Is the cap generous enough?**~~ **Resolved (#20), and the question was the wrong way
   round.** Capping the twelve richest sprites at 37 moves the average pixel **1.14 ΔE**
   from where full fidelity would put it — half a just-noticeable difference. Raising the
   cap to 40 improves that to 0.97 ΔE, which nobody can see, while rescuing 2.7% of sprites
-  from reducing and demanding three more legible glyphs that do not exist. Colour fidelity
-  was never the binding constraint. **Glyph legibility is, and it is the only thing
-  holding the number at 37.**
+  from reducing. Colour fidelity was never the binding constraint. **Glyph legibility is,
+  and it is the only thing holding the number down.** That is precisely why the lever that
+  finally moved it (#30/D3) was widening the *legible symbol set* over a bundled font, not
+  raising the colour budget — see §5.3.
 - ~~**Anti-aliasing / `alphaThreshold`:**~~ **Resolved (#20), and the premise was wrong.**
   The partial-alpha band is not anti-aliasing fringe. It is one value — `alpha = 153` — and
   it is Wesnoth's drop shadow, present under 90% of sprites and worth 12.57% of every
@@ -753,16 +791,17 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   becomes the grey it looks like (DMC 317 on `merfolk/citizen.png`), and `alphaThreshold`
   stays at 128 — the histogram is empty either side of it, so its exact value is
   immaterial. See §5.2, "Translucency is semantic".
-- **Still open — needs a printer, not a program — but deliberately deferred.** Whether 37
-  glyphs *actually* read at print scale. The set was checked by rendering a real chart
-  (dwarvish scout at `k=20`) in black and white at 9px, which is what caught the rotation
-  variants and the `★`/`◆` blob collision. The remaining marginal pairs are letters:
-  `C`/`G`, `E`/`F`, `P`/`R`. If any fails on paper, dropping it lowers the cap by one — the
-  two are the same number. #20 built the test sheet (`npm run uat:legibility`, §5.3) but
-  the verdict is a human judgement, so it is tracked as its own issue (#28). **Gemma's
-  call (decisions-pending.md §2): revisit this once the #30/D1 assignment-rule work and
-  the glyph-pool question (§3, D3/D4) have landed** — there is limited value judging
-  marginal pairs in a set that is about to be redesigned around a bundled font anyway.
+- **Still open — needs a printer, not a program — but deliberately deferred.** Whether the
+  symbol set *actually* reads at print scale. The original 37 were checked by rendering a
+  real chart (dwarvish scout at `k=20`) in black and white at 9px, which caught the rotation
+  variants and the `★`/`◆` blob collision. Two groups remain unproven on paper: the marginal
+  letter pairs `C`/`G`, `E`/`F`, `P`/`R`, and now the **12 provisional additions** widened in
+  by #30/D3 — `♦` and `♠` especially, expected to collide with `◆` and `▲`. If any fails,
+  dropping it lowers the cap by one — the count and the cap are the same number. #20 built
+  the test sheet (`npm run uat:legibility`, §5.3) but the verdict is a human judgement, so it
+  is tracked as its own issue (#28). **Gemma's call (decisions-pending.md §2): take the print
+  test once the set has settled** — i.e. after #30/D1's assignment work — since the widened
+  set is where the culling now happens.
 
 ## 9. Milestones
 

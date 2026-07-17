@@ -126,9 +126,10 @@ function weightedMedoid(
 /**
  * Compute a sprite's full merge sequence — the expensive half, run once per sprite.
  *
- * O(n³) distance *lookups* over a precomputed n×n ΔE matrix, where n is the sprite's
- * distinct-DMC count (23–37 on real Wesnoth sprites, capped at 40 by Req. 6). The
- * only trigonometry-grade work is the n² Lab distances, computed up front.
+ * O(n³) distance *lookups* over a precomputed n×n ΔE matrix, where n is the sprite's own
+ * distinct-DMC count — this runs on the uncapped base, so n is a median of ~24 and up to 95
+ * on the richest sprites, not the slider cap. The only trigonometry-grade work is the n²
+ * Lab distances, computed up front.
  */
 export function planReduction(base: MappedSprite): ReductionPlan {
   const colours = base.palette.colours
