@@ -260,6 +260,12 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
 not a number chosen here. A chart cannot show more colours than it has symbols to name,
 so the symbol set is what binds.
 
+**Confirmed on purpose, not just in practice (decisions-pending.md §4).** This shipped in
+#19 before ever being asked as a question — the slider simply defaulted to "sprite's own
+count, capped." Gemma has since confirmed that is the wanted behaviour: no separate
+fixed-small-palette mode. The sprite's own distinct-DMC count (capped at 37) stays the
+slider's ceiling and default.
+
 **Census (#16, re-run in #20 against the composited pipeline), over all 7,118 sprites in
 the checkout** — the original guess of 40 was made blind, so it is worth recording what the
 data actually says. Reproduce with `npm run validate:cap`:
@@ -476,6 +482,34 @@ anyone tries to raise it:
   (its medoid), so the mapping exists — at the cost that a low-`k` chart would no longer
   be guaranteed the most distinctive glyphs. That trade is deliberately not taken here;
   revisit under #18/#19 once the overlay is real enough to judge.
+
+#### Gemma's answers on #30's D1–D5 (decisions-pending.md §1, §3)
+
+**What failed UAT (the question #30 was left waiting on):** not individual glyph
+confusion, but that the assignment rule concentrates the boldest glyphs on the
+sprite's largest, dominant-coloured regions — the near-solid black field on
+`merfolk/citizen` at `k=37` this section already describes. That confirms the
+"heaviest glyphs land on the largest areas" finding is the real defect, not a
+side-observation.
+
+- **D2 — churn is not a priority.** Keep assigning against the *reduced* palette
+  (index order), as today. The base-palette escape hatch above is not worth taking
+  just to kill churn; if D1's inverse-density work changes the assignment rule anyway,
+  churn may fall out of that for free.
+- **D3 — bring back distinct numerals, and widen the pool.** Once the glyph set is
+  being redesigned around a bundled font (D4, §3 below), revisit whether `3 4 7` (and
+  other glyphs excluded only for font-safety, not for confusability) are worth
+  re-admitting. This folds into the same design-exploration work as §3's "do we bundle
+  an export font" question — see there for what's still open.
+- **D5 — yes, one set for both.** The on-screen overlay and the printed chart use the
+  same `STITCH_SYMBOLS`/`symbolsFor` — already true in code (both consumers call the
+  same function), and now confirmed as the intended design, not an accident of not
+  having built two.
+- **D1 — still open, and now scoped as a concrete deliverable.** Gemma asked for real
+  comparative renders rather than a decision made on paper: inverse-density (large
+  areas get the lightest glyphs — the opposite of today), stability (minimise churn
+  across `k`), and an interleaved rule (most-distinct, then least-dense, then
+  next-most-distinct, …). This is the next piece of work — see the note added to #30.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
@@ -719,13 +753,16 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   becomes the grey it looks like (DMC 317 on `merfolk/citizen.png`), and `alphaThreshold`
   stays at 128 — the histogram is empty either side of it, so its exact value is
   immaterial. See §5.2, "Translucency is semantic".
-- **Still open — needs a printer, not a program.** Whether 37 glyphs *actually* read at
-  print scale. The set was checked by rendering a real chart (dwarvish scout at `k=20`) in
-  black and white at 9px, which is what caught the rotation variants and the `★`/`◆` blob
-  collision. The remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any
-  fails on paper, dropping it lowers the cap by one — the two are the same number. #20
-  built the test sheet (`npm run uat:legibility`, §5.3) but the verdict is a human
-  judgement, so it is tracked as its own issue (#28).
+- **Still open — needs a printer, not a program — but deliberately deferred.** Whether 37
+  glyphs *actually* read at print scale. The set was checked by rendering a real chart
+  (dwarvish scout at `k=20`) in black and white at 9px, which is what caught the rotation
+  variants and the `★`/`◆` blob collision. The remaining marginal pairs are letters:
+  `C`/`G`, `E`/`F`, `P`/`R`. If any fails on paper, dropping it lowers the cap by one — the
+  two are the same number. #20 built the test sheet (`npm run uat:legibility`, §5.3) but
+  the verdict is a human judgement, so it is tracked as its own issue (#28). **Gemma's
+  call (decisions-pending.md §2): revisit this once the #30/D1 assignment-rule work and
+  the glyph-pool question (§3, D3/D4) have landed** — there is limited value judging
+  marginal pairs in a set that is about to be redesigned around a bundled font anyway.
 
 ## 9. Milestones
 
@@ -741,6 +778,12 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 3. Export parity with the prototype (PNG preview, PDF chart with floss key),
    including the configurable background colour (§5.4, §6).
 4. Packaging: electron-builder installer target (§3), since the app is intended to
-   be distributable to others, not just personal/dev use.
+   be distributable to others, not just personal/dev use. **Gated on UAT
+   (decisions-pending.md §4):** does not start until Milestones 2 and 3 have passed UAT
+   and are closed — i.e. #30 and #28 (§8) are resolved and the M2/M3 GitHub milestones
+   have no open issues. First release is Milestones 1–4.
 5. Future extensions: multi-source browsing (§7.1), batch processing (§7.2), manual
-   per-stitch override (§7.3), non-unit asset categories (§7.4).
+   per-stitch override (§7.3), non-unit asset categories (§7.4). Post-first-release work
+   (page-overlap margins, colour-key display, distribution/Pattern Keeper compatibility,
+   etc.) is tracked directly as GitHub milestones rather than enumerated here — see the
+   repo's milestone list.

@@ -42,6 +42,21 @@ succeeded individually and the chart still came out wrong.
 > rather than an invented answer. If it's the black-field problem, that's D1 confirmed. If
 > it's specific glyph pairs, that's the print test below — and you can now actually take it.
 
+### 1.A Gemma's answer — recorded in `design.md` §5.3
+
+ - **D1** Can you give us some tests for inverse-density and stability? Also worth trying, interleaving distinct with inverse-density (so most distinct glyph, then least dense, then second most distinct, etc.)
+ - **D2** Don't really care about churn
+ - **D3** Worth bringing back distinct numerals, and other glyphs from question 3.
+ - **D4** (was there a D4 question somewhere?) — yes: it's question 3 below. Bundling the export font (#32) is done; the still-open half of D4 is whether to redesign the glyph set around the wider pool that opens, which is exactly question 3.
+ - **D5** Yes, it should use the same set.
+
+ What failed UAT: we are not happy with the range of glyphs - it should be bigger but still distinct. I think this is dealt with in question 3.
+
+**Status: still open.** D2, D3 and D5 are decided (folded into `design.md` §5.3). D1 isn't
+— it's a request for real comparative renders, not a verdict, so it stays open as a build
+task on #30 rather than something to tick off here. Follows the same design-exploration
+work as question 3.
+
 ---
 
 ## 2. The print test — needs a printer and your eyes — [#28]
@@ -64,6 +79,14 @@ This has real teeth: **the colour cap and the glyph count are the same number (3
 pair fails, the maximum number of colours a pattern can use drops by one for each glyph lost.
 A chart cannot show more colours than it has symbols to name.
 
+### 2.A Gemma's answer
+
+We will revisit the print test with the new design tests for question 3.
+
+**Status: deferred, not decided.** #28 stays open but blocked behind question 3's
+glyph-pool work — no point judging marginal pairs in a set about to be redesigned. Noted
+in `design.md` §8.
+
 ---
 
 ## 3. Do we bundle an export font? — [#30's D4] — the safe half is taken
@@ -83,6 +106,14 @@ Worth knowing: **colour fidelity is not the reason for the cap.** Squeezing the 
 down to 37 colours costs about half a just-noticeable difference. Nobody can see it. Glyph
 legibility is the only thing holding the number down.
 
+### 3.A Gemma's answer
+
+We would like to see more glyphs, as it makes the stitching project more enjoyable. If there is some design work that Claude can help with before going into coding that would be good for us to experiment with different ideas. If it's easier to code though rather than present mock-ups, then do that.
+
+**Status: still open — this is the next thing to work on.** Covers D1's comparative
+assignment-rule renders and D3/D4's wider glyph pool together, since both bear on the
+same chart. Tracked on #30.
+
 ---
 
 ## 4. Two things marked "pending review with partner" since Milestone 2
@@ -98,6 +129,17 @@ Still unanswered — and one has quietly been decided by the code:
   builds? Doesn't change what gets built, but it changes what comes *after* Milestone 3 —
   whether packaging gets pulled forward.
 
+### 4.A Gemma's answers
+
+ - **Default colour count** We like the way the app does it currently. The sprite's maximum colours should be the cap for the slider.
+ - **Distribution** I've updated github project to have some more milestones. The non-numbered milestones are for after first release. First release is Milestones 1-4. So packaging can come after we have passed UAT for milestones 2 and 3 and closed them off.
+
+**Status: resolved.** Recorded in `design.md` §5.2 (default colour count) and §9
+(packaging gated on M2/M3 UAT). GitHub already has the milestone structure this
+describes — "Quality of life features" and "Pattern Keeper export" are the two
+non-numbered post-release milestones, Milestones 1–4 are first release. Nothing further
+needed here.
+
 ---
 
 ## 5. Page-overlap margin (wait until you've seen a printed chart)
@@ -109,23 +151,33 @@ up by eye. Easy either way — and it's a change to `planTiles` and nothing else
 Note the dwarvish fighter fits on **one** page at the reference scale, so this only bites on
 larger sprites.
 
+### 5.A Gemma's answer
+
+I've added this to the Quality of Life milestone for after first release.
+
+**Status: resolved.** Confirmed on GitHub — #49 sits in the "Quality of life features"
+milestone already. Nothing further needed here.
+
 ---
 
 ## Where things stand
 
-**Milestones 2 and 3 are built.** Every coding task is merged; the app browses sprites,
-converts them to DMC floss, reduces the palette live on a slider, and exports both a PNG and
-a printable PDF chart. See the [sprint review](reviews/sprint-review-m2-m3.html).
+**Milestones 2 and 3 are built**, but not yet closed. Every coding task is merged; the app
+browses sprites, converts them to DMC floss, reduces the palette live on a slider, and
+exports both a PNG and a printable PDF chart. See the
+[sprint review](reviews/sprint-review-m2-m3.html).
 
-The only two things still open are **the two in this file that need a person**:
+Items 4 and 5 above are now resolved and folded into `design.md`. What's left open:
 
 | | | |
 | --- | --- | --- |
-| **#28** | Print the chart, judge `C`/`G`, `E`/`F`, `P`/`R` | needs a printer and your eyes |
-| **#30** | Decide what the symbol-assignment rule should optimise for | needs a direction, not a program |
+| **#30** | Design-explore the symbol set and its assignment rule (D1 comparative renders + D3/D4 wider glyph pool) | **the next thing to work on** — question 3 |
+| **#28** | Print the chart, judge `C`/`G`, `E`/`F`, `P`/`R` | deferred until #30's glyph work lands |
+| **#53** | Trim transparent border before charting | small, unrelated to the above — still open on Milestone 2 |
+| #45–#48, #54 | Assorted Milestone 3 export polish | open, unrelated to the decisions above |
 
-Next up after those: **Milestone 4 — packaging** (an installer). Not started, and not blocked
-by either of the above.
+Milestones 2 and 3 close once their open issues are cleared, which unblocks **Milestone 4 —
+packaging** (an installer, decided in item 4 above to wait for exactly this).
 
 ## Convention
 
