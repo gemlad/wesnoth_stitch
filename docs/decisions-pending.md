@@ -52,10 +52,14 @@ succeeded individually and the chart still came out wrong.
 
  What failed UAT: we are not happy with the range of glyphs - it should be bigger but still distinct. I think this is dealt with in question 3.
 
-**Status: still open.** D2, D3 and D5 are decided (folded into `design.md` §5.3). D1 isn't
-— it's a request for real comparative renders, not a verdict, so it stays open as a build
-task on #30 rather than something to tick off here. Follows the same design-exploration
-work as question 3.
+**Status: D1 now needs your eyes.** D2, D3 and D5 are decided (folded into `design.md`
+§5.3). **D1 is built and measured** — the three rules (distinctness / inverse-density /
+interleaved) are implemented and rendered on the real citizen and scout charts in the
+export font. The measurement is clear: **inverse-density is the only one that flattens the
+black field** (~2.4× on citizen); interleaved keeps a bold anchor but doesn't fix the worst
+block. What the numbers can't settle is whether inverse-density's faint glyphs on the big
+areas are still comfortable to *stitch from* — that's the UAT. **The verdict is yours after
+looking at the comparison artifact.** Regenerate with `npm run assign:compare`.
 
 ---
 

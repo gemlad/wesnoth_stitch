@@ -540,11 +540,51 @@ side-observation.
   same `STITCH_SYMBOLS`/`symbolsFor` — already true in code (both consumers call the
   same function), and now confirmed as the intended design, not an accident of not
   having built two.
-- **D1 — still open, and now scoped as a concrete deliverable.** Gemma asked for real
-  comparative renders rather than a decision made on paper: inverse-density (large
-  areas get the lightest glyphs — the opposite of today), stability (minimise churn
-  across `k`), and an interleaved rule (most-distinct, then least-dense, then
-  next-most-distinct, …). This is the next piece of work — see the note added to #30.
+- **D1 — built and measured, awaiting Gemma's UAT verdict.** The three candidate rules are
+  implemented in `pipeline/assignment.ts` (`assignSymbols(palette, strategy)`), driven by a
+  per-glyph ink measurement — see below.
+
+#### Assignment strategies (#30/D1) — measured, awaiting a verdict
+
+The #30 finding is that assignment, not the glyphs, is what breaks: the palette is sorted
+dominant-floss-first and `symbolsFor` hands glyphs out in distinctness order, and the most
+distinctive glyphs are also the inkiest, so the largest colour areas get the darkest
+symbols. Measured with `npm run measure:ink` (rendering each glyph in the bundled DejaVu and
+counting cell fill, baked into `pipeline/glyph-ink.ts`): the four glyphs the set opens with —
+`■` 0.30, `●` 0.24, `▲`, `◆` — are all near the top of the ink ranking, while outlines and
+thin strokes (`☆ + = I`) sit near 0.04.
+
+Three strategies, all returning one symbol per colour, index-aligned, differing only in
+*which glyph the biggest area gets*:
+
+- **distinctness** — the status quo. Boldest, most recognisable glyph to the dominant floss.
+- **inverse-density** — glyphs ordered lightest-ink first, so the largest area gets the
+  faintest glyph. The direct fix.
+- **interleaved** — Gemma's idea: most distinct, then least dense, alternating, deduped.
+
+Measured on real charts (`npm run assign:compare`, ink averaged over each 10×10 block, worst
+block being where the eye trips):
+
+| merfolk citizen, k=49 | mean cell ink | worst 10×10 block |
+|---|---|---|
+| distinctness (today) | 0.145 | 0.239 |
+| inverse-density | 0.061 | **0.099** |
+| interleaved | 0.123 | 0.302 |
+
+**Inverse-density is the only rule that pulls ink off the big areas** — a ~2.4× flatter
+worst block on the sprite where the field collapses. **Interleaved does *not* fix the worst
+block** (it still lands the second-heaviest glyph on a large area, sometimes worse than
+today). The open cost of inverse-density is legibility: the dominant colours get faint,
+letter-like glyphs that are less distinct from one another, so telling the big regions apart
+leans harder on the grid. That is a judgement for the eye, not the metric — hence the UAT
+artifact (real charts, export font, true cell size, B&W symbol-only). **Which rule to adopt
+is Gemma's call from that; §5.3 gets the verdict once it's made.**
+
+This also feeds back into the glyph pool (question 3): if inverse-density reads too faint,
+the fix is not interleaving but an **ordered ink ramp** at the light end (the shaded blocks
+`░ ▒ ▓` held out of D3), which would give the big areas glyphs that are faint *and* mutually
+distinct. Stability across `k` (glyph churn, #30/D2) is a separate axis Gemma deprioritised;
+it is invisible on a single chart and not built here.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 

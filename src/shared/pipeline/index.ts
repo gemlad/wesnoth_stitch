@@ -19,3 +19,10 @@ export {
   symbolsFor,
   type StitchSymbol
 } from './symbols'
+export { GLYPH_INK, GLYPHS_BY_INK, inkOf } from './glyph-ink'
+export {
+  assignSymbols,
+  glyphOrder,
+  ASSIGNMENT_STRATEGIES,
+  type AssignmentStrategy
+} from './assignment'
