@@ -91,6 +91,9 @@ interface SpriteComparison {
   k: number
   sourceColourCount: number
   palette: { code: string; name: string; hex: string; pixelCount: number }[]
+  /** Palette index per cell, row-major; -1 = no stitch. Lets a renderer assign glyphs
+   *  its own way (e.g. an ink ramp mapped to colour value) rather than only replay ours. */
+  cells: number[][]
   strategies: StrategyResult[]
 }
 
@@ -124,6 +127,7 @@ function chartOf(relPath: string, k: number): SpriteComparison {
       hex: c.dmc.hex,
       pixelCount: c.pixelCount
     })),
+    cells: cells.map((row) => row.map((c) => (c === null ? -1 : c))),
     strategies
   }
 }
