@@ -52,8 +52,10 @@ succeeded individually and the chart still came out wrong.
 
  What failed UAT: we are not happy with the range of glyphs - it should be bigger but still distinct. I think this is dealt with in question 3.
 
-**Status:** D2, D3, D5 decided; the **shade-ramp idea is now rejected** (see 1.B); **D1 is
-the one open call** (see 1.C).
+**Status: all of D1–D5 are now decided.** D2, D3, D5 folded into `design.md` §5.3; the
+shade-ramp idea rejected (1.B); the assignment rule settled as `interleaved` (1.C). What
+remains for this issue is the **print test** — item 2 below — which is now the last thing
+standing between the widened set and closing #30.
 
 ### 1.B Decided — no shade ramps (2026-07-17)
 
@@ -66,23 +68,26 @@ colour). A demonstration is what settled it. Logged in `design.md` §5.3 (member
 Consequence: inverse-density (below) can't lean on a ramp to fix its faint glyphs — it stands
 or falls on the shape glyphs it already has.
 
-### 1.C ▶ OPEN DECISION — which assignment rule? (D1)
+### 1.C Decided — assignment rule is `interleaved` (2026-07-17)
 
-Built, measured and rendered on the real citizen (k=49) and scout (k=20) charts, in the
-export font, at true cell size. **Pick one:**
+Compared on the real citizen (k=49) and scout (k=20) charts, in the export font, at true cell
+size:
 
 | option | what it does | measured (citizen, worst 10×10 block) | the catch |
 | --- | --- | --- | --- |
-| **distinctness** (today) | boldest glyph → biggest area | 0.239 — the blob | crisp per-glyph, but rich sprites go solid-black |
-| **inverse-density** | faintest glyph → biggest area | **0.099** (~2.4× flatter) | big areas get faint, letter-like glyphs that are less distinct from each other |
-| **interleaved** | most-distinct, then least-dense, alternating | 0.302 — no better | keeps a bold anchor but doesn't fix the worst block |
+| distinctness (was) | boldest glyph → biggest area | 0.239 — the blob | rich sprites go solid-black |
+| inverse-density | faintest glyph → biggest area | **0.099** (~2.4× flatter) | faint, letter-like glyphs on every big area; nothing to navigate by |
+| **interleaved ✅** | most-distinct, then least-dense, alternating | 0.302 | worst block no better than before — accepted |
 
-The metric favours **inverse-density**; the open question is whether its faint glyphs stay
-comfortable to *stitch from* now that the ramp fallback is gone. That's an eyes-on judgement
-— the comparison artifact is the thing to look at. Regenerate the data with
+**Chosen against the metric, deliberately.** Ink concentration favoured inverse-density; the
+eye did not. Interleaved keeps a bold anchor on the dominant colour — the thing you re-find
+your place by — while still dropping the next-largest areas to the faintest glyphs.
+Inverse-density's failure mode isn't blobbing, it's *sameness*.
+
+**Done:** `DEFAULT_ASSIGNMENT_STRATEGY = 'interleaved'` in `pipeline/assignment.ts`, with
+`symbolsFor` (the single entry point the preview, chart pages and floss key all call) routing
+through it. Recorded in `design.md` §5.3. Re-run the comparison any time with
 `npm run assign:compare`.
-
-**Your call:** _______________  ·  _(my recommendation: inverse-density, but it's your chart)_
 
 ---
 

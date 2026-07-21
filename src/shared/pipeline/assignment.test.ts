@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   ASSIGNMENT_STRATEGIES,
+  DEFAULT_ASSIGNMENT_STRATEGY,
   assignSymbols,
   glyphOrder,
+  symbolsFor,
   type AssignmentStrategy
 } from './assignment'
-import { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolsFor } from './symbols'
+import { MAX_COLOUR_COUNT, STITCH_SYMBOLS } from './symbols'
 import { GLYPHS_BY_INK, inkOf } from './glyph-ink'
 import type { QuantizedPalette } from './types'
 
@@ -30,10 +32,50 @@ function paletteOf(n: number): QuantizedPalette {
 const glyphsOf = (strategy: AssignmentStrategy, n: number): string[] =>
   assignSymbols(paletteOf(n), strategy).map((s) => s.glyph)
 
-describe('assignSymbols', () => {
-  it('distinctness reproduces symbolsFor exactly', () => {
+describe('the app-wide rule (symbolsFor)', () => {
+  it('is interleaved — Gemma’s #30/D1 decision', () => {
+    // The one constant that re-charts the whole app. If this changes, it is a design
+    // decision being made, not an implementation detail drifting.
+    expect(DEFAULT_ASSIGNMENT_STRATEGY).toBe('interleaved')
+  })
+
+  it('routes through the chosen strategy, so chart and floss key cannot disagree', () => {
     const palette = paletteOf(20)
-    expect(assignSymbols(palette, 'distinctness')).toEqual(symbolsFor(palette))
+    expect(symbolsFor(palette)).toEqual(assignSymbols(palette, DEFAULT_ASSIGNMENT_STRATEGY))
+  })
+
+  it('gives one distinct symbol per colour, and still leads with a bold anchor', () => {
+    const palette = paletteOf(12)
+    const symbols = symbolsFor(palette)
+    expect(symbols).toHaveLength(12)
+    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(12)
+    // Interleaved keeps the dominant floss on the most distinctive glyph — that is the
+    // whole reason it was preferred over inverse-density.
+    expect(symbols[0].glyph).toBe('●')
+    // …but the second-largest area drops straight to the faintest glyph in the set.
+    expect(symbols[1].glyph).toBe(GLYPHS_BY_INK[0])
+  })
+
+  it('names a full palette at the cap without running out', () => {
+    const symbols = symbolsFor(paletteOf(MAX_COLOUR_COUNT))
+    expect(symbols).toHaveLength(MAX_COLOUR_COUNT)
+    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(MAX_COLOUR_COUNT)
+  })
+
+  it('refuses a palette larger than the symbol set — the ceiling is hard', () => {
+    expect(() => symbolsFor(paletteOf(MAX_COLOUR_COUNT + 1))).toThrow(RangeError)
+  })
+
+  it('handles an empty palette', () => {
+    expect(symbolsFor({ colours: [], colourCount: 0, sourceColourCount: 0 })).toEqual([])
+  })
+})
+
+describe('assignSymbols', () => {
+  it('distinctness hands out the set in authored order', () => {
+    const palette = paletteOf(20)
+    const glyphs = assignSymbols(palette, 'distinctness').map((s) => s.glyph)
+    expect(glyphs).toEqual(STITCH_SYMBOLS.slice(0, 20).map((s) => s.glyph))
   })
 
   for (const strategy of ASSIGNMENT_STRATEGIES) {

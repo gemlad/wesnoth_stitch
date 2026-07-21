@@ -400,10 +400,12 @@ visually distinguishable by symbol alone.
 
 **The set, pinned down (#16), then widened (#30/D3).** `STITCH_SYMBOLS` holds
 **49 glyphs** — the original 37, plus a provisional block of 12 appended by #30/D3 (below).
-It is ordered by *distinctness* rather than codepoint. Symbols are handed out in array order
-and the palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top
-of the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
-The original nine tiers:
+It is ordered by *distinctness* rather than codepoint — the array runs from the boldest,
+most unmistakable silhouettes down to the subtlest. **That ordering is an input to the
+assignment rule, not the rule itself:** which colour gets which glyph is decided by
+`assignment.ts`, and since #30/D1 that is `interleaved`, not "hand them out in array order"
+(see "Decided: `interleaved`" below). The array stays ranked by distinctness regardless,
+because every strategy reads it. The original nine tiers:
 
 1. **Solid geometrics** (4) — separable by silhouette alone: `● ■ ▲ ◆`
 2. **Outline counterparts** (5) — same silhouettes, inverted fill: `○ □ △ ◇ ☆`
@@ -555,12 +557,12 @@ side-observation.
   implemented in `pipeline/assignment.ts` (`assignSymbols(palette, strategy)`), driven by a
   per-glyph ink measurement — see below.
 
-#### Assignment strategies (#30/D1) — measured, awaiting a verdict
+#### Assignment strategies (#30/D1) — measured, then decided
 
-The #30 finding is that assignment, not the glyphs, is what breaks: the palette is sorted
-dominant-floss-first and `symbolsFor` hands glyphs out in distinctness order, and the most
-distinctive glyphs are also the inkiest, so the largest colour areas get the darkest
-symbols. Measured with `npm run measure:ink` (rendering each glyph in the bundled DejaVu and
+The #30 finding was that assignment, not the glyphs, is what breaks: the palette is sorted
+dominant-floss-first, and the rule *at the time* handed glyphs out in distinctness order,
+where the most distinctive glyphs are also the inkiest — so the largest colour areas got the
+darkest symbols. Measured with `npm run measure:ink` (rendering each glyph in the bundled DejaVu and
 counting cell fill, baked into `pipeline/glyph-ink.ts`): the four glyphs the set opens with —
 `■` 0.30, `●` 0.24, `▲`, `◆` — are all near the top of the ink ranking, while outlines and
 thin strokes (`☆ + = I`) sit near 0.04.
@@ -587,9 +589,29 @@ worst block on the sprite where the field collapses. **Interleaved does *not* fi
 block** (it still lands the second-heaviest glyph on a large area, sometimes worse than
 today). The open cost of inverse-density is legibility: the dominant colours get faint,
 letter-like glyphs that are less distinct from one another, so telling the big regions apart
-leans harder on the grid. That is a judgement for the eye, not the metric — hence the UAT
-artifact (real charts, export font, true cell size, B&W symbol-only). **Which rule to adopt
-is Gemma's call from that; §5.3 gets the verdict once it's made.**
+leans harder on the grid.
+
+#### Decided: `interleaved` (Gemma, 2026-07-17)
+
+**The app charts with `interleaved`.** `DEFAULT_ASSIGNMENT_STRATEGY` in
+`pipeline/assignment.ts` is the one constant that says so, and `symbolsFor` — the single
+entry point the preview, the chart pages and the floss key all call — routes through it, so
+a key can never disagree with its chart.
+
+This went **against the metric**, deliberately and with the numbers on the table. Ink
+concentration favoured inverse-density; the eye did not. What the block measurement cannot
+see is that a chart is a thing you *work from*: interleaved keeps a bold, unmistakable anchor
+on the dominant colour — the thing you re-find your place by — while still pushing the
+next-largest areas straight to the faintest glyphs, so the field breaks up without the whole
+chart going flat and characterless. Inverse-density's failure mode is not blobbing but
+sameness: faint letter-like glyphs on every large region, with nothing to navigate by. The
+accepted cost is a worst block no better than the status quo (0.302 vs 0.239 on the citizen).
+
+The measurement was still worth taking: it is what established that the metric and the
+judgement disagree here, and *why* — which is a more useful thing to have recorded than a
+number that happened to agree. Note also that the ink-ramp escape hatch (below) was closed
+before this choice was made, so interleaved was chosen knowing no ramp would rescue the
+alternative.
 
 **The ink-ramp escape hatch is closed (Gemma's decision, 2026-07-17).** It was tempting to
 say "if inverse-density reads too faint, give the big areas an ordered ink ramp (`░ ▒ ▓`) so

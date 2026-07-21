@@ -103,3 +103,44 @@ export function assignSymbols(
 export function glyphOrder(strategy: AssignmentStrategy): readonly string[] {
   return ORDER[strategy]
 }
+
+/**
+ * **The rule the app actually charts with — Gemma's D1 decision, 2026-07-17: `interleaved`.**
+ *
+ * Chosen after comparing all three on real charts at true print size. The metric alone
+ * favoured `inverse-density` (it flattens the worst 10×10 block ~2.4×, where interleaved does
+ * not improve it at all), but the measurement only counts ink — it cannot tell you whether a
+ * chart is pleasant to *stitch from*, and that judgement went the other way: interleaved keeps
+ * a bold, unmistakable anchor on the dominant colour while still pushing the next-largest
+ * areas to faint glyphs, so the chart stays readable without going flat and characterless.
+ * The trade — a worst block no better than today's — is accepted deliberately, with the
+ * numbers on the table.
+ *
+ * Changing this one constant re-charts the whole app, because everything that names a glyph
+ * goes through `symbolsFor` below.
+ */
+export const DEFAULT_ASSIGNMENT_STRATEGY: AssignmentStrategy = 'interleaved'
+
+/**
+ * One symbol per palette colour, index-aligned with `palette.colours`, under the app's chosen
+ * assignment rule (`DEFAULT_ASSIGNMENT_STRATEGY`).
+ *
+ * **This is the single entry point for "which glyph names this colour".** The preview, the PDF
+ * chart pages and the floss key all call it, which is what guarantees a key can never disagree
+ * with its chart — the one bug here that would waste a whole stitching project rather than
+ * merely look wrong. Do not re-derive an assignment anywhere else.
+ *
+ * Kept out of `PaletteColour` itself (§6): symbols are chart presentation, not part of the
+ * colour data, and the pipeline stages stay pure without them.
+ *
+ * **Stable only for a fixed `k`.** Reduction keeps *colours* stable as the slider moves
+ * (§5.2), but the palette reorders by pixel count, so a colour that survives a merge can still
+ * be handed a different glyph (#30/D2 — churn, deliberately not addressed). Within any single
+ * `k` every glyph is unique and stable, which is all an exported chart needs; do not treat a
+ * glyph as a colour's identity across colour counts.
+ *
+ * @throws RangeError if the palette holds more colours than the symbol set can name.
+ */
+export function symbolsFor(palette: QuantizedPalette): readonly StitchSymbol[] {
+  return assignSymbols(palette, DEFAULT_ASSIGNMENT_STRATEGY)
+}

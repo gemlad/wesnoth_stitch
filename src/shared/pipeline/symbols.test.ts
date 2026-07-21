@@ -1,25 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolAt, symbolsFor } from './symbols'
-import { mapSpriteToDmc } from './map-to-dmc'
-import { reduceSprite } from './reduce-over-dmc'
-import { DMC_COLORS } from '../colour'
-import type { DecodedImage } from '../ipc'
-import type { QuantizedPalette } from './types'
+import { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolAt } from './symbols'
 
 const glyphs = STITCH_SYMBOLS.map((s) => s.glyph)
 const codepoint = (g: string): number => g.codePointAt(0)!
-
-/** Build a 1-row opaque sprite from a list of RGB triples. */
-function imageOf(colours: readonly { r: number; g: number; b: number }[]): DecodedImage {
-  const data = new Uint8Array(colours.length * 4)
-  colours.forEach(({ r, g, b }, i) => {
-    data[i * 4] = r
-    data[i * 4 + 1] = g
-    data[i * 4 + 2] = b
-    data[i * 4 + 3] = 255
-  })
-  return { width: colours.length, height: 1, data }
-}
 
 describe('STITCH_SYMBOLS', () => {
   it('caps the slider at 49 — the original 37 plus the #30/D3 provisional additions', () => {
@@ -129,36 +112,5 @@ describe('symbolAt', () => {
   })
 })
 
-describe('symbolsFor', () => {
-  const paletteOf = (n: number): QuantizedPalette =>
-    reduceSprite(
-      mapSpriteToDmc(imageOf(DMC_COLORS.filter((_, i) => i % 6 === 0).map((c) => c.rgb))),
-      n
-    ).palette
-
-  it('gives one distinct symbol per colour, aligned with the palette order', () => {
-    const palette = paletteOf(12)
-    const symbols = symbolsFor(palette)
-    expect(symbols.length).toBe(palette.colours.length)
-    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(12)
-    // Index-aligned: the dominant floss takes the first, most distinctive glyph.
-    expect(symbols[0].glyph).toBe('●')
-    expect(symbols).toEqual(palette.colours.map((_, i) => symbolAt(i)))
-  })
-
-  it('names a full palette at the cap without running out', () => {
-    const symbols = symbolsFor(paletteOf(MAX_COLOUR_COUNT))
-    expect(symbols.length).toBe(MAX_COLOUR_COUNT)
-    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(MAX_COLOUR_COUNT)
-  })
-
-  it('refuses a palette larger than the symbol set — the ceiling is hard', () => {
-    const oversized = paletteOf(MAX_COLOUR_COUNT + 1)
-    expect(oversized.colours.length).toBe(MAX_COLOUR_COUNT + 1) // the fixture really is over
-    expect(() => symbolsFor(oversized)).toThrow(RangeError)
-  })
-
-  it('handles an empty palette', () => {
-    expect(symbolsFor({ colours: [], colourCount: 0, sourceColourCount: 0 })).toEqual([])
-  })
-})
+// `symbolsFor` is tested in assignment.test.ts — it belongs to the assignment rule (#30/D1),
+// not to the set. This file covers membership and ordering of STITCH_SYMBOLS only.

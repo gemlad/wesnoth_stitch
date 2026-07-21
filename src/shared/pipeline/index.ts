@@ -12,17 +12,16 @@ export {
   type ReducedSprite,
   type ReductionPlan
 } from './reduce-over-dmc'
-export {
-  MAX_COLOUR_COUNT,
-  STITCH_SYMBOLS,
-  symbolAt,
-  symbolsFor,
-  type StitchSymbol
-} from './symbols'
+export { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolAt, type StitchSymbol } from './symbols'
 export { GLYPH_INK, GLYPHS_BY_INK, inkOf } from './glyph-ink'
+// `symbolsFor` lives here, not in ./symbols: which glyph a colour gets is a *choice* of
+// assignment rule (#30/D1), and every consumer must go through the one function so the
+// chart and its floss key cannot disagree.
 export {
   assignSymbols,
   glyphOrder,
+  symbolsFor,
   ASSIGNMENT_STRATEGIES,
+  DEFAULT_ASSIGNMENT_STRATEGY,
   type AssignmentStrategy
 } from './assignment'

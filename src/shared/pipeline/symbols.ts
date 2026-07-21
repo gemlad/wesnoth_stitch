@@ -6,20 +6,28 @@
  * colours apart, so the set has to stay legible at roughly 5pt, in a ~10px grid cell.
  * That constraint, not the size of Unicode, is what fixes the count.
  *
- * **Ordered by distinctness, not by codepoint.** Symbols are handed out in array order,
- * and the palette is sorted dominant-floss-first (#14), so a low-`k` pattern spends only
- * the top of the list: bold, unmistakable silhouettes. Detail degrades gracefully as `k`
- * climbs rather than every chart drawing from the same undifferentiated pool.
+ * **Ordered by distinctness, not by codepoint** — the array runs from the boldest,
+ * most unmistakable silhouettes down to the subtlest. That ordering is *input* to the
+ * assignment rule, not the rule itself: `assignment.ts` decides which colour actually gets
+ * which glyph, and since #30/D1 that rule is `interleaved` rather than "hand them out in
+ * array order". Keep this array ranked by distinctness regardless — every strategy reads it.
  *
- * **Two rules decide what gets in**, both learned from glyphs that failed when the set
- * was actually rendered at chart scale:
+ * **Three rules decide what gets in.** The first is a standing decision; the other two were
+ * learned from glyphs that failed when the set was actually rendered at chart scale:
  *
- * 1. **One orientation per shape family.** A rotated glyph is not a new glyph. The eye
+ * 1. **Distinguish by shape, not by shade** (Gemma, 2026-07-17). A glyph earns its place by
+ *    being a *different mark*, not by laying down more or less of the same one. Distinct
+ *    fills are fine where each reads as its own thing — `●`/`○`, the half-fill `◐`, the
+ *    crosshatch `▦` — because those are recognised, not measured. A graded ink ramp
+ *    (`░ ▒ ▓ █`, or circle fill-states used as a series) is **rejected**: reading *how much*
+ *    ink a 2.36 mm cell holds while counting stitches is the work a symbol should save you.
+ *    Value-shading — glyph darkness standing in for the colour's darkness — is out too.
+ * 2. **One orientation per shape family.** A rotated glyph is not a new glyph. The eye
  *    reads `▲ ▼ ◀ ▶` as one symbol pointing four ways and has to *decode* the direction,
  *    which is precisely the work a chart symbol exists to avoid. Only the upward
  *    triangle survives; likewise a single half-filled circle, with no mirror twin to be
  *    confused against.
- * 2. **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled
+ * 3. **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled
  *    area and little else, so `★` and `◆` become the same dark lozenge. The star is
  *    kept only in outline, where its points actually register.
  *
@@ -49,7 +57,6 @@
  * over the bundled font. `MAX_COLOUR_COUNT` tracks the array length either way, so the
  * print test can knock it back down one glyph at a time. See §5.3.
  */
-import type { QuantizedPalette } from './types'
 
 /** One chart glyph. `name` is for the floss key and for screen readers. */
 export interface StitchSymbol {
@@ -161,27 +168,9 @@ export function symbolAt(index: number): StitchSymbol {
 }
 
 /**
- * One symbol per palette colour, index-aligned with `palette.colours` — so the dominant
- * floss gets the most distinctive glyph.
- *
- * Kept out of `PaletteColour` itself (§6): symbols are chart presentation, not part of
- * the colour data, and the pipeline stages stay pure without them.
- *
- * **Stable only for a fixed `k`.** Reduction keeps *colours* stable as the slider moves
- * (§5.2), but the palette reorders by pixel count, so a colour that survives a merge can
- * still be handed a different glyph. Measured on the dwarvish scout, 22 of 30 slider
- * steps reassign at least one surviving colour's symbol. Within any single `k` every
- * glyph is unique and stable, which is all an exported chart needs — but do not treat a
- * glyph as a colour's identity across colour counts, and do not persist one expecting it
- * to survive a re-quantization. See "Limitations of the hard limit" in §5.3.
- *
- * @throws RangeError if the palette holds more colours than the symbol set can name.
+ * **`symbolsFor` now lives in `assignment.ts`.** Which glyph a colour gets is no longer a
+ * property of this module: #30/D1 turned it into a choice between rules, and Gemma chose
+ * **interleaved**. This file owns the *set*; `assignment.ts` owns *who gets what*, and
+ * exports `symbolsFor` as the app-wide entry point so the chart and the floss key cannot
+ * drift apart.
  */
-export function symbolsFor(palette: QuantizedPalette): readonly StitchSymbol[] {
-  if (palette.colours.length > MAX_COLOUR_COUNT) {
-    throw new RangeError(
-      `Palette has ${palette.colours.length} colours but only ${MAX_COLOUR_COUNT} stitch symbols exist`
-    )
-  }
-  return palette.colours.map((_, i) => STITCH_SYMBOLS[i])
-}
