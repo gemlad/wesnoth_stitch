@@ -26,7 +26,7 @@
     "assign:compare": "node scripts/run-ts.mjs scripts/assignment-compare.ts",
     "uat": "npm run uat:chart && npm run uat:legibility",
     "uat:chart": "node scripts/run-ts.mjs scripts/uat-chart.ts",
-    "uat:legibility": "npm run validate:cap && electron scripts/legibility-sheet.mjs"
+    "uat:legibility": "node scripts/run-ts.mjs scripts/legibility-sheet.ts"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
