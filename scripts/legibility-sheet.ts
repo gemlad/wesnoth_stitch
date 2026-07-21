@@ -53,6 +53,15 @@ const INK = rgb(0, 0, 0)
 const MUTED = rgb(0.35, 0.35, 0.35)
 const HAIR = rgb(0.6, 0.6, 0.6)
 
+/**
+ * Chart gridline weights — deliberately identical to `pdf-chart.ts`, because the whole point
+ * of this rewrite is that a chart on this sheet and a chart from the export are the same
+ * object. Every 10th line is heavy: the convention every commercial chart uses to count by.
+ */
+const CHART_MAJOR_EVERY = 10
+const CHART_MINOR_PT = 0.2
+const CHART_MAJOR_PT = 0.7
+
 /** The scale that matters: a 72-cell sprite across A4's printable width. */
 const REFERENCE_CELL_MM = 2.361
 const SCALES: { mm: number; note: string }[] = [
@@ -149,6 +158,11 @@ class Sheet {
     return size * SCALE
   }
 
+  /** How wide a string renders, back in millimetres — for right-aligning labels. */
+  textWidthMm(s: string, sizePt: number): number {
+    return (this.font.widthOfTextAtSize(s, sizePt) * MM_PER_IN) / PT_PER_IN
+  }
+
   text(s: string, xMm: number, baselineMm: number, sizePt: number, color = INK): void {
     this.page.drawText(s, {
       x: this.X(xMm),
@@ -188,12 +202,21 @@ class Sheet {
     return y + lineMm * 0.4
   }
 
-  line(x1: number, y1: number, x2: number, y2: number, thickness = 0.4, color = INK): void {
+  line(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    thickness = 0.4,
+    color = INK,
+    opacity = 1
+  ): void {
     this.page.drawLine({
       start: { x: this.X(x1), y: this.Y(y1) },
       end: { x: this.X(x2), y: this.Y(y2) },
       thickness: this.pt(thickness),
-      color
+      color,
+      opacity
     })
   }
 
@@ -605,12 +628,27 @@ async function build(): Promise<Uint8Array> {
         if (g !== ' ') s.glyphCell(g, MARGIN + c * cell, top + r * cell, cell, false)
       }
     }
-    // gridlines every 10 cells, as a real chart has
-    for (let c = 0; c <= chart.width; c += 10) {
-      s.line(MARGIN + c * cell, top, MARGIN + c * cell, top + chart.height * cell, 0.25, HAIR)
+    // The cell grid — **every** line, not just the tens. In symbol-only mode the grid is the
+    // only thing separating one stitch from the next (§5.4), so a chart without it is not the
+    // thing being judged. Same weights, colour and opacity as pdf-chart.ts, so the sheet's
+    // chart and the exported chart are the same object.
+    for (let c = 0; c <= chart.width; c++) {
+      const t = c % CHART_MAJOR_EVERY === 0 ? CHART_MAJOR_PT : CHART_MINOR_PT
+      s.line(MARGIN + c * cell, top, MARGIN + c * cell, top + chart.height * cell, t, INK, 0.6)
     }
-    for (let r = 0; r <= chart.height; r += 10) {
-      s.line(MARGIN, top + r * cell, MARGIN + chart.width * cell, top + r * cell, 0.25, HAIR)
+    for (let r = 0; r <= chart.height; r++) {
+      const t = r % CHART_MAJOR_EVERY === 0 ? CHART_MAJOR_PT : CHART_MINOR_PT
+      s.line(MARGIN, top + r * cell, MARGIN + chart.width * cell, top + r * cell, t, INK, 0.6)
+    }
+
+    // Row/column rulers on the tens, as the exported chart carries — they are how you find
+    // your place, and their absence would change what you are judging.
+    for (let c = 0; c < chart.width; c += CHART_MAJOR_EVERY) {
+      s.text(String(c), MARGIN + c * cell + 0.4, top - 1.2, 5.5, MUTED)
+    }
+    for (let r = 0; r < chart.height; r += CHART_MAJOR_EVERY) {
+      const label = String(r)
+      s.text(label, MARGIN - s.textWidthMm(label, 5.5) - 1, top + r * cell + 1.6, 5.5, MUTED)
     }
   }
 
