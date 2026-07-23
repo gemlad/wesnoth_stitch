@@ -20,6 +20,7 @@ import { contrastInk, type RGB } from '../../shared/colour'
 import type { PatternSettings } from '../../shared/ipc'
 import { symbolsFor, type QuantizedPalette, type StitchPattern } from '../../shared/pipeline'
 import { drawLicenceFooter } from './pdf-footer'
+import { centreMarksForTile, drawCentreMarks } from './pdf-markers'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -187,6 +188,11 @@ function drawTile(
       color: line
     }
   )
+
+  // 5. Centre markers (#54): whichever of top-edge / side-edge / true-centre fall on this
+  //    tile, so a stitcher can start from the middle. On a multi-page chart each mark lands
+  //    only on the page that holds its edge or cell.
+  drawCentreMarks(page, centreMarksForTile(pattern, tile), tile, { left, gridTop, cell })
 }
 
 /**
