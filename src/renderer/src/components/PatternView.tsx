@@ -71,11 +71,11 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   const [colourCount, setColourCount] = useState<number | null>(null)
 
   /**
-   * Which export is running, if any. Building a chart takes long enough to notice, and a
+   * Whether a chart export is running. Building a chart takes long enough to notice, and a
    * second click while the save dialog is already up would open a second dialog — so the
-   * buttons disable rather than queue.
+   * button disables rather than queue.
    */
-  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null)
+  const [exporting, setExporting] = useState(false)
   /** Last export outcome, shown briefly. `null` after a cancel — that is not worth saying. */
   const [exported, setExported] = useState<string | null>(null)
 
@@ -126,14 +126,14 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
     : 0
 
   /**
-   * Export the pattern as it is on screen.
+   * Export the printable chart as it is on screen.
    *
    * Main re-derives the pattern from `(id, colourCount)` — see `ExportRequest`. What is sent
    * is the *current* `k` and settings, so what lands on disk is what you are looking at.
    */
-  const onExport = async (kind: 'png' | 'pdf'): Promise<void> => {
+  const onExportPdf = async (): Promise<void> => {
     if (exporting || !sprite) return
-    setExporting(kind)
+    setExporting(true)
     setExported(null)
     try {
       const request = {
@@ -141,15 +141,14 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
         ...(colourCount === null ? {} : { colourCount }),
         settings
       }
-      const outcome =
-        kind === 'pdf' ? await window.api.exportPdf(request) : await window.api.exportPng(request)
+      const outcome = await window.api.exportPdf(request)
 
       // Cancelling is not a failure — say nothing at all.
       if (outcome.status === 'saved') setExported(outcome.path)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setExporting(null)
+      setExporting(false)
     }
   }
 
@@ -233,20 +232,11 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
             <button
               type="button"
               className="pattern-controls__button"
-              title="Save the pattern as a PNG image"
-              disabled={exporting !== null}
-              onClick={() => void onExport('png')}
-            >
-              {exporting === 'png' ? 'Saving…' : 'PNG'}
-            </button>
-            <button
-              type="button"
-              className="pattern-controls__button"
               title="Save the printable chart: cover, floss key, and chart pages"
-              disabled={exporting !== null}
-              onClick={() => void onExport('pdf')}
+              disabled={exporting}
+              onClick={() => void onExportPdf()}
             >
-              {exporting === 'pdf' ? 'Building…' : 'Chart PDF'}
+              {exporting ? 'Building…' : 'Chart PDF'}
             </button>
           </div>
         )}

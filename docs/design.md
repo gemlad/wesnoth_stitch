@@ -740,9 +740,13 @@ charts, and that logic is portable. The main change is what it runs against: the
 `StitchPattern` / `QuantizedPalette` structures (§6) instead of the old flattened-image
 path. Milestone 3; broken down in `milestone-3-tasks.md`.
 
-**PNG.** One block of N×N pixels per stitch, written with `pngjs` in the main process (no
+**PNG.** One block of N×N pixels per stitch, rendered with `pngjs` in the main process (no
 canvas needed — it is already the decoder). "No stitch" cells take
-`PatternSettings.backgroundColour`, not the prototype's hardcoded cream.
+`PatternSettings.backgroundColour`, not the prototype's hardcoded cream. **The standalone
+"save preview PNG" action was removed (#45):** a bare raster of the pattern, with no glyphs
+or gridlines, was not worth a separate export button once the chart PDF covers real use.
+`renderPatternPng` stays as the renderer for the preview embedded in the PDF front matter
+(#46) — the quick look now lives inside the chart, not beside it.
 
 **PDF.** Multi-page, via `pdf-lib` (§3): a cover/stats page (dimensions, colour count,
 finished size at Aida 11/14/16/18, and the Wesnoth artwork attribution the licence asks

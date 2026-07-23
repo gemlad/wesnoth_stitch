@@ -14,7 +14,6 @@ import { decodeImage, makeThumbnail } from './images'
 import { convertSprite } from './convert'
 import { loadExportFont } from './export/font'
 import { buildChartPdf } from './export/pdf'
-import { renderPatternPng } from './export/png'
 
 /**
  * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
@@ -111,27 +110,9 @@ export function registerIpcHandlers(): void {
     }
   )
 
-  // Both export handlers re-derive the pattern from (id, colourCount) rather than take it
+  // The export handler re-derives the pattern from (id, colourCount) rather than take it
   // from the renderer. convertSprite's cache makes that free, and it means the exported
   // file and the preview it came from are the *same* conversion — they cannot disagree.
-
-  ipcMain.handle(
-    IpcChannels.exportPng,
-    async (event, { id, colourCount, settings }: ExportRequest): Promise<ExportOutcome> => {
-      const { palette, pattern } = await convertSprite(id, resolveSpritePath(id), colourCount)
-
-      return saveThrough(
-        event,
-        { defaultName: spriteName(id), extension: 'png', description: 'PNG image' },
-        async (path) => {
-          const png = renderPatternPng(pattern, palette, {
-            backgroundColour: settings.backgroundColour
-          })
-          await writeFile(path, png)
-        }
-      )
-    }
-  )
 
   ipcMain.handle(
     IpcChannels.exportPdf,

@@ -44,7 +44,6 @@ export const IpcChannels = {
   getThumbnail: 'sprites:thumbnail',
   getFullImage: 'sprites:full-image',
   convertSprite: 'sprites:convert',
-  exportPng: 'export:png',
   exportPdf: 'export:pdf'
 } as const
 
@@ -139,13 +138,6 @@ export interface SpriteApi {
    * Rejects if `colourCount` is not an integer in `1..maxColourCount`.
    */
   convertSprite(id: string, colourCount?: number): Promise<ConvertedSprite>
-
-  /**
-   * Export the pattern as a PNG (§5.5, #33) — the quick look, no glyphs, no gridlines.
-   *
-   * Opens a save dialog. Resolves `{ status: 'cancelled' }` if the user backs out.
-   */
-  exportPng(request: ExportRequest): Promise<ExportOutcome>
 
   /**
    * Export the printable chart as a PDF (§5.5, #34/#35) — cover, floss key, chart pages.
