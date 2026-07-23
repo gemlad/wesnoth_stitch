@@ -23,9 +23,9 @@ export function SpriteSetup({
     <div className="sprite-setup">
       <h2>Getting the Wesnoth sprites</h2>
       <p className="sprite-setup__lead">
-        The unit sprites are downloaded from the official Battle for Wesnoth project the first
-        time you run the app — a one-time download of a few megabytes. It needs an internet
-        connection just this once.
+        The unit sprites are downloaded the first time you run the app — a one-time download of
+        a few megabytes, from the Wesnoth Stitch project&rsquo;s own copy of the Battle for
+        Wesnoth artwork. It needs an internet connection just this once.
       </p>
 
       {error ? (

@@ -56,6 +56,18 @@ function inkFor(background: RGB): ReturnType<typeof rgb> {
 }
 
 /**
+ * The ink a chart glyph is drawn in.
+ *
+ * In `both` mode the glyph sits on its floss cell, so it takes whichever of black/white
+ * contrasts with that colour. In `symbol`-only mode the cell is bare white paper (nothing is
+ * filled) and the chart is a black-and-white print, so the glyph is **always black** — the
+ * fabric background must never tint it, or a dark fabric prints white glyphs onto white paper.
+ */
+export function glyphInk(showColour: boolean, floss: RGB): ReturnType<typeof rgb> {
+  return showColour ? inkFor(floss) : rgb(0, 0, 0)
+}
+
+/**
  * Draw one tile onto `page`.
  *
  * PDF's origin is bottom-left and the pattern's is top-left, so every row is flipped as it
@@ -110,10 +122,8 @@ function drawTile(
       // A no-stitch cell gets no glyph: there is no floss there to name.
       if (showSymbol && index !== null) {
         const glyph = symbols[index].glyph
-        // In `symbol` mode the cell is bare paper, so the ink must contrast with the
-        // *fabric*; in `both` mode it sits on the floss colour. Same call the preview
-        // makes (§5.3), so the export cannot pick an ink the preview would not have.
-        const ink = inkFor(showColour ? colour : backgroundColour)
+        // Black on bare paper in symbol-only mode; contrast against the floss in both mode.
+        const ink = glyphInk(showColour, colour)
         const w = font.widthOfTextAtSize(glyph, glyphPt)
         page.drawText(glyph, {
           x: x + (cell - w) / 2,

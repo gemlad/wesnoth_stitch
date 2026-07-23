@@ -57,6 +57,10 @@ body {
   color: #ff6b6b;
 }
 
+.sprite-update__ok {
+  color: var(--ev-c-text-2);
+}
+
 /* First-run sprite download screen (#70) ---------------------------------- */
 
 .sprite-setup {

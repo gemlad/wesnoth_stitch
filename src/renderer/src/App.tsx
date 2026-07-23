@@ -18,6 +18,9 @@ function App(): React.JSX.Element {
   const [downloading, setDownloading] = useState(false)
   const [progress, setProgress] = useState<SpriteDownloadProgress | null>(null)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  // A confirmation shown after a successful "update sprites", so it doesn't just quietly
+  // snap back to the button with no feedback.
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null)
   // Guard against the mount effect firing a second time (React 18 StrictMode double-invoke).
   const started = useRef(false)
 
@@ -31,6 +34,7 @@ function App(): React.JSX.Element {
   const runDownload = useCallback((): void => {
     setDownloading(true)
     setDownloadError(null)
+    setUpdateMessage(null)
     setProgress(null)
     const unsubscribe = window.api.onSpriteProgress(setProgress)
     window.api
@@ -38,6 +42,7 @@ function App(): React.JSX.Element {
       .then(({ version }) => {
         setStatus((s) => (s ? { ...s, state: 'ready', version } : s))
         setError(null)
+        setUpdateMessage(`Sprites up to date (Wesnoth ${version}).`)
         loadList()
       })
       .catch((e: unknown) => setDownloadError(e instanceof Error ? e.message : String(e)))
@@ -78,6 +83,9 @@ function App(): React.JSX.Element {
             <button onClick={runDownload} disabled={downloading}>
               {downloading ? phaseLabel(progress, null) : 'Update sprites'}
             </button>
+            {!downloading && updateMessage && !downloadError && (
+              <span className="sprite-update__ok">{updateMessage}</span>
+            )}
             {downloadError && <span className="sprite-update__error">Update failed: {downloadError}</span>}
           </div>
         )}
