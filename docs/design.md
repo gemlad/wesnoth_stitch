@@ -752,8 +752,12 @@ or gridlines, was not worth a separate export button once the chart PDF covers r
 finished size at Aida 11/14/16/18, **a colour preview of the pattern embedded via `embedPng`
 — #46**, and the Wesnoth artwork attribution the licence asks for), floss key page(s) —
 swatch, glyph, DMC code and name, stitch count — then tiled chart pages with gridlines bold
-every 10th. The cover preview reuses `renderPatternPng` (§5.5 PNG), so the quick colour look
-that was once a standalone export (#45) now rides inside the document it belongs to.
+every 10th and **centre markers (#54)**: arrows at the mid-column of the top edge and the
+mid-row of the left edge, and a diamond on the true centre cell, so a stitcher can start from
+the middle and count outward. On a multi-page chart each mark is drawn only on the page that
+holds its edge or cell (`centreMarksForTile`). The cover preview reuses `renderPatternPng`
+(§5.5 PNG), so the quick colour look that was once a standalone export (#45) now rides inside
+the document it belongs to.
 
 **The licence notice is on every page, not just the cover (#47).** Wesnoth's art licence
 (GPL v2+ / CC-BY-SA 4.0) requires credit on derived work, and a loose chart page printed
