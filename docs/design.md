@@ -755,6 +755,13 @@ swatch, glyph, DMC code and name, stitch count — then tiled chart pages with g
 every 10th. The cover preview reuses `renderPatternPng` (§5.5 PNG), so the quick colour look
 that was once a standalone export (#45) now rides inside the document it belongs to.
 
+**The licence notice is on every page, not just the cover (#47).** Wesnoth's art licence
+(GPL v2+ / CC-BY-SA 4.0) requires credit on derived work, and a loose chart page printed
+without its cover would otherwise carry none. A shared `drawLicenceFooter` (from the one
+wording in `shared/licence.ts`) draws it in the bottom margin of the cover, every key page and
+every chart page; the same string is shown in an on-screen footer in the app, so the two can't
+drift.
+
 **Two things the port must get right, both of which the prototype gets wrong:**
 
 - **Cells are sized in millimetres, not in figure-relative units.** The prototype tiles at

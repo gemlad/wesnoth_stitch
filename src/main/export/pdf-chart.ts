@@ -19,6 +19,7 @@ import { rgb } from 'pdf-lib'
 import { contrastInk, type RGB } from '../../shared/colour'
 import type { PatternSettings } from '../../shared/ipc'
 import { symbolsFor, type QuantizedPalette, type StitchPattern } from '../../shared/pipeline'
+import { drawLicenceFooter } from './pdf-footer'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -208,6 +209,7 @@ export function drawChartPages(
   return tiles.map((tile) => {
     const page = pdf.addPage([mmToPt(A4_WIDTH_MM), mmToPt(A4_HEIGHT_MM)])
     drawTile(page, tile, pattern, palette, font, resolved)
+    drawLicenceFooter(page, font) // every page carries the attribution (#47)
     return page
   })
 }

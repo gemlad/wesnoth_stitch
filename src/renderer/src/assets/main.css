@@ -57,6 +57,20 @@ body {
   min-height: 0;
 }
 
+/* Licence footer ---------------------------------------------------------- */
+
+.app-footer {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 6px 24px;
+  border-top: 1px solid var(--ev-c-gray-3);
+  font-size: 11px;
+  color: var(--ev-c-text-2);
+  user-select: text;
+}
+
 /* Sprite browser ---------------------------------------------------------- */
 
 .sprite-browser {
