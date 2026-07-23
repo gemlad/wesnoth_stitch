@@ -81,10 +81,10 @@ describe('drawKeyPages', () => {
     expect(drawKeyPages(pdf, paletteOf(40), font)).toHaveLength(1)
   })
 
-  it('spills a full 49-colour cap key onto a second page rather than clipping', () => {
-    // #30/D3 widened the set to 49, past the 40 one page holds, so the pagination is now
-    // live on a real chart. Row pitch was deliberately not shrunk to reclaim the page while
-    // the widened glyphs are still provisional (#28).
+  it('spills a full 47-colour cap key onto a second page rather than clipping', () => {
+    // #30/D3 widened the set and #28 settled it at 47, past the 40 one page holds, so the
+    // pagination is now live on a real chart. Row pitch was deliberately not shrunk to
+    // reclaim the page.
     expect(MAX_COLOUR_COUNT).toBeGreaterThan(keyRowsPerPage())
     expect(drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT), font)).toHaveLength(2)
   })

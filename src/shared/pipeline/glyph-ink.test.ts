@@ -24,14 +24,14 @@ describe('GLYPH_INK', () => {
     // noise. Filled square/circle are the darkest; a thin plus and an open star the lightest.
     expect(inkOf('■')).toBeGreaterThan(inkOf('□'))
     expect(inkOf('●')).toBeGreaterThan(inkOf('○'))
-    expect(inkOf('◆')).toBeGreaterThan(inkOf('◇'))
+    expect(inkOf('♦')).toBeGreaterThan(inkOf('◇'))
     expect(inkOf('■')).toBeGreaterThan(0.25)
     expect(inkOf('+')).toBeLessThan(0.07)
     expect(inkOf('☆')).toBeLessThan(0.07)
   })
 
   it('captures the #30 defect: the distinctness-first glyphs are among the inkiest', () => {
-    // STITCH_SYMBOLS opens with ● ■ ▲ ◆ — the point of the whole spike is that these, the
+    // STITCH_SYMBOLS opens with ● ■ ▲ ♦ — the point of the whole spike is that these, the
     // most distinctive glyphs, are also nearly the darkest, so dominant-first assignment
     // piles ink onto the biggest areas.
     const lightest = GLYPHS_BY_INK.slice(0, 8)

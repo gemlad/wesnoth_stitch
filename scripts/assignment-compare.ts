@@ -23,6 +23,7 @@ import {
   assignSymbols,
   inkOf,
   mapSpriteToDmc,
+  MAX_COLOUR_COUNT,
   planReduction,
   reduceTo,
   type AssignmentStrategy
@@ -135,7 +136,7 @@ function chartOf(relPath: string, k: number): SpriteComparison {
 const report = {
   cellMm: 2.36,
   scout: chartOf('dwarves/scout.png', 20),
-  citizen: chartOf('merfolk/citizen.png', 49)
+  citizen: chartOf('merfolk/citizen.png', MAX_COLOUR_COUNT)
 }
 
 mkdirSync(OUT_DIR, { recursive: true })

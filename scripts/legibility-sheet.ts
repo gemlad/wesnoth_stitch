@@ -73,25 +73,30 @@ const SCALES: { mm: number; note: string }[] = [
 
 /**
  * Pairs to judge. The three original marginal letters, plus every collision the widened set
- * (#30/D3) is suspected of introducing — the card suits against the geometrics they echo, the
+ * (#30/D3) was suspected of introducing — the card suits against the geometrics they echo, the
  * crosshatch square against the solid and open ones, and the restored digits against their
  * nearest letters. Controls the design already resolved are mixed in unlabelled-as-such so the
  * eye is not primed.
+ *
+ * **Outcome of the print test (#28, 2026-07-23):** every letter pair and digit passed. The
+ * two casualties were ♦ vs ◆ (kept ♦, dropped ◆) and the crosshatch ▦ vs ■/□ (dropped ▦).
+ * ♠ vs ▲ passed, contrary to the guess. The dropped glyphs are kept in the pair list below so
+ * the sheet still shows *why* they went, but neither is in `STITCH_SYMBOLS` any more.
  */
 const PAIRS: [string, string, string][] = [
-  ['C', 'G', 'marginal (§5.3)'],
-  ['E', 'F', 'marginal (§5.3)'],
-  ['P', 'R', 'marginal (§5.3)'],
-  ['♦', '◆', 'NEW — expected to fail'],
-  ['♠', '▲', 'NEW — expected to fail'],
-  ['▦', '■', 'NEW — fill vs solid'],
-  ['▦', '□', 'NEW — fill vs outline'],
-  ['†', '‡', 'NEW — print marks'],
-  ['§', '¶', 'NEW — print marks'],
-  ['♣', '♠', 'NEW — suits'],
-  ['3', 'B', 'NEW — digit vs letter'],
-  ['7', 'T', 'NEW — digit vs letter'],
-  ['4', 'A', 'NEW — digit vs letter'],
+  ['C', 'G', 'marginal (§5.3) — passed'],
+  ['E', 'F', 'marginal (§5.3) — passed'],
+  ['P', 'R', 'marginal (§5.3) — passed'],
+  ['♦', '◆', 'DROPPED ◆ — indistinct, kept ♦'],
+  ['♠', '▲', 'passed — both kept'],
+  ['▦', '■', 'DROPPED ▦ — fill vs solid'],
+  ['▦', '□', 'DROPPED ▦ — fill vs outline'],
+  ['†', '‡', 'print marks — passed'],
+  ['§', '¶', 'print marks — passed'],
+  ['♣', '♠', 'suits — passed'],
+  ['3', 'B', 'digit vs letter — passed'],
+  ['7', 'T', 'digit vs letter — passed'],
+  ['4', 'A', 'digit vs letter — passed'],
   ['●', '◆', 'control'],
   ['○', '◇', 'control'],
   ['+', '×', 'control'],
@@ -453,7 +458,7 @@ async function build(): Promise<Uint8Array> {
     s.text(`${sc.mm.toFixed(2)} mm`, MARGIN, y, 9.5, isReal ? INK : MUTED)
     s.text(sc.note, MARGIN + 20, y, 8, MUTED)
     y += 2.5
-    // 49 cells at 3mm = 147mm, inside the 174mm content width: one row per scale.
+    // 47 cells at 3mm = 141mm, inside the 174mm content width: one row per scale.
     s.glyphRow(glyphs, MARGIN, y, sc.mm)
     y += sc.mm + 7
   }

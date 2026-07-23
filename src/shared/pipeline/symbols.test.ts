@@ -5,9 +5,9 @@ const glyphs = STITCH_SYMBOLS.map((s) => s.glyph)
 const codepoint = (g: string): number => g.codePointAt(0)!
 
 describe('STITCH_SYMBOLS', () => {
-  it('caps the slider at 49 — the original 37 plus the #30/D3 provisional additions', () => {
-    // Provisional: the print test (#28) may remove blob-collisions and lower this.
-    expect(MAX_COLOUR_COUNT).toBe(49)
+  it('caps the slider at 47 — the widened 49 less the two print-test (#28) casualties', () => {
+    // The print test settled the set: ◆ (kept ♦ instead) and ▦ were culled from the 49.
+    expect(MAX_COLOUR_COUNT).toBe(47)
     expect(STITCH_SYMBOLS.length).toBe(MAX_COLOUR_COUNT)
   })
 
@@ -29,13 +29,14 @@ describe('STITCH_SYMBOLS', () => {
   })
 
   it('restores 3/4/7 and the widened families (#30/D3), tofu-safety delegated to the font', () => {
-    // The original 37 stayed inside near-universal ranges; the provisional additions do
-    // not, so "font-safe by range" is retired. Coverage is now guaranteed against the
-    // actual bundled DejaVu Sans by font-coverage.test.ts, not asserted here by codepoint.
+    // The original 37 stayed inside near-universal ranges; the widened glyphs do not, so
+    // "font-safe by range" is retired. Coverage is now guaranteed against the actual bundled
+    // DejaVu Sans by font-coverage.test.ts, not asserted here by codepoint.
     for (const g of ['3', '4', '7']) expect(glyphs).toContain(g)
     for (const g of ['♥', '♣', '♦', '♠']) expect(glyphs).toContain(g)
     for (const g of ['†', '‡', '§', '¶']) expect(glyphs).toContain(g)
-    expect(glyphs).toContain('▦')
+    // The crosshatch square ▦ was culled by the print test (#28) — indistinct from ■ and □.
+    expect(glyphs).not.toContain('▦')
   })
 
   it('rule 1: carries one orientation per shape family — a rotation is not a new glyph', () => {
@@ -50,8 +51,10 @@ describe('STITCH_SYMBOLS', () => {
 
   it('rule 2: no two solid glyphs share an ink blob at chart size', () => {
     // A filled star closes up into the same dark lozenge as a filled diamond at 9px,
-    // so the star is kept in outline only, where its points actually register.
-    expect(glyphs).toContain('◆')
+    // so the star is kept in outline only, where its points actually register. The set's
+    // filled diamond is now the card suit ♦; the geometric ◆ was culled in print (#28).
+    expect(glyphs).toContain('♦')
+    expect(glyphs).not.toContain('◆')
     expect(glyphs).not.toContain('★')
     expect(glyphs).toContain('☆')
   })
@@ -76,25 +79,14 @@ describe('STITCH_SYMBOLS', () => {
     // Then the strokes, then the original 23 letters.
     expect(glyphs.slice(10, 14)).toEqual(['+', '×', '#', '='])
     expect(glyphs.slice(14, 37).every((g) => /[A-Z]/.test(g))).toBe(true)
-    // The #30/D3 provisional block sits after the validated 37, in a fixed order.
-    expect(glyphs.slice(37)).toEqual([
-      '♥',
-      '♣',
-      '♦',
-      '♠',
-      '▦',
-      '†',
-      '‡',
-      '§',
-      '¶',
-      '3',
-      '4',
-      '7'
-    ])
+    // The #30/D3 widened block sits after the original 37, in a fixed order — less the two
+    // print-test casualties (◆, and ▦ which lived in this block). ♦ was promoted to tier 1.
+    expect(glyphs.slice(37)).toEqual(['♥', '♣', '♠', '†', '‡', '§', '¶', '3', '4', '7'])
     // Solid before outline: a filled circle outranks an open one.
     expect(glyphs.indexOf('●')).toBeLessThan(glyphs.indexOf('○'))
     expect(glyphs.indexOf('■')).toBeLessThan(glyphs.indexOf('□'))
-    expect(glyphs.indexOf('◆')).toBeLessThan(glyphs.indexOf('◇'))
+    // The filled diamond ♦ (tier 1) outranks the open diamond ◇ (tier 2).
+    expect(glyphs.indexOf('♦')).toBeLessThan(glyphs.indexOf('◇'))
   })
 })
 

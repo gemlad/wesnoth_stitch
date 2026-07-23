@@ -29,11 +29,10 @@ export const AIDA_COUNTS = [11, 14, 16, 18] as const
  * Vertical pitch of one floss-key row.
  *
  * 6mm, not 7 — so **one page holds 40 rows**, which fit the original 37-colour cap on a
- * single sheet. #30 / D3 has since widened the set provisionally to 49, so a full-cap key
- * now spans **two** pages; `drawKeyPages` paginates for exactly this. Row pitch is
- * deliberately *not* shrunk to reclaim one page: the widened glyphs are provisional (the
- * #28 print test may drop the cap back under 40), and squeezing key legibility for a number
- * that may not hold would be the wrong trade. Revisit if the cap settles above 40.
+ * single sheet. #30 / D3 widened the set and the #28 print test settled it at 47, so a
+ * full-cap key now spans **two** pages; `drawKeyPages` paginates for exactly this. Row pitch
+ * is deliberately *not* shrunk to reclaim one page: squeezing key legibility to save a sheet
+ * would be the wrong trade. Revisit only if #57 grows the cap much further.
  */
 const KEY_ROW_MM = 6
 /** Space at the top of a key page for its heading. */
@@ -137,18 +136,19 @@ export function drawCoverPage(
  * the key re-index the palette itself, is how a chart ends up keyed wrong — the one bug
  * that would waste an entire stitching project rather than just look bad.
  *
- * Paginates. Up to 40 colours the key is a single page; a full 49-colour cap (#30 / D3)
- * spills onto a second. "It always fits on one page" was exactly the assumption that broke
- * when the cap moved, which is why this loop exists.
+ * Paginates. Up to 40 colours the key is a single page; a full 47-colour cap (#30 / D3,
+ * #28) spills onto a second. "It always fits on one page" was exactly the assumption that
+ * broke when the cap moved, which is why this loop exists.
  */
 export function drawKeyPages(
   pdf: PDFDocument,
   palette: QuantizedPalette,
   font: PDFFont,
   /**
-   * Rows per page. Defaults to what the page holds (40). The cap has since risen to 49
-   * (#30 / D3), so a full-cap key now runs onto a second page and the pagination below is
-   * live, not merely defensive. A test overrides this to exercise the boundary directly.
+   * Rows per page. Defaults to what the page holds (40). The cap has since risen to 47
+   * (#30 / D3, settled by #28), so a full-cap key now runs onto a second page and the
+   * pagination below is live, not merely defensive. A test overrides this to exercise the
+   * boundary directly.
    */
   rowsPerPage: number = keyRowsPerPage()
 ): PDFPage[] {

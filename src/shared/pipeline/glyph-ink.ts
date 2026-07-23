@@ -9,9 +9,10 @@
  *
  * **Why this exists.** Today's assignment hands glyphs out by *distinctness* (§5.3), and the
  * palette is sorted dominant-floss-first, so the largest colour area gets the inkiest glyph.
- * `STITCH_SYMBOLS` opens with the four heaviest glyphs in the set — `■` (0.30), `●` (0.24),
- * `▲`, `◆` — which is exactly why a heavily-shaded sprite collapses into a near-solid black
- * field (#30, finding 1). An *inverse-density* rule needs a number to sort by; this is it.
+ * `STITCH_SYMBOLS` opens with the inkiest glyphs in the set — `■` (0.30), `●` (0.24),
+ * `▲` (0.16), the filled diamond `♦` (0.11) — which is exactly why a heavily-shaded sprite
+ * collapses into a near-solid black field (#30, finding 1). An *inverse-density* rule needs
+ * a number to sort by; this is it.
  *
  * Kept out of `StitchSymbol` itself: it is measurement, not identity, and only the
  * assignment strategies (`assignment.ts`) read it.
@@ -20,11 +21,11 @@ import { STITCH_SYMBOLS } from './symbols'
 
 /** Cell-fill fraction per glyph, in the bundled DejaVu Sans. Higher = darker in a cell. */
 export const GLYPH_INK: Readonly<Record<string, number>> = {
-  // tier 1 — solid geometrics (the heaviest glyphs in the set)
+  // tier 1 — solid geometrics (among the heaviest glyphs in the set). The filled diamond
+  // is the card suit ♦ (kept over ◆ in the print test #28) — see tier 6, where it is listed.
   '●': 0.2389,
   '■': 0.3025,
   '▲': 0.1558,
-  '◆': 0.1513,
   // tier 2 — outline counterparts (light: only their stroke inks)
   '○': 0.0719,
   '□': 0.0847,
@@ -62,19 +63,17 @@ export const GLYPH_INK: Readonly<Record<string, number>> = {
   W: 0.1399,
   Y: 0.0601,
   Z: 0.0858,
-  // tier 6 — card suits (provisional, #30/D3)
+  // tier 6 — card suits (widened set, #30/D3). ♦ is charted as tier 1's filled diamond.
   '♥': 0.1749,
   '♣': 0.1431,
   '♦': 0.1078,
   '♠': 0.1209,
-  // tier 7 — textured square (provisional)
-  '▦': 0.2199,
-  // tier 8 — print marks (provisional)
+  // tier 7 — print marks (widened set)
   '†': 0.054,
   '‡': 0.0686,
   '§': 0.0806,
   '¶': 0.099,
-  // tier 9 — restored numerals (provisional)
+  // tier 8 — restored numerals (widened set)
   '3': 0.0751,
   '4': 0.078,
   '7': 0.0569

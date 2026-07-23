@@ -17,8 +17,8 @@
  *
  * 1. **Distinguish by shape, not by shade** (Gemma, 2026-07-17). A glyph earns its place by
  *    being a *different mark*, not by laying down more or less of the same one. Distinct
- *    fills are fine where each reads as its own thing — `●`/`○`, the half-fill `◐`, the
- *    crosshatch `▦` — because those are recognised, not measured. A graded ink ramp
+ *    fills are fine where each reads as its own thing — `●`/`○`, the half-fill `◐` —
+ *    because those are recognised, not measured. A graded ink ramp
  *    (`░ ▒ ▓ █`, or circle fill-states used as a series) is **rejected**: reading *how much*
  *    ink a 2.36 mm cell holds while counting stitches is the work a symbol should save you.
  *    Value-shading — glyph darkness standing in for the colour's darkness — is out too.
@@ -28,8 +28,9 @@
  *    triangle survives; likewise a single half-filled circle, with no mirror twin to be
  *    confused against.
  * 3. **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled
- *    area and little else, so `★` and `◆` become the same dark lozenge. The star is
- *    kept only in outline, where its points actually register.
+ *    area and little else, so `★` and the filled diamond `♦` become the same dark lozenge.
+ *    The star is kept only in outline, where its points actually register. The same trap
+ *    retired the geometric diamond `◆` in print (#28) — indistinguishable from `♦`.
  *
  * The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`)
  * the prototype shipped. Letters and digits are exempt from rule 2 — they are drawn by
@@ -38,24 +39,27 @@
  * `5`/`S`, `6`/`G`, `8`/`B`, `9`/`P`) — but `3 4 7` have no letter twin and are kept
  * (#30 / D3).
  *
- * **Provisional additions (#30 / D3).** Beyond the original 37, a widened block appended
- * below reaches for card suits, print marks, one textured square and the three digits
- * above. These are used only above `k = 37` and are deliberately generous: the print test
- * (#28) is expected to remove the ones that blob-collide on paper (e.g. `♦` against `◆`,
- * `♠` against `▲`). Until it does, they raise the cap rather than being held back.
+ * **The widened block (#30 / D3), settled by the print test (#28, 2026-07-23).** Beyond the
+ * original 37, a block reaching for card suits, print marks and the three digits above was
+ * added over the bundled font, deliberately generous, on the understanding that the print
+ * test would cull whatever blob-collided on paper. It has now been taken. Two were culled —
+ * the geometric diamond `◆` (the card suit `♦` kept in its place, and promoted into tier 1)
+ * and the crosshatch square `▦` (against solid `■` and open `□`) — leaving **47**. The
+ * survivors kept their appended positions; a full re-rank of the settled set by distinctness
+ * is deferred post-launch (#57), where widening the pool further is also tracked.
  *
  * **Why these code points.** Every glyph is a single BMP code point. The original 37 were
  * kept inside near-universal ranges (Basic Latin, Latin-1, Geometric Shapes, the outline
- * star) so the set survived *any* font. The provisional additions reach into
- * Miscellaneous Symbols and General Punctuation, which are **not** universal — that is now
+ * star) so the set survived *any* font. The widened glyphs reach into Miscellaneous Symbols
+ * (`♥ ♣ ♦ ♠`) and General Punctuation (`† ‡ § ¶`), which are **not** universal — that is
  * safe because the export bundles and embeds DejaVu Sans (#32, §5.5) and
  * `font-coverage.test.ts` asserts every codepoint here resolves in it rather than falling
  * back to tofu. The bundled font, not the range, is the guarantee (#30 / D4).
  *
- * **§8's symbol-set question, revisited.** The set opened at 37 (the count that stays
- * legible in font-safe ranges); it is **provisionally 49** after #30 / D3 widened the pool
- * over the bundled font. `MAX_COLOUR_COUNT` tracks the array length either way, so the
- * print test can knock it back down one glyph at a time. See §5.3.
+ * **§8's symbol-set question, resolved.** The set opened at 37 (the count that stays
+ * legible in font-safe ranges); it grew to 49 over the bundled font (#30 / D3), and the
+ * print test (#28) then settled it at **47**. `MAX_COLOUR_COUNT` tracks the array length,
+ * so it stays in lockstep. See §5.3.
  */
 
 /** One chart glyph. `name` is for the floss key and for screen readers. */
@@ -69,7 +73,9 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
   { glyph: '●', name: 'filled circle' },
   { glyph: '■', name: 'filled square' },
   { glyph: '▲', name: 'filled triangle' },
-  { glyph: '◆', name: 'filled diamond' },
+  // The set's filled diamond is the card suit ♦, kept over the geometric ◆ after the
+  // print test (#28): the two were indistinguishable on paper, and Gemma chose ♦.
+  { glyph: '♦', name: 'diamond suit' },
   // 2. Outline counterparts — same silhouettes, inverted fill. The star lives here
   //    only: filled, its points close up into the same blob as the diamond.
   { glyph: '○', name: 'open circle' },
@@ -109,26 +115,24 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
   { glyph: 'W', name: 'letter W' },
   { glyph: 'Y', name: 'letter Y' },
   { glyph: 'Z', name: 'letter Z' },
-  // ── Provisional additions (#30 / D3 — Gemma's call, 2026-07-17) ──────────────────
-  // Widening the pool now that a font is bundled (#32) and proven to cover it
-  // (font-coverage.test.ts). Appended, not interleaved: the 37 above keep their validated
-  // distinctness ranking, and the assignment/ordering rule is itself under review
-  // (#30 / D1), so imposing a new ranking on these would be premature. They are used only
-  // above k=37, and are deliberately generous — the print test (#28) is expected to cull
-  // the blob-collisions (♦↔◆, ♠↔▲). Ordered within the block by rough boldness.
-  // 6. Card suits — strong filled silhouettes; ♦/♠ are the expected #28 casualties.
+  // ── Widened block (#30 / D3), now settled by the print test (#28, 2026-07-23) ──────
+  // These reach past the original font-safe ranges, safe because a font is bundled (#32)
+  // and proven to cover them (font-coverage.test.ts). They kept their appended position
+  // rather than being re-ranked into the tiers above: the print test settled *membership*,
+  // but re-ranking the whole set by distinctness is deferred post-launch (#57). Two of the
+  // originally-generous additions were culled by the print test — the geometric diamond ◆
+  // (♦ kept in its place, tier 1) and the crosshatch square ▦ (against solid ■ and open □).
+  // 6. Card suits — strong filled silhouettes. ♦ was promoted into tier 1 as the set's
+  //    filled diamond; ♠ survived the print test against ▲, contrary to the earlier guess.
   { glyph: '♥', name: 'heart' },
   { glyph: '♣', name: 'club' },
-  { glyph: '♦', name: 'diamond suit' },
   { glyph: '♠', name: 'spade' },
-  // 7. Textured square — a fill state distinct from solid ■ and open □; reads as a weave.
-  { glyph: '▦', name: 'crosshatch square' },
-  // 8. Print marks — typographic, drawn to stay distinct small; unlike anything above.
+  // 7. Print marks — typographic, drawn to stay distinct small; unlike anything above.
   { glyph: '†', name: 'dagger' },
   { glyph: '‡', name: 'double dagger' },
   { glyph: '§', name: 'section sign' },
   { glyph: '¶', name: 'pilcrow' },
-  // 9. Restored numerals — the three digits with no letter twin in the set (#30 / D3).
+  // 8. Restored numerals — the three digits with no letter twin in the set (#30 / D3).
   { glyph: '3', name: 'digit three' },
   { glyph: '4', name: 'digit four' },
   { glyph: '7', name: 'digit seven' }
@@ -140,16 +144,16 @@ export const STITCH_SYMBOLS: readonly StitchSymbol[] = [
  * Not a stylistic preference: past this, two floss colours would have to share a glyph
  * and a black-and-white chart would become ambiguous. The slider must not offer it.
  *
- * This is also the effective colour cap for Req. 6. It opened at 37 and is **provisionally
- * 49** after #30 / D3 widened the glyph pool over the bundled font. Across all Wesnoth
- * sprites the full distinct-DMC palette fits under 49 about 99% of the time; the rest
+ * This is also the effective colour cap for Req. 6. It opened at 37, grew to 49 over the
+ * bundled font (#30 / D3), and the print test (#28) settled it at **47**. Across all Wesnoth
+ * sprites the full distinct-DMC palette fits under 47 about 99% of the time; the rest
  * reduce (#14), which is exactly what reduction is for. (Re-measured by
- * `npm run validate:cap`, which now reports `coverageAtCap`.)
+ * `npm run validate:cap`, which reports `coverageAtCap`.)
  *
- * **This number is not settled.** It stays legible only if every provisional glyph in the
- * set survives the print test (#28); each one that fails is removed and the cap drops with
- * it. Read "Limitations of the hard limit" in §5.3 before treating 49 as final. The number
- * cannot be raised or lowered on its own — it *is* `STITCH_SYMBOLS.length`.
+ * **Settled by the print test (#28), but tracked for growth (#57).** The cap is legible
+ * because every glyph in the set was judged distinct on paper. Widening the pool further —
+ * more of DejaVu Sans — is post-launch work (#57), and would raise this number. It cannot
+ * be raised or lowered on its own — it *is* `STITCH_SYMBOLS.length`.
  */
 export const MAX_COLOUR_COUNT = STITCH_SYMBOLS.length
 

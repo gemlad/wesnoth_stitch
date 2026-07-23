@@ -29,7 +29,7 @@ Point the chart script at any sprite: `npm run uat:chart -- wesnoth-sprites/unit
 | `chart-symbol.pdf` | **Black-and-white** chart — cover, floss key, chart page. | **This is [#28].** The glyph is the *only* thing naming a colour, so this is the fair test of the symbol set. |
 | `chart-both.pdf` | The working chart — colour underneath, glyph on top. | What you'd really stitch from. Judge whether it's *usable*, not just correct. |
 | `preview.png` | The PNG export, 12px per stitch. | The quick-look export. Mainly: does the fabric colour look right behind the pattern? |
-| `glyph-legibility-test.pdf` | Seven-page glyph drill — calibration rulers, all 49 glyphs at four cell sizes, the suspect pairs side-by-side *and* separated, a blind identification task with a key, and two real charts. | The systematic version of the same question. |
+| `glyph-legibility-test.pdf` | Seven-page glyph drill — calibration rulers, all 47 glyphs at four cell sizes, the suspect pairs side-by-side *and* separated, a blind identification task with a key, and two real charts. | The systematic version of the same question. |
 
 **Both PDFs now come from the same place.** The legibility sheet used to render through
 Chromium's font stack, which made it a drill rather than an authority. It is now drawn with
@@ -40,6 +40,11 @@ object. They can no longer disagree.
 ---
 
 ## How to take the test
+
+> **Taken and passed (2026-07-23).** #28 is resolved: every letter pair passed, `◆` and `▦`
+> were cut (kept `♦` in `◆`'s place), and the cap settled at **47**. The steps below are kept
+> so the test can be re-run if the set changes (e.g. under #57). See
+> [`../docs/decisions-agreed-2026-07-23.md`](../docs/decisions-agreed-2026-07-23.md) §2.
 
 **Print at 100% / Actual Size.** Not "fit to page", not "shrink oversized pages". The entire
 argument is about *physical millimetres*. Page 1 carries a **100 mm bar** (and a 50 mm
@@ -71,13 +76,13 @@ the real charts on pages 5–6 are laid out at.
 
 ### What to judge
 
-1. **The suspect pairs on page 3.** Three are the original unvalidated survivors — `C`/`G`,
-   `E`/`F`, `P`/`R`. The rest are the glyphs the set gained in the #30/D3 widening, and some
-   are *expected* to fail: `♦` against `◆` and `♠` against `▲` especially, plus `▦` against
-   `■`/`□`, `†` against `‡`, and the restored digits `3 4 7` against `B`/`T`/`A`. Tick "same"
-   only if you can't tell them apart **without** comparing side by side.
+1. **The suspect pairs on page 3.** Three were the original unvalidated survivors — `C`/`G`,
+   `E`/`F`, `P`/`R` (all passed). The rest were the glyphs the set gained in the #30/D3
+   widening: the 2026-07-23 verdict cut `◆` (kept `♦`) and `▦` (against `■`/`□`), while `♠`
+   passed against `▲`, the digits passed, and the print marks passed. Tick "same" only if you
+   can't tell them apart **without** comparing side by side.
    **Every glyph that fails is removed, and the colour cap drops by one with it** — the glyph
-   count and `MAX_COLOUR_COUNT` are the same number (currently 49). Record the verdict on [#28].
+   count and `MAX_COLOUR_COUNT` are the same number (currently 47). Record the verdict on [#28].
 2. **The blind test on page 4.** Errors here matter more than the drill — it's the task a
    stitcher actually performs.
 3. **The real charts on pages 5–6.** These now use the **interleaved** assignment rule
@@ -93,8 +98,8 @@ the real charts on pages 5–6 are laid out at.
 - Glyph pairs failing in print → comment on **[#28]**, and update §5.3 in `design.md`.
 - The chart-reads-as-a-smudge problem, or anything about *which* glyph goes to which colour
   → **[#30]**, the symbol-set spike.
-- Anything still undecided → `docs/decisions-pending.md`, which is the queue of calls
-  waiting on you.
+- Anything still undecided → a dated `docs/decisions-*.md`. The last round is recorded in
+  `docs/decisions-agreed-2026-07-23.md`; all of its calls are now made.
 
 [#20]: https://github.com/gemlad/wesnoth_stitch/issues/20
 [#28]: https://github.com/gemlad/wesnoth_stitch/issues/28
