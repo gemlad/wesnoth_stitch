@@ -44,11 +44,13 @@ describe('convertSprite', () => {
     expect(new Set(out.symbols.map((s) => s.glyph)).size).toBe(12)
     // Symbols are index-aligned with the palette, dominant floss first.
     expect(out.symbols[0].glyph).toBe('●')
-    // Every colour is real floss; the grid is 1:1 with the sprite.
+    // Every colour is real floss; the grid is 1:1 with the artwork, trimmed from the 72×72
+    // canvas to the sprite's content box (#53) — the scout's dwarf occupies 32×48.
     expect(out.palette.colours.every((c) => c.dmc.code.length > 0)).toBe(true)
-    expect(out.pattern.width).toBe(72)
-    expect(out.pattern.height).toBe(72)
-    expect(out.pattern.cells).toHaveLength(72)
+    expect(out.pattern.width).toBe(32)
+    expect(out.pattern.height).toBe(48)
+    expect(out.pattern.cells).toHaveLength(48)
+    expect(out.pattern.cells.every((row) => row.length === 32)).toBe(true)
     expect(out.maxColourCount).toBe(MAX_COLOUR_COUNT)
   })
 

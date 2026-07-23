@@ -222,6 +222,16 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
 
 **Approach:**
 
+0. **Trim the transparent border first (#53).** Wesnoth sprites sit on a generous
+   transparent canvas — the dwarvish scout is a 32×48 figure on a 72×72 sheet — so a strict
+   1:1 map would pad every chart with empty stitches. `mapSpriteToDmc` crops to the bounding
+   box of stitchable content before mapping, so `pattern.width`/`height` (and the finished
+   size on the cover page) reflect the artwork. "Transparent" here is the same
+   `alphaThreshold` rule as the stitch/no-stitch test below, not `alpha === 0`, so a border of
+   no-stitch pixels is cropped rather than left to pad the chart; no-stitch pixels *inside* the
+   box stay `null`. A fully transparent sprite trims to an empty (0×0) pattern. This is the one
+   place the 1:1 rule bends — and only by removing rows and columns that hold no stitch at all.
+   Lives in `pipeline/trim.ts` (`trimToContent`).
 1. Convert every opaque pixel to Lab colour space (`culori`). Lab is designed so that
    Euclidean distance approximates *perceived* colour difference — this is the fix.
    Transparent pixels are excluded entirely and stay transparent (they're not stitches).

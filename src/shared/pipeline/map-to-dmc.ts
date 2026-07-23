@@ -20,6 +20,7 @@
  */
 import { nearestDmc, srgbToLab } from '../colour'
 import type { DecodedImage } from '../ipc'
+import { trimToContent } from './trim'
 import type { PaletteColour, QuantizedPalette, StitchPattern } from './types'
 
 export interface MapToDmcOptions {
@@ -93,10 +94,16 @@ function stitchKey(data: DecodedImage['data'], i: number, alphaThreshold: number
  * Deterministic: the returned palette is ordered by descending pixel count
  * (dominant floss first), ties broken by DMC code, so `cells` indices are stable
  * across runs.
+ *
+ * **The sprite is trimmed to its content first (#53).** Wesnoth sprites carry a wide
+ * transparent border, which would otherwise pad every chart with empty stitches, so
+ * `pattern.width`/`height` reflect the artwork, not the source canvas. Trimming uses the same
+ * alpha threshold as the stitch/no-stitch rule below, so a border of no-stitch pixels is
+ * cropped rather than left in place. No-stitch pixels *inside* the bounding box stay `null`.
  */
 export function mapSpriteToDmc(image: DecodedImage, options: MapToDmcOptions = {}): MappedSprite {
-  const { width, height, data } = image
   const alphaThreshold = options.alphaThreshold ?? DEFAULT_ALPHA_THRESHOLD
+  const { width, height, data } = trimToContent(image, alphaThreshold)
 
   // Pass 1: tally distinct stitch colours by exact (composited) RGB.
   const counts = new Map<number, number>()
