@@ -4,7 +4,8 @@ Turn [Battle for Wesnoth](https://www.wesnoth.org/) unit sprites into **cross-st
 patterns**. Pick a unit, choose how many thread colours you want, and export a printable PDF
 chart with stitch symbols and a DMC floss shopping list. One sprite pixel = one stitch.
 
-<!-- TODO: add a screenshot of the app (browser + pattern preview) here. -->
+<!-- Screenshot goes here once docs/screenshot.png is added:
+![Wesnoth Stitch converting a dwarvish scout sprite into a colour cross-stitch preview](docs/screenshot.png) -->
 
 ## Download and install (Windows)
 
@@ -26,8 +27,9 @@ installer is exactly the one attached to the Release above.)
 
 ## First run: getting the sprites
 
-The unit sprites aren't bundled with the app — they're downloaded from the official Battle for
-Wesnoth project the **first time you open Wesnoth Stitch**, so you always get the current art.
+The unit sprites aren't bundled with the app — they're downloaded the **first time you open
+Wesnoth Stitch**. They're a copy of the official Battle for Wesnoth unit art, hosted alongside
+the app so it's a single quick download.
 
 - It's a **one-time download of a few megabytes** and needs an internet connection just this
   once. You'll see a progress bar; when it finishes, the sprite browser fills in.

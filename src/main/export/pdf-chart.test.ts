@@ -17,7 +17,7 @@ import { PDFDocument, type PDFFont } from 'pdf-lib'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { RGB } from '../../shared/colour'
 import { MAX_COLOUR_COUNT, type QuantizedPalette, type StitchPattern } from '../../shared/pipeline'
-import { drawChartPages } from './pdf-chart'
+import { drawChartPages, glyphInk } from './pdf-chart'
 import { DEFAULT_CELL_MM, mmToPt, planTiles, A4_WIDTH_MM, A4_HEIGHT_MM } from './pdf-layout'
 
 const FONT = fileURLToPath(new URL('../../../resources/fonts/DejaVuSans.ttf', import.meta.url))
@@ -92,6 +92,21 @@ describe('drawChartPages', () => {
         symbolDisplay
       })
     ).not.toThrow()
+  })
+
+  // The fix at the heart of it: in symbol-only mode (no colour fill) the chart is a
+  // black-and-white print, so a glyph is always black — a dark fabric setting must not make it
+  // white, which would print white-on-white. In both mode it still contrasts with the floss.
+  const rgbOf = (ink: ReturnType<typeof glyphInk>): [number, number, number] => [ink.red, ink.green, ink.blue]
+
+  it('inks symbol-only glyphs black regardless of the fabric — never white-on-paper', () => {
+    expect(rgbOf(glyphInk(false, { r: 10, g: 10, b: 30 }))).toEqual([0, 0, 0]) // dark fabric
+    expect(rgbOf(glyphInk(false, { r: 250, g: 250, b: 250 }))).toEqual([0, 0, 0]) // light fabric
+  })
+
+  it('contrasts glyphs against the floss colour in both mode', () => {
+    expect(rgbOf(glyphInk(true, { r: 0, g: 0, b: 0 }))).toEqual([1, 1, 1]) // white on a dark floss
+    expect(rgbOf(glyphInk(true, { r: 255, g: 255, b: 255 }))).toEqual([0, 0, 0]) // black on a light floss
   })
 
   it('refuses a palette with more colours than there are stitch symbols', () => {
