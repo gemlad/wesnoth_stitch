@@ -1,6 +1,6 @@
 {
   "name": "wesnoth-stitch",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Convert Battle for Wesnoth unit sprites into cross-stitch patterns",
   "main": "./out/main/index.js",
   "author": "Gemma Wright, coauthored by Claude (Opus 4.8)",
