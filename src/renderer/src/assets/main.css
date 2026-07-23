@@ -21,6 +21,110 @@ body {
   flex: none;
   padding: 16px 24px;
   border-bottom: 1px solid var(--ev-c-gray-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Update-sprites control (packaged builds only) --------------------------- */
+
+.sprite-update {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-size: 12px;
+}
+
+.sprite-update button {
+  padding: 5px 12px;
+  font-size: 12px;
+  border: 1px solid var(--ev-c-gray-3);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ev-c-text-1);
+  cursor: pointer;
+}
+
+.sprite-update button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.sprite-update__error {
+  color: #ff6b6b;
+}
+
+/* First-run sprite download screen (#70) ---------------------------------- */
+
+.sprite-setup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 32px 24px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.sprite-setup h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--ev-c-text-1);
+}
+
+.sprite-setup__lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ev-c-text-2);
+}
+
+.sprite-setup__progress,
+.sprite-setup__error {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sprite-setup__phase {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ev-c-text-2);
+}
+
+.sprite-setup__error button,
+.sprite-setup__error p {
+  color: var(--ev-c-text-1);
+}
+
+.sprite-setup__error button {
+  padding: 6px 16px;
+  border: 1px solid var(--ev-c-gray-3);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sprite-progress {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ev-c-gray-3);
+  overflow: hidden;
+}
+
+.sprite-progress__bar {
+  height: 100%;
+  background: var(--ev-c-text-2);
+  transition: width 0.2s ease;
 }
 
 .app-header h1 {

@@ -7,6 +7,7 @@ import {
   type DecodedImage,
   type ExportOutcome,
   type ExportRequest,
+  type SpriteStatus,
   type SpriteSummary
 } from '../shared/ipc'
 import { scanSprites } from './sprites'
@@ -15,14 +16,23 @@ import { convertSprite } from './convert'
 import { loadExportFont } from './export/font'
 import { buildChartPdf } from './export/pdf'
 import { chartExportName } from './export/chart-filename'
+import {
+  hasSprites,
+  readInstalledVersion,
+  resolveSpriteLocation,
+  type SpriteLocation
+} from './sprites-cache'
+import { downloadSpriteSet } from './sprites-download'
+import { SPRITE_ASSET_URL, SPRITE_MANIFEST_URL } from './sprites-source'
 
 /**
- * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
- * sprite set at <repo>/wesnoth-sprites/units. `app.getAppPath()` is the project
- * root in dev; a real folder-picker + packaging-aware path is future work, since
- * this folder is deliberately not vendored/packaged.
+ * Where the sprite set lives (#70). In dev this is the repo's gitignored
+ * `wesnoth-sprites/units`; in a packaged build it is `<userData>/sprites/units`, downloaded on
+ * first run. Resolved in {@link registerIpcHandlers} (it needs app paths that are only valid
+ * once the app is ready) and read by every sprite handler — which is why it is no longer the
+ * import-time constant Milestone 1 used.
  */
-const SPRITE_ROOT = resolve(app.getAppPath(), 'wesnoth-sprites', 'units')
+let location: SpriteLocation
 
 /** Longest-side cap for browser-grid thumbnails (§5.1). Sprites are ~64–144px,
  * so this trims IPC payload while staying crisp under nearest-neighbour. */
@@ -35,8 +45,9 @@ const THUMBNAIL_MAX_PX = 64
  * to read arbitrary files off disk.
  */
 function resolveSpritePath(id: string): string {
-  const abs = resolve(SPRITE_ROOT, id)
-  if (abs !== SPRITE_ROOT && !abs.startsWith(SPRITE_ROOT + sep)) {
+  const root = location.root
+  const abs = resolve(root, id)
+  if (abs !== root && !abs.startsWith(root + sep)) {
     throw new Error(`Refusing to read outside the sprite root: "${id}"`)
   }
   return abs
@@ -83,10 +94,42 @@ async function saveThrough(
  * filesystem + decode logic without changing these channel signatures.
  */
 export function registerIpcHandlers(): void {
+  location = resolveSpriteLocation({
+    isPackaged: app.isPackaged,
+    appPath: app.getAppPath(),
+    userDataPath: app.getPath('userData')
+  })
+
+  // Is the sprite set present? A packaged first run answers `absent`, and the renderer shows
+  // the download screen (#70) instead of the missing-folder error the M1 flow would have hit.
+  ipcMain.handle(IpcChannels.getSpriteStatus, async (): Promise<SpriteStatus> => {
+    const ready = await hasSprites(location.root)
+    const version = await readInstalledVersion(location.versionFile)
+    return { state: ready ? 'ready' : 'absent', managed: location.managed, version }
+  })
+
+  // Download (or re-download, for the "update sprites" action) the official set, streaming
+  // progress back over the one-way spriteProgress channel. Resolves with the installed version.
+  ipcMain.handle(IpcChannels.downloadSprites, async (event): Promise<{ version: string }> => {
+    // Guard the dev set: in dev the "cache" IS the repo's wesnoth-sprites/, which we must not
+    // overwrite. Only a packaged build manages (and downloads) its sprite set.
+    if (!location.managed) {
+      throw new Error('Sprite download is only used in packaged builds; dev uses wesnoth-sprites/.')
+    }
+    const { sender } = event
+    return downloadSpriteSet({
+      manifestUrl: SPRITE_MANIFEST_URL,
+      assetUrl: SPRITE_ASSET_URL,
+      cacheDir: location.cacheDir,
+      versionFile: location.versionFile,
+      onProgress: (p) => sender.send(IpcChannels.spriteProgress, p)
+    })
+  })
+
   ipcMain.handle(IpcChannels.getSpriteList, async (): Promise<SpriteSummary[]> => {
     // Errors (e.g. the sprite folder missing) reject the invoke and surface to
     // the renderer, which shows the message — see App.tsx / SpriteRootMissingError.
-    return scanSprites(SPRITE_ROOT)
+    return scanSprites(location.root)
   })
 
   ipcMain.handle(IpcChannels.getThumbnail, async (_event, id: string): Promise<DecodedImage> => {

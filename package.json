@@ -22,6 +22,7 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
+    "fetch:sprites": "node scripts/fetch-sprites.mjs",
     "validate:cap": "node scripts/run-ts.mjs scripts/validate-cap.ts",
     "measure:ink": "npm run validate:cap && electron scripts/measure-glyph-ink.mjs",
     "assign:compare": "node scripts/run-ts.mjs scripts/assignment-compare.ts",
@@ -36,7 +37,8 @@
     "@types/pngjs": "^6.0.5",
     "culori": "^4.0.2",
     "pdf-lib": "^1.17.1",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "tar": "^7.5.21"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

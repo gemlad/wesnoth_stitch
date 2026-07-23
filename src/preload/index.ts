@@ -1,11 +1,19 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { IpcChannels, type SpriteApi } from '../shared/ipc'
+import { IpcChannels, type SpriteApi, type SpriteDownloadProgress } from '../shared/ipc'
 
 // Renderer-facing IPC surface: thin wrappers over ipcRenderer.invoke so the
 // renderer never sees ipcRenderer or raw channel names (§4). Typed against
 // SpriteApi so the wrappers can't drift from the main-process handlers.
 const api: SpriteApi = {
+  getSpriteStatus: () => ipcRenderer.invoke(IpcChannels.getSpriteStatus),
+  downloadSprites: () => ipcRenderer.invoke(IpcChannels.downloadSprites),
+  onSpriteProgress: (callback) => {
+    const listener = (_event: IpcRendererEvent, progress: SpriteDownloadProgress): void =>
+      callback(progress)
+    ipcRenderer.on(IpcChannels.spriteProgress, listener)
+    return () => ipcRenderer.removeListener(IpcChannels.spriteProgress, listener)
+  },
   getSpriteList: () => ipcRenderer.invoke(IpcChannels.getSpriteList),
   getThumbnail: (id) => ipcRenderer.invoke(IpcChannels.getThumbnail, id),
   getFullImage: (id) => ipcRenderer.invoke(IpcChannels.getFullImage, id),
