@@ -4,8 +4,7 @@ Turn [Battle for Wesnoth](https://www.wesnoth.org/) unit sprites into **cross-st
 patterns**. Pick a unit, choose how many thread colours you want, and export a printable PDF
 chart with stitch symbols and a DMC floss shopping list. One sprite pixel = one stitch.
 
-<!-- Screenshot goes here once docs/screenshot.png is added:
-![Wesnoth Stitch converting a dwarvish scout sprite into a colour cross-stitch preview](docs/screenshot.png) -->
+![Wesnoth Stitch converting a dwarvish scout sprite into a colour cross-stitch preview](docs/screenshot.png)
 
 ## Download and install (Windows)
 
