@@ -40,12 +40,38 @@ export interface PatternSettings {
 
 /** Channel names. Kept as string-literal consts so both processes agree. */
 export const IpcChannels = {
+  getSpriteStatus: 'sprites:status',
+  downloadSprites: 'sprites:download',
+  spriteProgress: 'sprites:progress',
   getSpriteList: 'sprites:list',
   getThumbnail: 'sprites:thumbnail',
   getFullImage: 'sprites:full-image',
   convertSprite: 'sprites:convert',
   exportPdf: 'export:pdf'
 } as const
+
+/**
+ * Whether the sprite set is present and can be browsed (#70).
+ *
+ * A packaged build downloads the Wesnoth units set on first run (§5.1, decision in
+ * docs/decisions-sprite-acquisition-2026-07-23.md), so before that first download the
+ * answer is `absent` and the renderer shows the download screen rather than an error.
+ * In dev the set is the repo's `wesnoth-sprites/`, so it is always `ready` and unmanaged.
+ */
+export interface SpriteStatus {
+  state: 'ready' | 'absent'
+  /** true in packaged builds (the download cache is used); false in dev. Gates the update UI. */
+  managed: boolean
+  /** The installed sprite-set version, or null if unknown (dev, or never downloaded). */
+  version: string | null
+}
+
+/** Progress emitted (main → renderer, one-way) while downloading the sprite set (#70). */
+export interface SpriteDownloadProgress {
+  phase: 'manifest' | 'download' | 'extract'
+  receivedBytes?: number
+  totalBytes?: number
+}
 
 /**
  * What the renderer sends to export (#36).
@@ -121,6 +147,16 @@ export interface ConvertedSprite {
  * Every method is async because it round-trips to the main process over IPC.
  */
 export interface SpriteApi {
+  /** Whether the sprite set is installed (#70). Call before {@link getSpriteList}: a packaged
+   *  first run is `absent` and needs {@link downloadSprites} before the list exists. */
+  getSpriteStatus(): Promise<SpriteStatus>
+  /** Download the official set (first run) or re-download it (the "update sprites" action).
+   *  Emits {@link onSpriteProgress} while running; resolves with the installed version. Rejects
+   *  on network/integrity failure without disturbing any set already installed. */
+  downloadSprites(): Promise<{ version: string }>
+  /** Subscribe to download progress. Returns an unsubscribe function. */
+  onSpriteProgress(callback: (progress: SpriteDownloadProgress) => void): () => void
+
   /** All unit sprites under SPRITE_ROOT (real scan arrives in #3). */
   getSpriteList(): Promise<SpriteSummary[]>
   /** Decoded thumbnail for one sprite id (real decode arrives in #4). */

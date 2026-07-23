@@ -69,13 +69,16 @@ the acquisition mechanism the milestone's critical path.
   as a release-runbook step, cached to `userData`, with an in-app "update sprites" action.
 - Depends on: nothing. **On the critical path** — everything user-facing waited on its answer.
 
-### 2. Sprite acquisition: download + cache + update (#70)
+### 2. Sprite acquisition: download + cache + update (#70, #82)
 - Branch: `feature/sprite-download`
-- Implement the spike's choice (may split once #69 reports). Working assumption: first-run
-  download with progress → cache to `userData` → rewire `SPRITE_ROOT` to resolve there when
-  `app.isPackaged` (dev keeps `wesnoth-sprites/units`) → re-scan → an "update sprites"
-  action. Graceful offline/failure; the browser waits rather than throwing
-  `SpriteRootMissingError`.
+- Implement the spike's choice. First-run download with progress → cache to `userData` →
+  `SPRITE_ROOT` resolves there when `app.isPackaged` (dev keeps `wesnoth-sprites/units`) →
+  re-scan → an "update sprites" action. Graceful offline/failure; a first run shows the
+  download screen (`SpriteSetup`) rather than throwing `SpriteRootMissingError`. Integrity is
+  checked against a `sha256` in the published manifest before install.
+- **Install is non-destructive (#82).** The archive is *overlaid* onto the sprite folder
+  (`fs.cp`, `force: true`) rather than swapping the folder out, so any sprite a user has
+  added by hand survives an update; official files are overwritten, nothing is deleted.
 - Depends on: 1.
 
 ### 3. App icon & branding (#71)

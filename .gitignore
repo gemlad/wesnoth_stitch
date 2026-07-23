@@ -14,5 +14,8 @@ output/
 # Fetched Wesnoth mainline unit sprites (not vendored; refetch via sparse clone)
 wesnoth-sprites/
 
+# Built sprite release asset (npm run fetch:sprites) — uploaded to a GitHub Release, not vendored
+dist-sprites/
+
 # OS
 .DS_Store
