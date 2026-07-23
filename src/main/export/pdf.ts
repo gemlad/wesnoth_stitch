@@ -54,7 +54,9 @@ export async function buildChartPdf(
   pdf.setTitle(meta.title)
   pdf.setCreator('Wesnoth Stitch')
 
-  drawCoverPage(pdf, meta, palette, font)
+  await drawCoverPage(pdf, meta, pattern, palette, font, {
+    backgroundColour: options.backgroundColour
+  })
   drawKeyPages(pdf, palette, font)
 
   const chart: ChartOptions = {

@@ -61,16 +61,53 @@ function patternOf(w: number, h: number, colours: number): StitchPattern {
 }
 
 describe('drawCoverPage', () => {
-  it('adds a single page', () => {
+  const WHITE: RGB = { r: 255, g: 255, b: 255 }
+
+  it('adds a single page', async () => {
     const before = pdf.getPageCount()
-    drawCoverPage(pdf, { title: 'Dwarvish Fighter', width: 72, height: 72 }, paletteOf(8), font)
+    await drawCoverPage(
+      pdf,
+      { title: 'Dwarvish Fighter', width: 8, height: 8 },
+      patternOf(8, 8, 8),
+      paletteOf(8),
+      font,
+      { backgroundColour: WHITE }
+    )
     expect(pdf.getPageCount()).toBe(before + 1)
   })
 
-  it('does not throw when the palette was reduced (it says so on the page)', () => {
-    expect(() =>
-      drawCoverPage(pdf, { title: 'Citizen', width: 90, height: 90 }, paletteOf(37, 95), font)
-    ).not.toThrow()
+  it('does not throw when the palette was reduced (it says so on the page)', async () => {
+    const page = await drawCoverPage(
+      pdf,
+      { title: 'Citizen', width: 40, height: 39 },
+      patternOf(40, 39, 37),
+      paletteOf(37, 95),
+      font,
+      { backgroundColour: WHITE }
+    )
+    expect(page).toBeDefined()
+  })
+
+  it('embeds the pattern preview (#46), and skips it for an empty pattern', async () => {
+    const cover = async (pattern: StitchPattern, colours: number): Promise<number> => {
+      const doc = await PDFDocument.create()
+      doc.registerFontkit(fontkit)
+      const f = await doc.embedFont(FONT_BYTES, { subset: true })
+      await drawCoverPage(
+        doc,
+        { title: 'X', width: pattern.width, height: pattern.height },
+        pattern,
+        paletteOf(colours),
+        f,
+        { backgroundColour: WHITE }
+      )
+      return (await doc.save()).length
+    }
+    const withPreview = await cover(patternOf(24, 24, 6), 6)
+    const empty = await cover({ width: 0, height: 0, cells: [] }, 0)
+    // The embedded raster makes the document substantially larger than the same cover with
+    // nothing to preview — proof the image bytes actually landed in the document.
+    expect(withPreview).toBeGreaterThan(empty + 500)
   })
 })
 

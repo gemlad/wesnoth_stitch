@@ -749,9 +749,11 @@ or gridlines, was not worth a separate export button once the chart PDF covers r
 (#46) — the quick look now lives inside the chart, not beside it.
 
 **PDF.** Multi-page, via `pdf-lib` (§3): a cover/stats page (dimensions, colour count,
-finished size at Aida 11/14/16/18, and the Wesnoth artwork attribution the licence asks
-for), floss key page(s) — swatch, glyph, DMC code and name, stitch count — then tiled
-chart pages with gridlines bold every 10th.
+finished size at Aida 11/14/16/18, **a colour preview of the pattern embedded via `embedPng`
+— #46**, and the Wesnoth artwork attribution the licence asks for), floss key page(s) —
+swatch, glyph, DMC code and name, stitch count — then tiled chart pages with gridlines bold
+every 10th. The cover preview reuses `renderPatternPng` (§5.5 PNG), so the quick colour look
+that was once a standalone export (#45) now rides inside the document it belongs to.
 
 **Two things the port must get right, both of which the prototype gets wrong:**
 
