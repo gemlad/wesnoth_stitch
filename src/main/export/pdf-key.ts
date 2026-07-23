@@ -15,6 +15,7 @@ import type { RGB } from '../../shared/colour'
 import type { QuantizedPalette, StitchPattern } from '../../shared/pipeline'
 import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
+import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -131,17 +132,9 @@ export async function drawCoverPage(
     page.drawText(line, { x: left + mmToPt(4), y, size: 10, font, color: INK })
   }
 
-  // Attribution, at the foot. Drawn first so the preview above knows where the floor is.
-  const notice = [
-    'Wesnoth artwork is licensed GPL v2+ / CC-BY-SA 4.0 by the Battle for Wesnoth project.',
-    'https://wiki.wesnoth.org/Wesnoth:Copyrights'
-  ]
-  let noticeY = mmToPt(MARGIN_MM + 6)
-  for (const line of [...notice].reverse()) {
-    page.drawText(line, { x: left, y: noticeY, size: 8, font, color: MUTED })
-    noticeY += mmToPt(4.5)
-  }
-  const footerTop = noticeY
+  // Licence notice, at the foot — the same footer every other page carries (#47).
+  drawLicenceFooter(page, font)
+  const footerTop = mmToPt(LICENCE_FOOTER_TOP_MM)
 
   // The preview — the pattern as colour, no glyphs or gridlines (#46), filling the space
   // between the finished-size block and the footer. Skipped for an empty pattern (a fully
@@ -217,6 +210,7 @@ export function drawKeyPages(
   for (let start = 0; start < palette.colours.length; start += perPage) {
     const page = addPage(pdf)
     pages.push(page)
+    drawLicenceFooter(page, font) // every page carries the attribution (#47)
 
     const chunk = palette.colours.slice(start, start + perPage)
     let y = mmToPt(A4_HEIGHT_MM - MARGIN_MM - 8)

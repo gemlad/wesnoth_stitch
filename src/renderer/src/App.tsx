@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { SpriteSummary } from '../../shared/ipc'
+import { LICENCE_LINES } from '../../shared/licence'
 import { SpriteBrowser } from './components/SpriteBrowser'
 import { PatternView } from './components/PatternView'
 import { PreviewPane } from './components/PreviewPane'
@@ -40,6 +41,14 @@ function App(): React.JSX.Element {
           <PreviewPane key={`preview:${selected?.id ?? 'none'}`} sprite={selected} />
         </div>
       )}
+
+      {/* The Wesnoth artwork licence, on-screen as well as on every exported page (#47).
+          Same wording as the PDF footer — one shared source in shared/licence.ts. */}
+      <footer className="app-footer">
+        {LICENCE_LINES.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+      </footer>
     </div>
   )
 }
