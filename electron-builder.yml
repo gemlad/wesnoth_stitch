@@ -9,35 +9,28 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  # Keep non-runtime trees out of the installer. wesnoth-sprites/ is the critical one:
+  # sprites are DOWNLOADED at runtime (#69/#70), never bundled — shipping the ~9 MB dev set
+  # would both bloat the installer and contradict that decision.
+  - '!wesnoth-sprites/**'
+  - '!{prototype,docs,uat,scripts}/**'
 asarUnpack:
   - 'resources/**'
 win:
   executableName: wesnoth-stitch
 nsis:
+  # Per-user, no-admin install (goes to %LOCALAPPDATA%) so a non-technical user is never
+  # blocked by a UAC/admin prompt. Assisted (not one-click) so they get a familiar wizard
+  # with a visible Install step and progress rather than a silent auto-run.
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: false
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
-mac:
-  entitlementsInherit: build/entitlements.mac.plist
-  extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
-dmg:
-  artifactName: ${name}-${version}.${ext}
-linux:
-  target:
-    - AppImage
-    - snap
-    - deb
-  maintainer: electronjs.org
-  category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
+  createStartMenuShortcut: true
+# No `publish:` block: the first release ships without an auto-updater, so there is no
+# update feed to point at. Updating means downloading the next installer from GitHub
+# Releases. (electron-updater can be wired to GitHub Releases post-launch if wanted.)
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
