@@ -11,8 +11,10 @@
  */
 import type { PDFDocument, PDFFont, PDFPage } from 'pdf-lib'
 import { rgb } from 'pdf-lib'
-import type { QuantizedPalette } from '../../shared/pipeline'
+import type { RGB } from '../../shared/colour'
+import type { QuantizedPalette, StitchPattern } from '../../shared/pipeline'
 import { symbolsFor } from '../../shared/pipeline'
+import { renderPatternPng } from './png'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -40,6 +42,14 @@ const KEY_HEADER_MM = 14
 
 const INK = rgb(0, 0, 0)
 const MUTED = rgb(0.42, 0.42, 0.42)
+const HAIRLINE = rgb(0.75, 0.75, 0.75)
+
+/**
+ * Pixels per stitch for the embedded cover preview (#46). Chosen so the raster's longest side
+ * lands near this many pixels regardless of pattern size — crisp when scaled to the cover box,
+ * without embedding a needlessly large image for a small sprite.
+ */
+const PREVIEW_TARGET_PX = 700
 
 /** Metadata the cover page states about the pattern. */
 export interface ChartMeta {
@@ -64,19 +74,26 @@ function finishedInches(stitches: number, count: number): number {
 }
 
 /**
- * The cover: what this is, how big it comes out, and who owns the art.
+ * The cover: what this is, how big it comes out, a preview of the pattern, and who owns the
+ * art.
  *
  * The attribution is **not decorative**. Wesnoth's artwork is GPL v2+ / CC-BY-SA 4.0, and
  * the licence frequently *requires* credit on anything derived from it. The prototype
  * carried this notice; a port that dropped it would be a licensing regression, not a
  * simplification.
+ *
+ * **Async because it embeds the preview (#46).** The colour raster (`renderPatternPng`, the
+ * former standalone PNG export — #45) is embedded here rather than saved beside the chart, so
+ * the quick look lives inside the document. `embedPng` is async, so this is too.
  */
-export function drawCoverPage(
+export async function drawCoverPage(
   pdf: PDFDocument,
   meta: ChartMeta,
+  pattern: StitchPattern,
   palette: QuantizedPalette,
-  font: PDFFont
-): PDFPage {
+  font: PDFFont,
+  options: { backgroundColour: RGB }
+): Promise<PDFPage> {
   const page = addPage(pdf)
   const left = mmToPt(MARGIN_MM)
   let y = mmToPt(A4_HEIGHT_MM - MARGIN_MM - 10)
@@ -114,7 +131,7 @@ export function drawCoverPage(
     page.drawText(line, { x: left + mmToPt(4), y, size: 10, font, color: INK })
   }
 
-  // Attribution, at the foot.
+  // Attribution, at the foot. Drawn first so the preview above knows where the floor is.
   const notice = [
     'Wesnoth artwork is licensed GPL v2+ / CC-BY-SA 4.0 by the Battle for Wesnoth project.',
     'https://wiki.wesnoth.org/Wesnoth:Copyrights'
@@ -123,6 +140,44 @@ export function drawCoverPage(
   for (const line of [...notice].reverse()) {
     page.drawText(line, { x: left, y: noticeY, size: 8, font, color: MUTED })
     noticeY += mmToPt(4.5)
+  }
+  const footerTop = noticeY
+
+  // The preview — the pattern as colour, no glyphs or gridlines (#46), filling the space
+  // between the finished-size block and the footer. Skipped for an empty pattern (a fully
+  // transparent sprite, trimmed to 0×0 — #53), which has nothing to show.
+  if (pattern.width > 0 && pattern.height > 0) {
+    y -= mmToPt(14)
+    page.drawText('Preview', { x: left, y, size: 13, font, color: INK })
+
+    const cellPx = Math.max(4, Math.round(PREVIEW_TARGET_PX / Math.max(pattern.width, pattern.height)))
+    const png = renderPatternPng(pattern, palette, {
+      cellSize: cellPx,
+      backgroundColour: options.backgroundColour
+    })
+    const image = await pdf.embedPng(png)
+
+    // Fit the raster into the box below the heading and above the footer, preserving aspect.
+    const boxTop = y - mmToPt(6)
+    const boxBottom = footerTop + mmToPt(8)
+    const maxW = mmToPt(PRINTABLE_WIDTH_MM)
+    const maxH = boxTop - boxBottom
+    const scale = Math.min(maxW / image.width, maxH / image.height)
+    const drawW = image.width * scale
+    const drawH = image.height * scale
+    const drawX = left + (maxW - drawW) / 2 // centre horizontally in the content column
+    const drawY = boxTop - drawH
+
+    // A hairline frame so a pale-fabric preview still reads as a bounded image on white paper.
+    page.drawRectangle({
+      x: drawX,
+      y: drawY,
+      width: drawW,
+      height: drawH,
+      borderColor: HAIRLINE,
+      borderWidth: 0.5
+    })
+    page.drawImage(image, { x: drawX, y: drawY, width: drawW, height: drawH })
   }
 
   return page
