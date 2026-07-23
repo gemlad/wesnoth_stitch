@@ -145,8 +145,10 @@ describe('reduceSprite', () => {
   })
 
   it('preserves the stitch count, the transparent cells, and the source colour count', () => {
+    // CLEARs sit interior (before BLACK), not as a trailing border, so trimming (#53) keeps
+    // them: the point here is that reduction preserves no-stitch cells and the stitch count.
     const mapped = mapSpriteToDmc(
-      makeImage([...repeat(RED, 3), DARK_RED, BLACK, WHITE, BLUE, CLEAR, CLEAR])
+      makeImage([...repeat(RED, 3), DARK_RED, CLEAR, CLEAR, BLACK, WHITE, BLUE])
     )
     const reduced = reduceSprite(mapped, 2)
 
@@ -179,10 +181,14 @@ describe('reduceSprite', () => {
   })
 
   it('handles a fully transparent sprite', () => {
+    // Trimming (#53) crops an all-transparent sprite to nothing: an empty pattern, not a
+    // canvas of nulls.
     const mapped = mapSpriteToDmc(makeImage([CLEAR, CLEAR]))
     const reduced = reduceSprite(mapped, 1)
     expect(reduced.palette.colours).toEqual([])
-    expect(reduced.pattern.cells).toEqual([[null, null]])
+    expect(reduced.pattern.cells).toEqual([])
+    expect(reduced.pattern.width).toBe(0)
+    expect(reduced.pattern.height).toBe(0)
   })
 
   it('rejects a colour count that is not a positive integer', () => {

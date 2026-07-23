@@ -36,23 +36,26 @@ describe('mapSpriteToDmc', () => {
     expect(pattern.height).toBe(2)
   })
 
-  it('renders transparent pixels as no-stitch (null) and excludes them from the palette', () => {
-    const { palette, pattern } = mapSpriteToDmc(makeImage(2, 2, [BLACK, CLEAR, CLEAR, CLEAR]))
-    expect(palette.colourCount).toBe(1)
-    expect(palette.sourceColourCount).toBe(1)
-    // Only the first cell is a stitch; the rest are null.
-    expect(pattern.cells[0][0]).toBe(0)
-    expect(pattern.cells[0][1]).toBeNull()
-    expect(pattern.cells[1][0]).toBeNull()
-    expect(pattern.cells[1][1]).toBeNull()
+  it('renders transparent pixels *inside* the bounding box as no-stitch (null)', () => {
+    // The three opaque pixels pin the bounding box to the full 2×2, so the CLEAR corner is
+    // interior to the content and survives trimming (#53) as a null — a genuine no-stitch hole.
+    const { palette, pattern } = mapSpriteToDmc(makeImage(2, 2, [BLACK, WHITE, RED, CLEAR]))
+    expect(palette.colourCount).toBe(3)
+    expect(pattern.width).toBe(2)
+    expect(pattern.height).toBe(2)
+    expect(pattern.cells[0][0]).not.toBeNull()
+    expect(pattern.cells[1][1]).toBeNull() // the transparent corner, retained as no-stitch
   })
 
-  it('returns an empty palette and an all-null grid for a fully transparent sprite', () => {
+  it('returns an empty palette and a 0×0 grid for a fully transparent sprite', () => {
+    // Nothing is stitchable, so trimming (#53) crops to nothing rather than a canvas of nulls.
     const { palette, pattern } = mapSpriteToDmc(makeImage(2, 1, [CLEAR, CLEAR]))
     expect(palette.colours).toEqual([])
     expect(palette.colourCount).toBe(0)
     expect(palette.sourceColourCount).toBe(0)
-    expect(pattern.cells).toEqual([[null, null]])
+    expect(pattern.width).toBe(0)
+    expect(pattern.height).toBe(0)
+    expect(pattern.cells).toEqual([])
   })
 
   it('collapses different source shades that share a floss into one palette entry', () => {
@@ -92,12 +95,14 @@ describe('mapSpriteToDmc', () => {
 
   it('honours the alpha threshold (default 128)', () => {
     const faint: Pixel = [220, 20, 30, 100] // below default threshold
-    // Default: the faint pixel is excluded — palette is just black.
-    const def = mapSpriteToDmc(makeImage(2, 1, [BLACK, faint]))
+    // Faint pixel between two blacks, so it stays interior to the bounding box and trimming
+    // (#53) can't remove it — the assertion is about the threshold, not the crop.
+    // Default: the faint pixel is excluded — palette is just black, faint cell is null.
+    const def = mapSpriteToDmc(makeImage(3, 1, [BLACK, faint, BLACK]))
     expect(def.palette.colourCount).toBe(1)
     expect(def.pattern.cells[0][1]).toBeNull()
     // Lower the threshold to 50 and it becomes a stitch.
-    const low = mapSpriteToDmc(makeImage(2, 1, [BLACK, faint]), { alphaThreshold: 50 })
+    const low = mapSpriteToDmc(makeImage(3, 1, [BLACK, faint, BLACK]), { alphaThreshold: 50 })
     expect(low.palette.colourCount).toBe(2)
     expect(low.pattern.cells[0][1]).not.toBeNull()
   })
@@ -110,6 +115,35 @@ describe('mapSpriteToDmc', () => {
     expect(pattern.cells.every((row) => row.length === 3)).toBe(true)
     const totalStitches = palette.colours.reduce((n, c) => n + c.pixelCount, 0)
     expect(totalStitches).toBe(5) // 6 pixels, 1 transparent
+  })
+
+  it('trims the transparent border so the pattern reflects the artwork, not the canvas (#53)', () => {
+    // One black pixel dead-centre of a 3×3 transparent canvas → a 1×1 pattern.
+    const pixels: Pixel[] = [CLEAR, CLEAR, CLEAR, CLEAR, BLACK, CLEAR, CLEAR, CLEAR, CLEAR]
+    const { pattern, palette } = mapSpriteToDmc(makeImage(3, 3, pixels))
+    expect(pattern.width).toBe(1)
+    expect(pattern.height).toBe(1)
+    expect(pattern.cells).toEqual([[0]])
+    expect(palette.colourCount).toBe(1)
+  })
+
+  it('trims an off-centre border down to a tight box while keeping interior holes', () => {
+    // Content is a 2-wide band in the bottom-right of a 4×3 canvas, with a null in it.
+    //   . . . .      → trims the top row and left two columns, leaving a 2×2 with one hole
+    //   . . B W
+    //   . . R .
+    const pixels: Pixel[] = [
+      CLEAR, CLEAR, CLEAR, CLEAR,
+      CLEAR, CLEAR, BLACK, WHITE,
+      CLEAR, CLEAR, RED, CLEAR
+    ]
+    const { pattern } = mapSpriteToDmc(makeImage(4, 3, pixels))
+    expect(pattern.width).toBe(2)
+    expect(pattern.height).toBe(2)
+    expect(pattern.cells[0][0]).not.toBeNull() // BLACK
+    expect(pattern.cells[0][1]).not.toBeNull() // WHITE
+    expect(pattern.cells[1][0]).not.toBeNull() // RED
+    expect(pattern.cells[1][1]).toBeNull() // the transparent corner inside the box
   })
 })
 
@@ -192,12 +226,14 @@ describe('mapSpriteToDmc — translucency is composited over white', () => {
   })
 
   it('still uses alpha only to decide whether a stitch exists at all', () => {
+    // Variable pixel kept between two blacks so it stays interior to the box: this is about
+    // the alpha threshold, not the border trim (#53).
     // Below the threshold the pixel is no-stitch, however it would have composited.
-    const off = mapSpriteToDmc(makeImage(2, 1, [BLACK, [0, 0, 0, 127]]))
+    const off = mapSpriteToDmc(makeImage(3, 1, [BLACK, [0, 0, 0, 127], BLACK]))
     expect(off.pattern.cells[0][1]).toBeNull()
     expect(off.palette.colourCount).toBe(1)
     // One step above, it is a stitch — and not a black one.
-    const on = mapSpriteToDmc(makeImage(2, 1, [BLACK, [0, 0, 0, 128]]))
+    const on = mapSpriteToDmc(makeImage(3, 1, [BLACK, [0, 0, 0, 128], BLACK]))
     expect(on.pattern.cells[0][1]).not.toBeNull()
     expect(on.palette.colourCount).toBe(2)
   })
