@@ -866,6 +866,14 @@ too much setup friction for a distributable build (§3, packaging), the prototyp
 GitHub-fetch-and-cache logic could be ported in as an alternative **asset source**
 (§7.1) alongside local paths, rather than replacing local-checkout support.
 
+> **Update (Milestone 4, 2026-07-23): this is no longer a future extension — it is pulled
+> forward into first-release scope.** "Fairly simple to run for someone with limited-to-no
+> experience of git or programming" makes the local-checkout assumption (§5.1) the very
+> friction this section anticipated, so the installed app downloads the sprite set on first
+> run instead. The mechanism is being decided by a spike (#69); implementation and the
+> "download-first, folder-picker maybe as fallback" question live in
+> [`milestone-4-tasks.md`](milestone-4-tasks.md).
+
 ## 8. Open Questions
 
 - ~~**Symbol-set size:**~~ **Resolved (#16).** 37 glyphs — solid geometrics, their
@@ -920,11 +928,16 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
    hard maximum.
 3. Export parity with the prototype (PNG preview, PDF chart with floss key),
    including the configurable background colour (§5.4, §6).
-4. Packaging: electron-builder installer target (§3), since the app is intended to
-   be distributable to others, not just personal/dev use. **Gated on UAT
-   ([decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md) §4):** does not start
-   until Milestones 2 and 3 have passed UAT and are closed. #30 and #28 (§8) are now resolved,
-   so the gate is the remaining M2/M3 GitHub issues clearing. First release is Milestones 1–4.
+4. Packaging **and first-release distribution** (§3), since the app is intended to
+   be distributable to others, not just personal/dev use. **Gate now clear:** Milestones 1–3
+   are all closed and #30/#28 (§8) resolved, so the UAT gate
+   ([decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md) §4) is satisfied. First
+   release is Milestones 1–4. **Scoped for a non-technical audience** (Gemma, 2026-07-23):
+   Windows-only NSIS installer, shipped **unsigned** with the SmartScreen warning documented,
+   and — the notable scope shift — **in-app sprite download pulled forward from §7.5** so the
+   installed app fetches the official sprite set itself rather than requiring the
+   local-checkout of §5.1 (the current hardcoded `SPRITE_ROOT` gives a packaged build no
+   sprites at all). Broken down in [`milestone-4-tasks.md`](milestone-4-tasks.md).
 5. Future extensions: multi-source browsing (§7.1), batch processing (§7.2), manual
    per-stitch override (§7.3), non-unit asset categories (§7.4). Post-first-release work
    (page-overlap margins, colour-key display, distribution/Pattern Keeper compatibility,
