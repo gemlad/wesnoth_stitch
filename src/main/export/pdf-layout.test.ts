@@ -1,10 +1,11 @@
 /**
  * Chart geometry (#34, §5.5).
  *
- * The load-bearing test here is the first one: §5.3 and #28 both quote "2.36mm per cell,
- * ~4.8pt glyph" as *the* scale the legibility argument is made at. If the layout stops
- * producing those numbers, the argument is being made about a chart we no longer print,
- * and #28's verdict silently stops applying. So they are pinned.
+ * The load-bearing tests here pin two scales. §5.3 and #28 quote "2.36mm per cell, ~4.8pt
+ * glyph" as the *floor* the legibility argument is made at — that is `REFERENCE_CELL_MM`, and
+ * if it drifts, #28's verdict is about a chart we no longer relate to. The default *export*
+ * scale (#65) is coarser — a 52-cell grid, ~3.27mm — and is pinned separately so a stray edit
+ * to the grid width can't shrink the printed chart back down without a test noticing.
  */
 import { describe, expect, it } from 'vitest'
 import {
@@ -12,35 +13,58 @@ import {
   cellsPerPage,
   CHART_HEIGHT_MM,
   DEFAULT_CELL_MM,
+  DEFAULT_GRID_CELLS,
   glyphSizePt,
   mmToPt,
   planTiles,
   PRINTABLE_WIDTH_MM,
+  REFERENCE_CELL_MM,
   REFERENCE_SPRITE_CELLS
 } from './pdf-layout'
 
-describe('the scale §5.3 states its legibility claim at', () => {
+describe('the §5.3 legibility floor', () => {
   it('puts the reference 72-cell sprite across A4 at ~2.36mm per cell', () => {
-    expect(DEFAULT_CELL_MM).toBeCloseTo(2.36, 2)
+    expect(REFERENCE_CELL_MM).toBeCloseTo(2.36, 2)
   })
 
   it('puts that cell’s glyph at ~4.8pt', () => {
-    expect(glyphSizePt(DEFAULT_CELL_MM)).toBeCloseTo(4.8, 1)
+    expect(glyphSizePt(REFERENCE_CELL_MM)).toBeCloseTo(4.8, 1)
   })
 
   it('derives the cell from the page, so the quoted figure cannot drift from the layout', () => {
     // Not a tautology worth skipping: it is the assertion that 2.36 is a *consequence* of
     // A4 + 20mm margins + a 72-cell sprite, and not a constant someone typed in.
-    expect(DEFAULT_CELL_MM).toBe(PRINTABLE_WIDTH_MM / REFERENCE_SPRITE_CELLS)
+    expect(REFERENCE_CELL_MM).toBe(PRINTABLE_WIDTH_MM / REFERENCE_SPRITE_CELLS)
     expect(PRINTABLE_WIDTH_MM).toBe(A4_WIDTH_MM - 40)
   })
 
   it('fits the whole reference sprite on a single page at that scale', () => {
-    // The point of choosing this scale: a typical Wesnoth sprite is one chart page.
-    const { cols, rows } = cellsPerPage(DEFAULT_CELL_MM)
+    // The floor scale is chosen so a typical Wesnoth sprite reads on one page.
+    const { cols, rows } = cellsPerPage(REFERENCE_CELL_MM)
     expect(cols).toBe(REFERENCE_SPRITE_CELLS)
     expect(rows).toBeGreaterThanOrEqual(REFERENCE_SPRITE_CELLS)
-    expect(planTiles(72, 72, DEFAULT_CELL_MM)).toHaveLength(1)
+    expect(planTiles(72, 72, REFERENCE_CELL_MM)).toHaveLength(1)
+  })
+})
+
+describe('the default export scale (#65)', () => {
+  it('prints a 52-cell grid across A4 at ~3.27mm per cell', () => {
+    expect(DEFAULT_CELL_MM).toBeCloseTo(3.27, 2)
+    expect(DEFAULT_CELL_MM).toBe(PRINTABLE_WIDTH_MM / DEFAULT_GRID_CELLS)
+  })
+
+  it('is coarser than the §5.3 floor — a strictly more legible glyph', () => {
+    expect(DEFAULT_CELL_MM).toBeGreaterThan(REFERENCE_CELL_MM)
+    expect(glyphSizePt(DEFAULT_CELL_MM)).toBeGreaterThan(glyphSizePt(REFERENCE_CELL_MM))
+  })
+
+  it('fits exactly 52 whole cells across the printable width', () => {
+    // The property #65 asks for: a 52-wide pattern is one page across, a 34-cell Scout covers
+    // 34/52 of it, and a 72-cell sprite now spills onto a second column of pages.
+    const { cols } = cellsPerPage(DEFAULT_CELL_MM)
+    expect(cols).toBe(DEFAULT_GRID_CELLS)
+    expect(planTiles(52, 1, DEFAULT_CELL_MM)).toHaveLength(1)
+    expect(planTiles(72, 1, DEFAULT_CELL_MM)).toHaveLength(2)
   })
 })
 

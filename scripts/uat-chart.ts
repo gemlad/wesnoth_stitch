@@ -40,7 +40,7 @@ const reduced = reduceSprite(mapped, k)
 console.log(`${sprite}  ${src.width}×${src.height}`)
 console.log(`  distinct DMC: ${mapped.palette.sourceColourCount}  → charted at k=${k}`)
 console.log(
-  `  cell ${DEFAULT_CELL_MM.toFixed(3)}mm  glyph ${glyphSizePt(DEFAULT_CELL_MM).toFixed(2)}pt  (§5.3's reference scale)`
+  `  cell ${DEFAULT_CELL_MM.toFixed(3)}mm  glyph ${glyphSizePt(DEFAULT_CELL_MM).toFixed(2)}pt  (#65's 52-cell export scale)`
 )
 
 mkdirSync(OUT_DIR, { recursive: true })
