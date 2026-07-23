@@ -62,13 +62,13 @@ function patternOf(w: number, h: number, colours: number): StitchPattern {
 
 describe('drawChartPages', () => {
   it('emits one A4 page per tile', () => {
-    const pattern = patternOf(72, 72, 8)
+    const pattern = patternOf(52, 52, 8)
     const pages = drawChartPages(pdf, pattern, paletteOf(8), font, {
       backgroundColour: AIDA,
       symbolDisplay: 'both'
     })
 
-    expect(pages).toHaveLength(1) // the reference sprite is exactly one page — see pdf-layout
+    expect(pages).toHaveLength(1) // a 52-wide sprite is exactly one page at the default scale — see pdf-layout
     const { width, height } = pages[0].getSize()
     expect(width).toBeCloseTo(mmToPt(A4_WIDTH_MM), 1)
     expect(height).toBeCloseTo(mmToPt(A4_HEIGHT_MM), 1)

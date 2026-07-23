@@ -13,9 +13,15 @@
  * (210mm), take 20mm margins, and you have 170mm of printable width. Put the reference
  * Wesnoth sprite (72 cells wide) across it and each cell is 170/72 = 2.361mm, which at
  * 72pt/inch is a 6.69pt cell carrying a ~4.8pt glyph. That is the number §5.3 and #28 are
- * both quoting, and `DEFAULT_CELL_MM` recomputes it rather than hardcoding it — so if the
+ * both quoting, and `REFERENCE_CELL_MM` recomputes it rather than hardcoding it — so if the
  * page or the margins ever change, the quoted figure changes with them instead of quietly
  * becoming a lie.
+ *
+ * **The default export prints larger than that floor (#65).** 2.36mm is the *worst case*
+ * the legibility argument survives, not a comfortable stitching scale. Charts export at
+ * `DEFAULT_CELL_MM` — a 52-cell grid across the page, ~3.27mm/cell — so a small sprite is big
+ * enough to work from by hand. That is strictly more legible than the 72-cell floor, so #28's
+ * verdict (taken at 2.36mm) still covers what we actually print.
  */
 
 export const MM_PER_INCH = 25.4
@@ -42,21 +48,34 @@ export const CHART_HEIGHT_MM = PRINTABLE_HEIGHT_MM - TITLE_BAND_MM // 249
 
 /**
  * The reference sprite width §5.3 quotes its legibility figures against: a 72-cell Wesnoth
- * unit sprite, which is the overwhelmingly common size in the checkout.
+ * unit sprite, which is the overwhelmingly common size in the checkout. This is the
+ * *legibility floor* — the smallest, hardest-to-read scale the glyph set was judged against
+ * (#28) — not the scale charts print at by default. See `DEFAULT_GRID_CELLS`.
  */
 export const REFERENCE_SPRITE_CELLS = 72
 
 /**
- * ~2.361mm. The scale at which the reference sprite fits across one page — and so the
- * smallest cell the chart will normally ever print at, which is exactly why §5.3 states its
- * legibility claim here rather than somewhere more comfortable.
+ * ~2.361mm. The scale at which the reference sprite fits across one page, and the smallest
+ * cell §5.3 argues legibility at — which is exactly why it states its claim here rather than
+ * somewhere more comfortable. Charts print larger than this by default (`DEFAULT_CELL_MM`).
  */
-export const DEFAULT_CELL_MM = PRINTABLE_WIDTH_MM / REFERENCE_SPRITE_CELLS
+export const REFERENCE_CELL_MM = PRINTABLE_WIDTH_MM / REFERENCE_SPRITE_CELLS
 
 /**
- * Glyph height as a fraction of the cell. 0.72 puts a `DEFAULT_CELL_MM` cell's glyph at
- * ~4.8pt — the figure §5.3 and #28 quote, so this constant is load-bearing for their
- * argument, not a styling preference.
+ * The default chart export grid width (#65): 52 cells across A4's printable width. Chosen so
+ * a small sprite prints large enough to stitch from comfortably — a 34-cell Scout covers
+ * 34/52 of the page rather than about half. Deliberately coarser than the 72-cell §5.3 floor:
+ * bigger cells are strictly more legible, so #28's verdict still holds for what we print.
+ */
+export const DEFAULT_GRID_CELLS = 52
+
+/** ~3.269mm. The cell the chart prints at by default: `DEFAULT_GRID_CELLS` across the page. */
+export const DEFAULT_CELL_MM = PRINTABLE_WIDTH_MM / DEFAULT_GRID_CELLS
+
+/**
+ * Glyph height as a fraction of the cell. 0.72 puts the §5.3 floor cell (`REFERENCE_CELL_MM`)
+ * glyph at ~4.8pt — the figure §5.3 and #28 quote, so this constant is load-bearing for their
+ * argument, not a styling preference — and the default cell's glyph at ~6.7pt.
  */
 export const GLYPH_SCALE = 0.72
 
