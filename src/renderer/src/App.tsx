@@ -42,7 +42,7 @@ function App(): React.JSX.Element {
         </div>
       )}
 
-      {/* Two licence notices, kept distinct (#77): the app's own MIT licence, then the
+      {/* Two licence notices, kept distinct (#77): the app's own GPL licence, then the
           Wesnoth artwork attribution (#47, also on every exported page). Same wording as the
           PDF footer — one shared source in shared/licence.ts. */}
       <footer className="app-footer">

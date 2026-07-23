@@ -1,8 +1,8 @@
 # Third-Party Notices
 
-Wesnoth Stitch's own source code is licensed under the MIT License (see
-[`LICENSE`](LICENSE)). It also relies on the third-party components below, each under
-its own licence. This file is the notice required by those licences, and it ships with
+Wesnoth Stitch's own source code is licensed under the **GNU General Public License v3.0 or
+later** (see [`LICENSE`](LICENSE)). It also relies on the third-party components below, each
+under its own licence. This file is the notice required by those licences, and it ships with
 the distributed application.
 
 ## Bundled assets
@@ -40,8 +40,9 @@ the distributed application.
 
 The application is built on the npm ecosystem. Every dependency in the resolved tree is under
 a **permissive** licence — a scan of the installed tree found only MIT, ISC, Apache-2.0, BSD
-(2- and 3-Clause), BlueOak-1.0.0, 0BSD, WTFPL, Python-2.0 and CC-BY-4.0 (build-time data);
-**no copyleft (GPL/LGPL) licences are present**, so none constrain Wesnoth Stitch's own MIT
+(2- and 3-Clause), BlueOak-1.0.0, 0BSD, WTFPL, Python-2.0 and CC-BY-4.0 (build-time data). All
+of these are **GPLv3-compatible** (permissive licences, and Apache-2.0 and CC-BY-4.0 are each
+one-way compatible into a GPLv3 work), so they combine cleanly with Wesnoth Stitch's GPLv3
 licence. Notable runtime components include **Electron**, **React**, **Konva**, **culori**,
 **pdf-lib**/**@pdf-lib/fontkit** and **pngjs**, all under the MIT License. Each package's full
 licence text is in its own directory under `node_modules/` in a source checkout; regenerate a
