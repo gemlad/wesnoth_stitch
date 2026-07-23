@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { SpriteSummary } from '../../shared/ipc'
-import { LICENCE_LINES } from '../../shared/licence'
+import { APP_LICENCE_LINES, LICENCE_LINES } from '../../shared/licence'
 import { SpriteBrowser } from './components/SpriteBrowser'
 import { PatternView } from './components/PatternView'
 import { PreviewPane } from './components/PreviewPane'
@@ -42,9 +42,16 @@ function App(): React.JSX.Element {
         </div>
       )}
 
-      {/* The Wesnoth artwork licence, on-screen as well as on every exported page (#47).
-          Same wording as the PDF footer — one shared source in shared/licence.ts. */}
+      {/* Two licence notices, kept distinct (#77): the app's own MIT licence, then the
+          Wesnoth artwork attribution (#47, also on every exported page). Same wording as the
+          PDF footer — one shared source in shared/licence.ts. */}
       <footer className="app-footer">
+        {APP_LICENCE_LINES.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+        <span className="app-footer__divider" aria-hidden="true">
+          •
+        </span>
         {LICENCE_LINES.map((line) => (
           <span key={line}>{line}</span>
         ))}
