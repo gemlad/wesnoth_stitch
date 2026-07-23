@@ -14,6 +14,7 @@ import { decodeImage, makeThumbnail } from './images'
 import { convertSprite } from './convert'
 import { loadExportFont } from './export/font'
 import { buildChartPdf } from './export/pdf'
+import { chartExportName } from './export/chart-filename'
 
 /**
  * Hardcoded sprite root for Milestone 1 (§5.1 scope note): the gitignored dev
@@ -122,7 +123,11 @@ export function registerIpcHandlers(): void {
 
       return saveThrough(
         event,
-        { defaultName: `${name}-chart`, extension: 'pdf', description: 'Printable chart' },
+        {
+          defaultName: chartExportName(name, settings.symbolDisplay),
+          extension: 'pdf',
+          description: 'Printable chart'
+        },
         async (path) => {
           const pdf = await buildChartPdf(
             pattern,
