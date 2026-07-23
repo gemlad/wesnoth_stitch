@@ -11,7 +11,6 @@ const api: SpriteApi = {
   getFullImage: (id) => ipcRenderer.invoke(IpcChannels.getFullImage, id),
   convertSprite: (id, colourCount) =>
     ipcRenderer.invoke(IpcChannels.convertSprite, id, colourCount),
-  exportPng: (request) => ipcRenderer.invoke(IpcChannels.exportPng, request),
   exportPdf: (request) => ipcRenderer.invoke(IpcChannels.exportPdf, request)
 }
 
