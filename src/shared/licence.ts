@@ -21,11 +21,10 @@ export const LICENCE_URL = 'https://wiki.wesnoth.org/Wesnoth:Copyrights'
  *
  * Kept separate from {@link LICENCE_LINES} on purpose: the code licence (who may reuse
  * Wesnoth Stitch itself) and the artwork attribution (crediting Wesnoth's sprites) answer
- * two different questions and must not be conflated — see
- * docs/decisions-licence-2026-07-23.md. The MIT code licence is possible precisely because
- * the sprites are downloaded, not redistributed, so the art's copyleft never reaches the code.
+ * two different questions and must not be conflated — see docs/decisions-licence-2026-07-23.md.
+ * The app is GPL v3+, which sits comfortably alongside Wesnoth's own GPL art.
  */
 export const APP_LICENCE_LINES: readonly string[] = [
-  'Wesnoth Stitch is free software under the MIT License — see LICENSE and THIRD-PARTY-NOTICES.',
+  'Wesnoth Stitch is free software under the GNU GPL v3 or later — see LICENSE and THIRD-PARTY-NOTICES.',
   'Bundled DejaVu Sans is under the Bitstream Vera Fonts License; DMC colour data is community-sourced.'
 ]
