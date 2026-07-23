@@ -1,78 +1,68 @@
-# Wesnoth Stitch — Wesnoth Art to Cross-Stitch
+# Wesnoth Stitch
 
-Pulls art assets from the official [Battle for Wesnoth](https://github.com/wesnoth/wesnoth)
-repository and converts them into cross-stitch patterns: a quick PNG preview first,
-then (if you like what you see) a full printable PDF chart with stitch symbols
-and a DMC floss key.
+Turn [Battle for Wesnoth](https://www.wesnoth.org/) unit sprites into **cross-stitch
+patterns**. Pick a unit, choose how many thread colours you want, and export a printable PDF
+chart with stitch symbols and a DMC floss shopping list. One sprite pixel = one stitch.
 
-## Status
+<!-- TODO: add a screenshot of the app (browser + pattern preview) here. -->
 
-This Python script is the working prototype, now moved into [prototype/](prototype/).
-It's being rewritten from scratch as an Electron + TypeScript desktop app with an
-interactive in-app pattern preview, proper perceptual colour quantization, and a
-real GUI instead of a CLI — see [docs/](docs/) for the full design and the milestone
-task breakdowns. The instructions below still describe this Python prototype, which
-remains the only runnable version until the rewrite reaches export parity
-(Milestone 3).
+## Download and install (Windows)
 
-## Setup
+1. Go to the **[Releases page](https://github.com/gemlad/wesnoth_stitch/releases)** and
+   download the latest **`wesnoth-stitch-…-setup.exe`**.
+2. Double-click it to install. It installs **just for you** — no administrator password
+   needed — and adds a Start-menu and desktop shortcut.
 
-```bash
-cd prototype
-pip install -r requirements.txt
-```
+### "Windows protected your PC" — this is expected
 
-Needs Python 3.9+.
+Wesnoth Stitch is a small free app and isn't code-signed, so Windows SmartScreen will show a
+blue **"Windows protected your PC"** box the first time. To continue:
 
-## Run
+1. Click **More info**.
+2. Click **Run anyway**.
 
-```bash
-python main.py
-```
+That's it — you'll only see this once. (If you'd rather not, you can check the file first: the
+installer is exactly the one attached to the Release above.)
 
-This will:
-1. Fetch the list of art files from GitHub (cached for a day after the first run).
-2. Let you pick a **category** — `units`, `terrain`, `portraits`, `items`,
-   `buildings`, `halo`, etc. (whatever folders exist under
-   `data/core/images/` in the Wesnoth repo).
-3. Let you pick a specific **file** within that category (type `s<text>` to
-   search by name, `m` to see more).
-4. Ask for a **stitch width** (how many stitches wide the finished pattern
-   should be — try 40–60 for a small sprite, more for detailed art) and a
-   **number of thread colors** (10–25 is typical).
-5. Save a quick `_preview.png` so you can see the result immediately.
-6. Ask whether to export the full `_pattern.pdf` — a multi-page printable
-   chart with stitch symbols, gridlines (bold every 10th line), a floss key
-   listing every DMC color used and how many stitches it covers, and an
-   estimated finished size at a few common Aida fabric counts.
+## First run: getting the sprites
 
-Both files land in `prototype/output/`.
+The unit sprites aren't bundled with the app — they're downloaded from the official Battle for
+Wesnoth project the **first time you open Wesnoth Stitch**, so you always get the current art.
 
-Run `python main.py --refresh` if you want to force a fresh fetch of the file
-list instead of using the cached one (e.g. after a big Wesnoth art update).
+- It's a **one-time download of a few megabytes** and needs an internet connection just this
+  once. You'll see a progress bar; when it finishes, the sprite browser fills in.
+- Later, if Wesnoth updates its art, use the **"Update sprites"** button (top-right) to pull
+  the newest set. Any sprites you've added to the folder yourself are kept.
 
-## Notes & limitations
+## Making a pattern
 
-- **Scope**: this only looks at `data/core/images/` — the mainline game art.
-  Campaign-specific art (`data/campaigns/<name>/images/`) isn't included; see
-  the comment at the top of `wesnoth_fetch.py` if you want to extend it.
-- **DMC colors**: `dmc_colors.csv` is a community-sourced chart, not an
-  official DMC export, and may have a few minor naming quirks in spots. The
-  hex/RGB values are the part that drives color matching; treat the thread
-  *names* as a convenience and double-check the printed **code** on the
-  skein label when you're shopping. Swap in a fuller list any time — the
-  loader just needs three columns: `code,name,hex`.
-- **GitHub rate limits**: unauthenticated requests are capped at 60/hour.
-  The file-list fetch is cached for a day so this is rarely an issue; if you
-  do hit it, set a `GITHUB_TOKEN` environment variable with a personal
-  access token (no special permissions needed, just a token).
-- **Color matching** uses a perceptual "redmean" distance rather than plain
-  RGB distance — noticeably better at picking sensible thread matches for
-  skin tones and dark colors.
+1. **Pick a unit** from the browser on the left.
+2. **Choose your colours.** The slider sets how many DMC thread colours the pattern uses. It
+   starts at the sprite's own colour count; drag it down to simplify (great for a quicker
+   stitch or a smaller floss list).
+3. **Set your fabric colour** so the preview matches the cloth you'll actually stitch on.
+4. **Export the chart.** You'll get a multi-page PDF: a cover with the finished size at common
+   Aida counts, a floss key (each colour's DMC code, name, symbol and stitch count), and the
+   chart pages themselves with a symbol in every cell and bold lines every 10 stitches.
 
-## License note
+**Print the PDF at 100% / "actual size"** (not "fit to page") — the chart is laid out at a real
+physical size so the symbols stay legible and the finished dimensions are correct.
 
-Wesnoth's artwork is licensed under the GNU GPL v2+ or Creative Commons
-BY-SA 4.0 — see [Wesnoth:Copyrights](https://wiki.wesnoth.org/Wesnoth:Copyrights).
-If you share patterns made from it, a credit to the Battle for Wesnoth
-project is a nice (and per the license, often required) touch.
+## Licence and credits
+
+- **Wesnoth Stitch** itself is free software under the **GNU GPL v3 or later** — see
+  [`LICENSE`](LICENSE).
+- **The unit sprites** are © the Battle for Wesnoth project, licensed **GPL v2+ / CC-BY-SA
+  4.0** ([Wesnoth:Copyrights](https://wiki.wesnoth.org/Wesnoth:Copyrights)). A cross-stitch
+  chart you make from them is a derivative work, so **please credit the Battle for Wesnoth
+  project** if you share it — the app already prints that credit on every chart page.
+- Bundled **DejaVu Sans** (Bitstream Vera Fonts License) and community-sourced **DMC colour
+  data** — full notices in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+
+## For developers
+
+The design docs and milestone breakdowns live in [`docs/`](docs/). The original Python CLI
+that started all this is in [`prototype/`](prototype/) with its
+[own README](prototype/README.md). Building from source needs Node (version pinned in
+`.node-version`): `npm install`, then `npm run dev` to run the app or `npm run build:win` to
+build the installer — see [`docs/RELEASING.md`](docs/RELEASING.md).
