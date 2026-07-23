@@ -323,6 +323,9 @@ const census = {
   max: counts[counts.length - 1],
   coverageAt37: +coverage(37).toFixed(1),
   coverageAt40: +coverage(40).toFixed(1),
+  // The live cap, whatever it is now — 37 was the original, #30/D3 widened it.
+  cap: MAX_COLOUR_COUNT,
+  coverageAtCap: +coverage(MAX_COLOUR_COUNT).toFixed(1),
   spritesOverCap: overCap.length,
   spritesOverCapPct: +((overCap.length / counts.length) * 100).toFixed(1)
 }

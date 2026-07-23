@@ -75,18 +75,21 @@ describe('drawCoverPage', () => {
 })
 
 describe('drawKeyPages', () => {
-  it('fits the full 37-colour palette on one page', () => {
-    // The row pitch (6mm) was chosen to make this true. At 7mm only 34 rows fit, which
-    // would split the maximum key across two sheets — turning a page mid-key while
-    // threading a needle, to buy 1mm of leading.
-    expect(keyRowsPerPage()).toBeGreaterThanOrEqual(MAX_COLOUR_COUNT)
-    expect(drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT), font)).toHaveLength(1)
+  it('fits a palette up to one page (40 rows) on a single sheet', () => {
+    // The row pitch (6mm) puts 40 rows on a page — enough for the original 37-colour cap.
+    expect(keyRowsPerPage()).toBe(40)
+    expect(drawKeyPages(pdf, paletteOf(40), font)).toHaveLength(1)
   })
 
-  it('paginates rather than clipping when a key does not fit', () => {
-    // Unreachable today — the page holds 40 rows and the cap is 37 — so it is forced here.
-    // The path is kept because the cap is a number we *expect* to move (#30, D4), and code
-    // that silently clips the day it passes 40 is a nasty way to discover that.
+  it('spills a full 47-colour cap key onto a second page rather than clipping', () => {
+    // #30/D3 widened the set and #28 settled it at 47, past the 40 one page holds, so the
+    // pagination is now live on a real chart. Row pitch was deliberately not shrunk to
+    // reclaim the page.
+    expect(MAX_COLOUR_COUNT).toBeGreaterThan(keyRowsPerPage())
+    expect(drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT), font)).toHaveLength(2)
+  })
+
+  it('paginates by the row budget it is given', () => {
     expect(drawKeyPages(pdf, paletteOf(12), font, 5)).toHaveLength(3)
     expect(drawKeyPages(pdf, paletteOf(10), font, 5)).toHaveLength(2)
   })

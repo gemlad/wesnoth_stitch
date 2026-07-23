@@ -256,9 +256,16 @@ thread. Distinct *DMC* is what Req. 6 actually wants.
    be fast enough to re-run live as the user drags a colour-count slider.
 
 **Default colour count (Req. 6):** = the distinct-DMC count from step 2, capped at
-`MAX_COLOUR_COUNT` (§5.3). The cap is **37**, the size of the legible stitch-symbol set —
-not a number chosen here. A chart cannot show more colours than it has symbols to name,
-so the symbol set is what binds.
+`MAX_COLOUR_COUNT` (§5.3). The cap is the size of the legible stitch-symbol set — not a
+number chosen here. A chart cannot show more colours than it has symbols to name, so the
+symbol set is what binds. It opened at **37**, grew to 49 after #30/D3 widened the glyph pool
+over the bundled font, and the print test (#28) settled it at **47** (§5.3).
+
+**Confirmed on purpose, not just in practice ([decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md) §4).** This shipped in
+#19 before ever being asked as a question — the slider simply defaulted to "sprite's own
+count, capped." Gemma has since confirmed that is the wanted behaviour: no separate
+fixed-small-palette mode. The sprite's own distinct-DMC count (capped at 37) stays the
+slider's ceiling and default.
 
 **Census (#16, re-run in #20 against the composited pipeline), over all 7,118 sprites in
 the checkout** — the original guess of 40 was made blind, so it is worth recording what the
@@ -275,11 +282,21 @@ Full palette fits under the cap — i.e. no reduction at default — for **93.0%
 at 37, against 95.7% at the originally-proposed 40. So lowering the ceiling to buy
 legibility costs 2.7 points of coverage, or 189 extra sprites that reduce.
 
-This corrects an assumption above: reduction is **not** a rare safety net for outliers.
-Roughly one sprite in fourteen exceeds the cap, and the long tail (merfolk, yeti death
-frames, the jinn) runs to 95 distinct floss — those are heavily shaded and anti-aliased
-despite being pixel art. Reduction is a routine, load-bearing part of the pipeline, which
-is a good argument for the care taken over its stability in step 3.
+**Update (#30/D3, settled by #28): the cap is 47**, and coverage jumps with it — the full
+palette fits under 47 for **99.0%** of sprites, leaving only **70 (1.0%)** that reduce at
+default, against 497 (7.0%) at 37. This did not come from deciding fidelity needed more
+colours (#20 settled that it does not — see below); it came from widening the *legible
+symbol set* now that a font is bundled (§5.3), then trimming it by two glyphs on the print
+test. Re-measure with `npm run validate:cap`, which reports `coverageAtCap`. The paragraphs
+below are the original 37-cap analysis, kept because the fidelity argument they make is
+exactly why widening the *symbol* set — not the colour budget — was the right lever.
+
+This corrects an assumption above: reduction is **not** a rare safety net for outliers — at
+least it was not at 37. Roughly one sprite in fourteen exceeded the cap at 37 (one in ~100
+at 47), and the long tail (merfolk, yeti death frames, the jinn) runs to 95 distinct floss —
+those are heavily shaded and anti-aliased despite being pixel art. Reduction is still a
+load-bearing part of the pipeline for that tail, which is a good argument for the care taken
+over its stability in step 3.
 
 **What the cap actually costs, measured (#20).** Coverage says how *often* the cap binds,
 not how much it hurts when it does. So: for every opaque pixel of the twelve richest
@@ -381,43 +398,79 @@ size of the legible stitch-symbol set, rather than allowing colour count to exce
 it. Guarantees every colour on a printed (including black-and-white) chart stays
 visually distinguishable by symbol alone.
 
-**The set, pinned down (#16).** `STITCH_SYMBOLS` holds **37 glyphs**, ordered by
-*distinctness* rather than codepoint. Symbols are handed out in array order and the
-palette is sorted dominant-floss-first (§5.2), so a low-`k` chart spends only the top of
-the list — bold, unmistakable silhouettes — and detail degrades gracefully as `k` climbs.
-Five tiers:
+**The set, pinned down (#16), widened (#30/D3), then settled by the print test (#28).**
+`STITCH_SYMBOLS` holds **47 glyphs** — the original 37, plus a widened block appended by
+#30/D3, less the two glyphs the print test cut (`◆`, kept `♦` instead; and `▦`). It is
+ordered by *distinctness* rather than codepoint — the array runs from the boldest, most
+unmistakable silhouettes down to the subtlest. **That ordering is an input to the assignment
+rule, not the rule itself:** which colour gets which glyph is decided by `assignment.ts`, and
+since #30/D1 that is `interleaved`, not "hand them out in array order" (see "Decided:
+`interleaved`" below). The array stays ranked by distinctness regardless, because every
+strategy reads it. The tiers:
 
-1. **Solid geometrics** (4) — separable by silhouette alone: `● ■ ▲ ◆`
+1. **Solid geometrics** (4) — separable by silhouette alone: `● ■ ▲ ♦`. The filled diamond is
+   the card suit `♦`, promoted here after the print test dropped the geometric `◆` (the two
+   were indistinct on paper, so only one earns the tier-1 slot).
 2. **Outline counterparts** (5) — same silhouettes, inverted fill: `○ □ △ ◇ ☆`
 3. **Half fill** (1) — a third fill state: `◐`
 4. **Strokes** (4) — a different visual class, thin and open: `+ × # =`
 5. **Letters** (23) — the fallback commercial charts have always used: A–Z less `O` and
    `Q` (confusable with `○`) and `X` (with `×`, which reads better small).
 
-**Two rules decide membership**, both learned from rendering the set at chart scale
+**Widened block (#30/D3, 2026-07-17), settled by the print test (#28, 2026-07-23).** Appended
+after the original 37 — so they are spent only above `k = 37` — and used unchanged in both the
+on-screen overlay and the printed chart (D5). They were added *deliberately generously*, on
+the understanding that the print test would cull whatever blob-collided on paper. It did: `◆`
+and `▦` went, `♦` was promoted into tier 1, and `♠` survived against `▲` (contrary to the
+guess). The survivors kept their appended position rather than being re-ranked into the tiers
+above — a full re-rank of the settled set by distinctness is deferred post-launch (#57).
+
+6. **Card suits** (3) — strong filled silhouettes: `♥ ♣ ♠` (`♦` promoted to tier 1)
+7. **Print marks** (4) — typographic, drawn to stay distinct small: `† ‡ § ¶`
+8. **Restored numerals** (3) — the three digits with no letter twin: `3 4 7`
+
+**Three rules decide membership**, all learned from rendering the set at chart scale
 rather than reasoning about it on paper:
 
+- **Distinguish by shape, not by shade (Gemma's decision, 2026-07-17).** A symbol earns its
+  place by being a *different mark*, not by laying down more or less of the same one. Distinct
+  fills are allowed where each reads as its own thing — solid vs outline (`●`/`○`), the
+  half-fill `◐` — because those are recognised, not measured. (The crosshatch square `▦` was
+  such a fill, but the print test found it too close to solid `■` and open `□`, so it went.)
+  What is **rejected** is a graded *ink ramp*: a scale like `░ ▒ ▓ █`, or circle fill-states
+  `◔ ◑ ◕` used as a series, where you tell one glyph from the next by *how much* ink it has.
+  Reading amount-of-ink off a 2.36 mm cell while counting stitches is exactly the work a
+  symbol should save you. This closes the "ordered ink ramp" idea floated for #30/D1 and
+  question 3, and it means value-shading (glyph ink standing in for the colour's darkness) is
+  out. See the ramp demonstration that settled it, logged in
+  [decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md).
 - **One orientation per shape family.** A rotated glyph is not a new glyph: the eye reads
   `▲ ▼ ◀ ▶` as one symbol pointing four ways and has to *decode* the direction, which is
   exactly the work a chart symbol exists to avoid. Only the upward triangle survives, and
   only one half-filled circle, so it has no mirror twin to be confused against.
 - **No two glyphs may share an ink blob.** At 9px a solid glyph reads as its filled area
-  and little else, so `★` and `◆` become the same dark lozenge. The star is kept in
-  outline only, where its points register.
+  and little else, so `★` and the filled diamond `♦` become the same dark lozenge. The star
+  is kept in outline only, where its points register. This is the same trap that retired the
+  geometric diamond `◆` on the print test — it was indistinct from `♦`.
 
 The same reasoning excludes the size variants (`▲`/`▴`) and weight variants (`+`/`✚`) the
-prototype shipped. Digits are dropped wholesale: `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`,
-`6`/`G`, `8`/`B` and `9`/`P` all collide with letters already in the set, and salvaging
-`3 4 7` is not worth a mixed-class rule. Every surviving glyph is a single BMP code point
-from Basic Latin, Latin-1, Geometric Shapes, or the outline star — ranges with
-near-universal font coverage, so neither Chromium's canvas (§5.4) nor a bundled PDF font
-(§5.5) falls back to tofu. Asking for a symbol past the end throws rather than wrapping;
-the prototype's `i % len` silently aliased two colours onto one glyph.
+prototype shipped. Most digits stay out — `0`/`O`, `1`/`I`, `2`/`Z`, `5`/`S`, `6`/`G`,
+`8`/`B` and `9`/`P` all collide with letters — but `3 4 7` have no letter twin and are
+restored in tier 8 (#30/D3). On code points: the original 37 were each a single BMP code
+point from Basic Latin, Latin-1, Geometric Shapes, or the outline star — ranges with
+near-universal coverage, so the set survived *any* font. The widened glyphs reach into
+Miscellaneous Symbols (`♥ ♣ ♦ ♠`) and General Punctuation (`† ‡ § ¶`), which are **not**
+universal; that is safe only because the export now bundles and embeds DejaVu Sans (#32,
+§5.5) and `font-coverage.test.ts` asserts every codepoint in the set resolves in it rather
+than falling back to tofu. The bundled font, not the range, is the guarantee (#30/D4).
+Asking for a symbol past the end throws rather than wrapping; the prototype's `i % len`
+silently aliased two colours onto one glyph.
 
-`MAX_COLOUR_COUNT = 37` is therefore the slider's **hard maximum** (read by #19), and
-since it sits below the 40 §5.2 proposed, *it* is the effective colour cap — see the
-census in §5.2. If #20 wants a higher cap, **the symbol set must grow first**: a chart
-cannot show more colours than it has symbols to name.
+`MAX_COLOUR_COUNT = STITCH_SYMBOLS.length` is the slider's **hard maximum** (read by #19)
+and the effective colour cap — see the census in §5.2. It opened at 37, grew to 49 with
+#30/D3, and the print test (#28) settled it at **47**. Raising it required exactly what §8
+said it would: **the symbol set had to grow first**, and it could only grow past the
+font-safe ranges once a font was bundled. Growing it further is post-launch work (#57).
 
 #### Limitations of the hard limit
 
@@ -425,46 +478,50 @@ The ceiling is a real constraint with real costs, and they should be understood 
 anyone tries to raise it:
 
 - **It is a limit on charting, not on stitching.** Nothing stops you stitching 95 floss
-  colours. The 37 exists because a *printed black-and-white chart* must name each colour
-  with a glyph you can tell apart from the other 36. That is the most demanding consumer
+  colours. The cap exists because a *printed black-and-white chart* must name each colour
+  with a glyph you can tell apart from every other. That is the most demanding consumer
   of the palette, and it sets the budget for everything upstream.
-- **497 sprites (7.0%) cannot be charted at full fidelity.** They exceed 37 distinct DMC
-  and must reduce (§5.2). The extreme case, `merfolk/citizen.png`, has 95 distinct floss
-  and loses 58 of them. #20 measured what that loss is worth: a pixel-weighted mean of
-  1.14 ΔE, half a just-noticeable difference. Reduction is designed to make that loss
-  principled rather than arbitrary, and by that measure it succeeds — but it is still a loss.
+- **At the settled cap of 47, only 70 sprites (1.0%) cannot be charted at full
+  fidelity** — down from 497 (7.0%) at 37. They exceed 47 distinct DMC and must reduce
+  (§5.2). The extreme case, `merfolk/citizen.png`, has 95 distinct floss and still loses 48
+  of them. #20 measured what that loss is worth at 37: a pixel-weighted mean of 1.14 ΔE,
+  half a just-noticeable difference; the wider cap only shrinks it. Reduction is designed
+  to make that loss principled rather than arbitrary — but it is still a loss.
 - **The cap is imposed on the preview by the export.** The on-screen colour preview
   (§5.4) and the PNG export need no symbols and could carry far more colours. The slider
   is capped globally anyway, so that what you preview is always what you can export. A
   preview you cannot turn into a chart would be worse than a lower ceiling.
-- **Raising it is not cheap.** The glyph pool that survives both rules inside font-safe
-  ranges is close to exhausted. Every obvious remaining candidate breaks something:
-  digits collide with letters, lowercase collides with uppercase, and arrows, dingbats
-  and box-drawing characters either reintroduce rotation families or risk font fallback
-  in a bundled PDF font (§5.5). Growing the set means either accepting a font dependency
-  or accepting worse glyphs.
-- **The rules are heuristics, and they have not met paper.** Both were validated by
-  rendering a real chart at 9px on screen — which is how the rotation variants and the
-  `★`/`◆` blob collision were caught — but not yet at 5pt in the actual export font.
-  `C`/`G`, `E`/`F` and `P`/`R` are the marginal survivors. If any fails in print, the cap
-  drops by one for each glyph removed; the two numbers are the same number.
+- **Raising it further is not cheap.** The bundled font (#32) reopened the ranges the
+  original 37 avoided, which is where the widened block came from — but each new glyph still
+  has to earn its place against the three rules *and* the print test. Two of the generous
+  additions already fell to it (`◆`, `▦`). Beyond the survivors the remaining distinct
+  silhouettes thin out fast, and the obvious large seam — the shade/fill ramps (`░ ▒ ▓`,
+  circle fill-states) — is **ruled out**: they differ by amount of ink, not shape, which the
+  first membership rule forbids (Gemma's decision). So growth from here is a slow hunt for
+  genuinely distinct marks, not a ramp waiting to be switched on. That hunt is post-launch
+  work, tracked as **#57**.
+- **The rules are heuristics; the set has now met paper (#28).** The original 37 were
+  validated by rendering a real chart at 9px on screen — which caught the rotation variants
+  and the `★`/`◆` blob collision — and the widened set has since been judged at true print
+  scale in the export font. The marginal letter pairs `C`/`G`, `E`/`F`, `P`/`R` all passed;
+  the widened glyphs cost two casualties (`◆`, `▦`), dropping the cap from 49 to 47. The count
+  and the cap are the same number, so each cut lowered it by one. #28 is resolved.
 
-  **#20 built the test but could not take it.** `npm run uat:legibility` renders
-  `uat/glyph-legibility-test.pdf`: seven A4 pages at exact physical size —
-  a 100mm calibration ruler, the whole set at four cell sizes, a side-by-side and
-  *separated* drill on the marginal pairs, a blind identification task, and two real
-  charts (dwarvish scout at `k=20`, merfolk citizen at `k=37`). The scale that matters is
-  **2.36 mm per cell**: a 72-cell sprite across A4's printable width, which puts the glyph
-  at ~4.8pt — that is where "legible at ~5pt" comes from. Two caveats the sheet cannot
-  remove: it renders through Chromium with the app's font stack, not the export font
-  (§5.5 does not exist yet), and the verdict is a human judgement. Tracked as #28.
+  **The test, taken.** `npm run uat:legibility` renders `uat/glyph-legibility-test.pdf`:
+  seven A4 pages at exact physical size — a 100mm calibration ruler, the whole set at four
+  cell sizes, a side-by-side and *separated* drill on the marginal pairs, a blind
+  identification task, and two real charts (dwarvish scout at `k=20`, merfolk citizen at the
+  cap). The authoritative artefact is `uat/chart-symbol.pdf`, a real chart from the export
+  path in the embedded font. The scale that matters is **2.36 mm per cell**: a 72-cell sprite
+  across A4's printable width, putting the glyph at ~4.8pt — that is where "legible at ~5pt"
+  comes from. Gemma judged it printed at 100% and signed the set off (#28).
 - **Symbols are assigned by palette index, so they are stable only for a fixed `k`.**
   This is the sharpest limitation, and it partly undercuts §5.2's stability story.
   Reduction keeps *colours* stable as the slider moves, but the palette reorders by pixel
   count, so a colour that survives a merge can still be handed a different glyph.
   Measured on the dwarvish scout (31 distinct floss): **22 of the 30 slider steps
   reassign at least one surviving colour's symbol**, 124 reassignments in total — and not
-  subtly, e.g. DMC 918 goes `◆` → `○` on a one-step move. So dragging the slider with the
+  subtly, e.g. DMC 918 goes `♦` → `○` on a one-step move. So dragging the slider with the
   symbol overlay on (#18) will visibly churn even though the colours beneath do not.
 
   This is tolerable because an exported chart is produced at one chosen `k`, and within
@@ -476,6 +533,98 @@ anyone tries to raise it:
   (its medoid), so the mapping exists — at the cost that a low-`k` chart would no longer
   be guaranteed the most distinctive glyphs. That trade is deliberately not taken here;
   revisit under #18/#19 once the overlay is real enough to judge.
+
+#### Gemma's answers on #30's D1–D5 ([decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md) §1–3)
+
+**What failed UAT (the question #30 was left waiting on):** not individual glyph
+confusion, but that the assignment rule concentrates the boldest glyphs on the
+sprite's largest, dominant-coloured regions — the near-solid black field on
+`merfolk/citizen` at `k=37` this section already describes. That confirms the
+"heaviest glyphs land on the largest areas" finding is the real defect, not a
+side-observation.
+
+- **D2 — churn is not a priority.** Keep assigning against the *reduced* palette
+  (index order), as today. The base-palette escape hatch above is not worth taking
+  just to kill churn; if D1's inverse-density work changes the assignment rule anyway,
+  churn may fall out of that for free.
+- **D3 — bring back distinct numerals, and widen the pool.** Once the glyph set is
+  being redesigned around a bundled font (D4, §3 below), revisit whether `3 4 7` (and
+  other glyphs excluded only for font-safety, not for confusability) are worth
+  re-admitting. This folds into the same design-exploration work as §3's "do we bundle
+  an export font" question — see there for what's still open.
+- **D5 — yes, one set for both.** The on-screen overlay and the printed chart use the
+  same `STITCH_SYMBOLS`/`symbolsFor` — already true in code (both consumers call the
+  same function), and now confirmed as the intended design, not an accident of not
+  having built two.
+- **D1 — built and measured, awaiting Gemma's UAT verdict.** The three candidate rules are
+  implemented in `pipeline/assignment.ts` (`assignSymbols(palette, strategy)`), driven by a
+  per-glyph ink measurement — see below.
+
+#### Assignment strategies (#30/D1) — measured, then decided
+
+The #30 finding was that assignment, not the glyphs, is what breaks: the palette is sorted
+dominant-floss-first, and the rule *at the time* handed glyphs out in distinctness order,
+where the most distinctive glyphs are also the inkiest — so the largest colour areas got the
+darkest symbols. Measured with `npm run measure:ink` (rendering each glyph in the bundled DejaVu and
+counting cell fill, baked into `pipeline/glyph-ink.ts`): the glyphs the set opens with —
+`■` 0.30, `●` 0.24, `▲` 0.16, the filled diamond `♦` 0.11 — are near the top of the ink
+ranking, while outlines and thin strokes (`☆ + = I`) sit near 0.04.
+
+Three strategies, all returning one symbol per colour, index-aligned, differing only in
+*which glyph the biggest area gets*:
+
+- **distinctness** — the status quo. Boldest, most recognisable glyph to the dominant floss.
+- **inverse-density** — glyphs ordered lightest-ink first, so the largest area gets the
+  faintest glyph. The direct fix.
+- **interleaved** — Gemma's idea: most distinct, then least dense, alternating, deduped.
+
+Measured on real charts (`npm run assign:compare`, ink averaged over each 10×10 block, worst
+block being where the eye trips):
+
+| merfolk citizen, k=47 (cap) | mean cell ink | worst 10×10 block |
+|---|---|---|
+| distinctness | 0.142 | 0.239 |
+| inverse-density | 0.060 | **0.099** |
+| interleaved | 0.122 | 0.302 |
+
+**Inverse-density is the only rule that pulls ink off the big areas** — a ~2.4× flatter
+worst block on the sprite where the field collapses. **Interleaved does *not* fix the worst
+block** (it still lands the second-heaviest glyph on a large area, sometimes worse than
+today). The open cost of inverse-density is legibility: the dominant colours get faint,
+letter-like glyphs that are less distinct from one another, so telling the big regions apart
+leans harder on the grid.
+
+#### Decided: `interleaved` (Gemma, 2026-07-17)
+
+**The app charts with `interleaved`.** `DEFAULT_ASSIGNMENT_STRATEGY` in
+`pipeline/assignment.ts` is the one constant that says so, and `symbolsFor` — the single
+entry point the preview, the chart pages and the floss key all call — routes through it, so
+a key can never disagree with its chart.
+
+This went **against the metric**, deliberately and with the numbers on the table. Ink
+concentration favoured inverse-density; the eye did not. What the block measurement cannot
+see is that a chart is a thing you *work from*: interleaved keeps a bold, unmistakable anchor
+on the dominant colour — the thing you re-find your place by — while still pushing the
+next-largest areas straight to the faintest glyphs, so the field breaks up without the whole
+chart going flat and characterless. Inverse-density's failure mode is not blobbing but
+sameness: faint letter-like glyphs on every large region, with nothing to navigate by. The
+accepted cost is a worst block no better than the status quo (0.302 vs 0.239 on the citizen).
+
+The measurement was still worth taking: it is what established that the metric and the
+judgement disagree here, and *why* — which is a more useful thing to have recorded than a
+number that happened to agree. Note also that the ink-ramp escape hatch (below) was closed
+before this choice was made, so interleaved was chosen knowing no ramp would rescue the
+alternative.
+
+**The ink-ramp escape hatch is closed (Gemma's decision, 2026-07-17).** It was tempting to
+say "if inverse-density reads too faint, give the big areas an ordered ink ramp (`░ ▒ ▓`) so
+they are faint *and* mutually distinct." A dedicated demonstration put that idea in front of
+Gemma and the verdict was no: shade ramps are bad to stitch from — symbols must differ by
+shape, not by amount of ink (§5.3, rule 1). So inverse-density has to stand on its own faint,
+shape-based glyphs, with no ramp to lean on. That sharpens the D1 choice rather than adding a
+fourth option: it is distinctness vs inverse-density vs interleaved, full stop. Stability
+across `k` (glyph churn, #30/D2) is a separate axis Gemma deprioritised; it is invisible on a
+single chart and not built here.
 
 ### 5.4 Pattern Preview & Grid (Req. 3, 4)
 
@@ -699,18 +848,21 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   no two glyphs sharing an ink blob. See §5.3.
 - ~~**Colour-count ceiling:**~~ **Resolved (#16), and not the way §5.2 guessed.** The cap
   is not a free choice: it *is* the symbol-set size, because a chart cannot show more
-  colours than it has symbols to name. So `MAX_COLOUR_COUNT = 37`. A census over all
-  7,118 sprites (§5.2) shows the full palette fits under it 93.0% of the time (95.7% at
-  the old 40), with a median of 24 and a long tail to 95. The original framing — a safety
-  ceiling for rare outliers — was wrong: about one sprite in fourteen exceeds the cap, so
-  reduction runs routinely.
+  colours than it has symbols to name. So `MAX_COLOUR_COUNT = STITCH_SYMBOLS.length`. A
+  census over all 7,118 sprites (§5.2) shows the full palette fits under 37 for 93.0% of
+  them (95.7% at the old 40), with a median of 24 and a long tail to 95. The original
+  framing — a safety ceiling for rare outliers — was wrong at 37: about one sprite in
+  fourteen exceeded it. **Update (#30/D3, settled by #28):** the symbol set was widened to 49
+  and the print test then trimmed it to **47**, at which coverage is 99.0% and reduction is
+  back to being rare (1.0%, one sprite in ~100). See §5.3.
 - ~~**Is the cap generous enough?**~~ **Resolved (#20), and the question was the wrong way
   round.** Capping the twelve richest sprites at 37 moves the average pixel **1.14 ΔE**
   from where full fidelity would put it — half a just-noticeable difference. Raising the
   cap to 40 improves that to 0.97 ΔE, which nobody can see, while rescuing 2.7% of sprites
-  from reducing and demanding three more legible glyphs that do not exist. Colour fidelity
-  was never the binding constraint. **Glyph legibility is, and it is the only thing
-  holding the number at 37.**
+  from reducing. Colour fidelity was never the binding constraint. **Glyph legibility is,
+  and it is the only thing holding the number down.** That is precisely why the lever that
+  finally moved it (#30/D3) was widening the *legible symbol set* over a bundled font, not
+  raising the colour budget — see §5.3.
 - ~~**Anti-aliasing / `alphaThreshold`:**~~ **Resolved (#20), and the premise was wrong.**
   The partial-alpha band is not anti-aliasing fringe. It is one value — `alpha = 153` — and
   it is Wesnoth's drop shadow, present under 90% of sprites and worth 12.57% of every
@@ -719,13 +871,14 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
   becomes the grey it looks like (DMC 317 on `merfolk/citizen.png`), and `alphaThreshold`
   stays at 128 — the histogram is empty either side of it, so its exact value is
   immaterial. See §5.2, "Translucency is semantic".
-- **Still open — needs a printer, not a program.** Whether 37 glyphs *actually* read at
-  print scale. The set was checked by rendering a real chart (dwarvish scout at `k=20`) in
-  black and white at 9px, which is what caught the rotation variants and the `★`/`◆` blob
-  collision. The remaining marginal pairs are letters: `C`/`G`, `E`/`F`, `P`/`R`. If any
-  fails on paper, dropping it lowers the cap by one — the two are the same number. #20
-  built the test sheet (`npm run uat:legibility`, §5.3) but the verdict is a human
-  judgement, so it is tracked as its own issue (#28).
+- ~~**Does the symbol set read at print scale?**~~ **Resolved (#28, 2026-07-23).** The
+  original 37 were checked by rendering a real chart (dwarvish scout at `k=20`) in black and
+  white at 9px, which caught the rotation variants and the `★`/`◆` blob collision. The
+  widened set has now been judged at true physical size in the export font, printed at 100%.
+  The marginal letter pairs `C`/`G`, `E`/`F`, `P`/`R` all passed; the widened glyphs cost two
+  casualties — `◆` (kept `♦` in its place) and `▦` — dropping the cap from 49 to **47**. `♠`
+  survived against `▲`, contrary to the guess. The count and the cap are the same number, so
+  each cut lowered it by one. Growing the set further is post-launch work (#57). See §5.3.
 
 ## 9. Milestones
 
@@ -741,6 +894,12 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 3. Export parity with the prototype (PNG preview, PDF chart with floss key),
    including the configurable background colour (§5.4, §6).
 4. Packaging: electron-builder installer target (§3), since the app is intended to
-   be distributable to others, not just personal/dev use.
+   be distributable to others, not just personal/dev use. **Gated on UAT
+   ([decisions-agreed-2026-07-23.md](decisions-agreed-2026-07-23.md) §4):** does not start
+   until Milestones 2 and 3 have passed UAT and are closed. #30 and #28 (§8) are now resolved,
+   so the gate is the remaining M2/M3 GitHub issues clearing. First release is Milestones 1–4.
 5. Future extensions: multi-source browsing (§7.1), batch processing (§7.2), manual
-   per-stitch override (§7.3), non-unit asset categories (§7.4).
+   per-stitch override (§7.3), non-unit asset categories (§7.4). Post-first-release work
+   (page-overlap margins, colour-key display, distribution/Pattern Keeper compatibility,
+   etc.) is tracked directly as GitHub milestones rather than enumerated here — see the
+   repo's milestone list.

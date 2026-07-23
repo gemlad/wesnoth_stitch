@@ -1,29 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolAt, symbolsFor } from './symbols'
-import { mapSpriteToDmc } from './map-to-dmc'
-import { reduceSprite } from './reduce-over-dmc'
-import { DMC_COLORS } from '../colour'
-import type { DecodedImage } from '../ipc'
-import type { QuantizedPalette } from './types'
+import { MAX_COLOUR_COUNT, STITCH_SYMBOLS, symbolAt } from './symbols'
 
 const glyphs = STITCH_SYMBOLS.map((s) => s.glyph)
 const codepoint = (g: string): number => g.codePointAt(0)!
 
-/** Build a 1-row opaque sprite from a list of RGB triples. */
-function imageOf(colours: readonly { r: number; g: number; b: number }[]): DecodedImage {
-  const data = new Uint8Array(colours.length * 4)
-  colours.forEach(({ r, g, b }, i) => {
-    data[i * 4] = r
-    data[i * 4 + 1] = g
-    data[i * 4 + 2] = b
-    data[i * 4 + 3] = 255
-  })
-  return { width: colours.length, height: 1, data }
-}
-
 describe('STITCH_SYMBOLS', () => {
-  it('caps the slider at 37 — legibility sets the count, and it binds below §5.2’s 40', () => {
-    expect(MAX_COLOUR_COUNT).toBe(37)
+  it('caps the slider at 47 — the widened 49 less the two print-test (#28) casualties', () => {
+    // The print test settled the set: ◆ (kept ♦ instead) and ▦ were culled from the 49.
+    expect(MAX_COLOUR_COUNT).toBe(47)
     expect(STITCH_SYMBOLS.length).toBe(MAX_COLOUR_COUNT)
   })
 
@@ -44,16 +28,15 @@ describe('STITCH_SYMBOLS', () => {
     }
   })
 
-  it('stays inside font-safe Unicode ranges, so no glyph falls back to tofu', () => {
-    // Basic Latin, the Latin-1 multiplication sign, Geometric Shapes, the outline star.
-    const safe = (c: number): boolean =>
-      (c >= 0x20 && c <= 0x7e) || c === 0x00d7 || (c >= 0x25a0 && c <= 0x25ff) || c === 0x2606
-    for (const g of glyphs) {
-      expect(
-        safe(codepoint(g)),
-        `${g} (U+${codepoint(g).toString(16)}) outside font-safe ranges`
-      ).toBe(true)
-    }
+  it('restores 3/4/7 and the widened families (#30/D3), tofu-safety delegated to the font', () => {
+    // The original 37 stayed inside near-universal ranges; the widened glyphs do not, so
+    // "font-safe by range" is retired. Coverage is now guaranteed against the actual bundled
+    // DejaVu Sans by font-coverage.test.ts, not asserted here by codepoint.
+    for (const g of ['3', '4', '7']) expect(glyphs).toContain(g)
+    for (const g of ['♥', '♣', '♦', '♠']) expect(glyphs).toContain(g)
+    for (const g of ['†', '‡', '§', '¶']) expect(glyphs).toContain(g)
+    // The crosshatch square ▦ was culled by the print test (#28) — indistinct from ■ and □.
+    expect(glyphs).not.toContain('▦')
   })
 
   it('rule 1: carries one orientation per shape family — a rotation is not a new glyph', () => {
@@ -68,8 +51,10 @@ describe('STITCH_SYMBOLS', () => {
 
   it('rule 2: no two solid glyphs share an ink blob at chart size', () => {
     // A filled star closes up into the same dark lozenge as a filled diamond at 9px,
-    // so the star is kept in outline only, where its points actually register.
-    expect(glyphs).toContain('◆')
+    // so the star is kept in outline only, where its points actually register. The set's
+    // filled diamond is now the card suit ♦; the geometric ◆ was culled in print (#28).
+    expect(glyphs).toContain('♦')
+    expect(glyphs).not.toContain('◆')
     expect(glyphs).not.toContain('★')
     expect(glyphs).toContain('☆')
   })
@@ -80,8 +65,10 @@ describe('STITCH_SYMBOLS', () => {
     expect(glyphs).not.toContain('X')
     // O and Q against the open circle.
     for (const banned of ['O', 'Q']) expect(glyphs).not.toContain(banned)
-    // Digits are dropped wholesale — each collides with a letter already in the set.
-    expect(glyphs.some((g) => /[0-9]/.test(g))).toBe(false)
+    // The colliding digits stay out — each has a letter twin in the set.
+    for (const banned of ['0', '1', '2', '5', '6', '8', '9']) expect(glyphs).not.toContain(banned)
+    // …but the three without a twin are restored (#30/D3).
+    for (const kept of ['3', '4', '7']) expect(glyphs).toContain(kept)
     // Size and weight variants the prototype shipped — indistinguishable printed.
     for (const banned of ['▴', '▪', '✚']) expect(glyphs).not.toContain(banned)
   })
@@ -89,13 +76,17 @@ describe('STITCH_SYMBOLS', () => {
   it('spends its most distinctive glyphs first, so low colour counts read clearly', () => {
     // The first 10 are geometric shapes (solid, outline, half) — silhouette + fill cues.
     for (const g of glyphs.slice(0, 10)) expect(codepoint(g)).toBeGreaterThanOrEqual(0x25a0)
-    // Then the strokes, then letters all the way out.
+    // Then the strokes, then the original 23 letters.
     expect(glyphs.slice(10, 14)).toEqual(['+', '×', '#', '='])
-    expect(glyphs.slice(14).every((g) => /[A-Z]/.test(g))).toBe(true)
+    expect(glyphs.slice(14, 37).every((g) => /[A-Z]/.test(g))).toBe(true)
+    // The #30/D3 widened block sits after the original 37, in a fixed order — less the two
+    // print-test casualties (◆, and ▦ which lived in this block). ♦ was promoted to tier 1.
+    expect(glyphs.slice(37)).toEqual(['♥', '♣', '♠', '†', '‡', '§', '¶', '3', '4', '7'])
     // Solid before outline: a filled circle outranks an open one.
     expect(glyphs.indexOf('●')).toBeLessThan(glyphs.indexOf('○'))
     expect(glyphs.indexOf('■')).toBeLessThan(glyphs.indexOf('□'))
-    expect(glyphs.indexOf('◆')).toBeLessThan(glyphs.indexOf('◇'))
+    // The filled diamond ♦ (tier 1) outranks the open diamond ◇ (tier 2).
+    expect(glyphs.indexOf('♦')).toBeLessThan(glyphs.indexOf('◇'))
   })
 })
 
@@ -113,36 +104,5 @@ describe('symbolAt', () => {
   })
 })
 
-describe('symbolsFor', () => {
-  const paletteOf = (n: number): QuantizedPalette =>
-    reduceSprite(
-      mapSpriteToDmc(imageOf(DMC_COLORS.filter((_, i) => i % 6 === 0).map((c) => c.rgb))),
-      n
-    ).palette
-
-  it('gives one distinct symbol per colour, aligned with the palette order', () => {
-    const palette = paletteOf(12)
-    const symbols = symbolsFor(palette)
-    expect(symbols.length).toBe(palette.colours.length)
-    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(12)
-    // Index-aligned: the dominant floss takes the first, most distinctive glyph.
-    expect(symbols[0].glyph).toBe('●')
-    expect(symbols).toEqual(palette.colours.map((_, i) => symbolAt(i)))
-  })
-
-  it('names a full 40-colour palette without running out', () => {
-    const symbols = symbolsFor(paletteOf(MAX_COLOUR_COUNT))
-    expect(symbols.length).toBe(MAX_COLOUR_COUNT)
-    expect(new Set(symbols.map((s) => s.glyph)).size).toBe(MAX_COLOUR_COUNT)
-  })
-
-  it('refuses a palette larger than the symbol set — the ceiling is hard', () => {
-    const oversized = paletteOf(MAX_COLOUR_COUNT + 1)
-    expect(oversized.colours.length).toBe(MAX_COLOUR_COUNT + 1) // the fixture really is over
-    expect(() => symbolsFor(oversized)).toThrow(RangeError)
-  })
-
-  it('handles an empty palette', () => {
-    expect(symbolsFor({ colours: [], colourCount: 0, sourceColourCount: 0 })).toEqual([])
-  })
-})
+// `symbolsFor` is tested in assignment.test.ts — it belongs to the assignment rule (#30/D1),
+// not to the set. This file covers membership and ordering of STITCH_SYMBOLS only.
