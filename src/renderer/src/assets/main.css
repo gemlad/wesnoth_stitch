@@ -71,6 +71,11 @@ body {
   user-select: text;
 }
 
+.app-footer__divider {
+  color: var(--ev-c-gray-3);
+  user-select: none;
+}
+
 /* Sprite browser ---------------------------------------------------------- */
 
 .sprite-browser {
