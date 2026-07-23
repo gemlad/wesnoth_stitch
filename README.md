@@ -59,6 +59,10 @@ physical size so the symbols stay legible and the finished dimensions are correc
 - Bundled **DejaVu Sans** (Bitstream Vera Fonts License) and community-sourced **DMC colour
   data** — full notices in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
 
+## AI statement
+
+This code was developed using Anthropic's Claude Opus. The code itself has not been reviewed by a human, but the outputs have been user-acceptance tested.
+
 ## For developers
 
 The design docs and milestone breakdowns live in [`docs/`](docs/). The original Python CLI
