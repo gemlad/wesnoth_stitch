@@ -22,6 +22,8 @@ import { DEFAULT_CELL_MM, mmToPt, planTiles, A4_WIDTH_MM, A4_HEIGHT_MM } from '.
 
 const FONT = fileURLToPath(new URL('../../../resources/fonts/DejaVuSans.ttf', import.meta.url))
 const AIDA: RGB = { r: 0xf2, g: 0xec, b: 0xdc }
+/** The running head every chart page carries (#91). */
+const TITLE = 'dwarvish-fighter'
 
 let pdf: PDFDocument
 let font: PDFFont
@@ -64,6 +66,7 @@ describe('drawChartPages', () => {
   it('emits one A4 page per tile', () => {
     const pattern = patternOf(52, 52, 8)
     const pages = drawChartPages(pdf, pattern, paletteOf(8), font, {
+      title: TITLE,
       backgroundColour: AIDA,
       symbolDisplay: 'both'
     })
@@ -77,6 +80,7 @@ describe('drawChartPages', () => {
   it('tiles a pattern too big for one page, agreeing with planTiles', () => {
     const pattern = patternOf(150, 200, 4)
     const pages = drawChartPages(pdf, pattern, paletteOf(4), font, {
+      title: TITLE,
       backgroundColour: AIDA,
       symbolDisplay: 'both'
     })
@@ -85,9 +89,24 @@ describe('drawChartPages', () => {
     expect(pages.length).toBeGreaterThan(1)
   })
 
+  it('carries the running head without re-tiling the chart (#91)', () => {
+    // The header shares the tile heading's baseline precisely so it costs no vertical space.
+    // If it ever took a band of its own, CHART_HEIGHT_MM would shrink and this page count
+    // would move — which is the whole reason to assert it against planTiles.
+    const pattern = patternOf(150, 200, 4)
+    const long = 'an-absurdly-long-sprite-name-that-would-run-off-the-page-if-unchecked'
+    const pages = drawChartPages(pdf, pattern, paletteOf(4), font, {
+      title: long,
+      backgroundColour: AIDA,
+      symbolDisplay: 'both'
+    })
+    expect(pages).toHaveLength(planTiles(150, 200, DEFAULT_CELL_MM).length)
+  })
+
   it.each(['colour', 'symbol', 'both'] as const)('renders in %s mode', (symbolDisplay) => {
     expect(() =>
       drawChartPages(pdf, patternOf(20, 20, 5), paletteOf(5), font, {
+        title: TITLE,
         backgroundColour: AIDA,
         symbolDisplay
       })
@@ -116,7 +135,8 @@ describe('drawChartPages', () => {
     const tooMany = MAX_COLOUR_COUNT + 1
     expect(() =>
       drawChartPages(pdf, patternOf(10, 10, tooMany), paletteOf(tooMany), font, {
-        backgroundColour: AIDA,
+        title: TITLE,
+      backgroundColour: AIDA,
         symbolDisplay: 'both'
       })
     ).toThrow(RangeError)
@@ -126,7 +146,8 @@ describe('drawChartPages', () => {
     const pattern: StitchPattern = { width: 1, height: 1, cells: [[9]] }
     expect(() =>
       drawChartPages(pdf, pattern, paletteOf(2), font, {
-        backgroundColour: AIDA,
+        title: TITLE,
+      backgroundColour: AIDA,
         symbolDisplay: 'both'
       })
     ).toThrow(RangeError)
@@ -136,7 +157,8 @@ describe('drawChartPages', () => {
     const pattern: StitchPattern = { width: 2, height: 1, cells: [[null, null]] }
     expect(() =>
       drawChartPages(pdf, pattern, paletteOf(1), font, {
-        backgroundColour: AIDA,
+        title: TITLE,
+      backgroundColour: AIDA,
         symbolDisplay: 'both'
       })
     ).not.toThrow()

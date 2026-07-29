@@ -57,9 +57,11 @@ export async function buildChartPdf(
   await drawCoverPage(pdf, meta, pattern, palette, font, {
     backgroundColour: options.backgroundColour
   })
-  drawKeyPages(pdf, palette, font)
+  // Every page after the cover carries the sprite's name (#91) — the cover already states it.
+  drawKeyPages(pdf, palette, font, meta.title)
 
   const chart: ChartOptions = {
+    title: meta.title,
     backgroundColour: options.backgroundColour,
     symbolDisplay: options.symbolDisplay,
     ...(options.cellMm === undefined ? {} : { cellMm: options.cellMm })
