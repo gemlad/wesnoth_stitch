@@ -175,7 +175,7 @@ export function registerIpcHandlers(): void {
           const pdf = await buildChartPdf(
             pattern,
             palette,
-            { title: name, width: pattern.width, height: pattern.height },
+            { title: name },
             { ...settings, fontBytes: loadExportFont() }
           )
           await writeFile(path, pdf)

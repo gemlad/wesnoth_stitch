@@ -91,7 +91,7 @@ describe('drawCoverPage', () => {
     const before = pdf.getPageCount()
     await drawCoverPage(
       pdf,
-      { title: 'Dwarvish Fighter', width: 8, height: 8 },
+      { title: 'Dwarvish Fighter' },
       patternOf(8, 8, 8),
       paletteOf(8),
       font,
@@ -103,7 +103,7 @@ describe('drawCoverPage', () => {
   it('does not throw when the palette was reduced (it says so on the page)', async () => {
     const page = await drawCoverPage(
       pdf,
-      { title: 'Citizen', width: 40, height: 39 },
+      { title: 'Citizen' },
       patternOf(40, 39, 37),
       paletteOf(37, 95),
       font,
@@ -117,14 +117,9 @@ describe('drawCoverPage', () => {
       const doc = await PDFDocument.create()
       doc.registerFontkit(fontkit)
       const f = await doc.embedFont(FONT_BYTES, { subset: true })
-      await drawCoverPage(
-        doc,
-        { title: 'X', width: pattern.width, height: pattern.height },
-        pattern,
-        paletteOf(colours),
-        f,
-        { backgroundColour: WHITE }
-      )
+      await drawCoverPage(doc, { title: 'X' }, pattern, paletteOf(colours), f, {
+        backgroundColour: WHITE
+      })
       return (await doc.save()).length
     }
     const withPreview = await cover(patternOf(24, 24, 6), 6)
@@ -261,7 +256,7 @@ describe('buildChartPdf', () => {
     const bytes = await buildChartPdf(
       pattern,
       palette,
-      { title: 'Dwarvish Fighter', width: 72, height: 72 },
+      { title: 'Dwarvish Fighter' },
       { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
     )
 
@@ -275,7 +270,7 @@ describe('buildChartPdf', () => {
     const bytes = await buildChartPdf(
       patternOf(72, 72, 8),
       paletteOf(8),
-      { title: TITLE, width: 72, height: 72 },
+      { title: TITLE },
       { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
     )
     const loaded = await PDFDocument.load(bytes)
@@ -300,7 +295,7 @@ describe('buildChartPdf', () => {
     const bytes = await buildChartPdf(
       patternOf(10, 10, 3),
       paletteOf(3),
-      { title: 't', width: 10, height: 10 },
+      { title: 't' },
       { backgroundColour: AIDA, symbolDisplay: 'symbol', fontBytes: FONT_BYTES }
     )
     expect(Buffer.from(bytes.slice(0, 5)).toString()).toBe('%PDF-')
@@ -313,7 +308,7 @@ describe('buildChartPdf', () => {
       buildChartPdf(
         patternOf(10, 10, tooMany),
         paletteOf(tooMany),
-        { title: 't', width: 10, height: 10 },
+        { title: 't' },
         { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
       )
     ).rejects.toThrow(RangeError)
