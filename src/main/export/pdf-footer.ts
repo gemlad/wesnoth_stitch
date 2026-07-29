@@ -12,7 +12,7 @@
 import type { PDFFont, PDFPage } from 'pdf-lib'
 import { rgb } from 'pdf-lib'
 import { LICENCE_LINES } from '../../shared/licence'
-import { MARGIN_MM, mmToPt } from './pdf-layout'
+import { MARGIN_MM, mmToPt, PRINTABLE_WIDTH_MM } from './pdf-layout'
 
 const MUTED = rgb(0.42, 0.42, 0.42)
 const FOOTER_SIZE_PT = 8
@@ -32,4 +32,62 @@ export function drawLicenceFooter(page: PDFPage, font: PDFFont): void {
     page.drawText(line, { x: mmToPt(MARGIN_MM), y, size: FOOTER_SIZE_PT, font, color: MUTED })
     y += mmToPt(LINE_STEP_MM)
   }
+}
+
+/**
+ * "Page 4 of 12", as the footer states it (#92).
+ *
+ * **The cover counts but is not numbered** (Gemma, 2026-07-29). Numbering the pages *after*
+ * the cover 1…n−1 would read like a booklet and disagree with every PDF viewer's page counter,
+ * which is precisely the thing you reach for when you are trying to reprint page 7 of a chart
+ * you dropped. So `total` is the whole document and the cover simply goes unlabelled.
+ */
+export function pageNumberLabel(pageNumber: number, total: number): string {
+  return `Page ${pageNumber} of ${total}`
+}
+
+/**
+ * Draw one page's number, right-aligned on the **bottom** footer line.
+ *
+ * It shares a baseline with the licence notice rather than taking a line of its own: two
+ * separate bands of grey furniture at the foot of a chart page read as clutter, and the bottom
+ * line is the short one (the copyrights URL), so there is room to the right of it. The licence
+ * notice is left-aligned and the number right-aligned, which is the ordinary newspaper
+ * arrangement and needs no rule between them.
+ *
+ * `LICENCE_FOOTER_TOP_MM` is untouched, so nothing else on the page has to move.
+ */
+export function drawPageNumber(
+  page: PDFPage,
+  font: PDFFont,
+  pageNumber: number,
+  total: number
+): void {
+  const label = pageNumberLabel(pageNumber, total)
+  const rightEdge = mmToPt(MARGIN_MM + PRINTABLE_WIDTH_MM)
+  page.drawText(label, {
+    x: rightEdge - font.widthOfTextAtSize(label, FOOTER_SIZE_PT),
+    y: mmToPt(FIRST_LINE_MM),
+    size: FOOTER_SIZE_PT,
+    font,
+    color: MUTED
+  })
+}
+
+/**
+ * Number every page of an assembled chart except the first.
+ *
+ * **A post-pass, and it has to be.** The total is not known while the document is being built —
+ * the key paginates on the palette and the chart tiles on the pattern — so "of 12" can only be
+ * written once every page exists. Taking the pages as an array rather than the document keeps
+ * that honest and testable: what it numbers is exactly what it is handed.
+ *
+ * Page 1 is the cover, which states the sprite's name at 22pt and needs no furniture.
+ */
+export function stampPageNumbers(pages: readonly PDFPage[], font: PDFFont): void {
+  const total = pages.length
+  pages.forEach((page, index) => {
+    if (index === 0) return // the cover
+    drawPageNumber(page, font, index + 1, total)
+  })
 }
