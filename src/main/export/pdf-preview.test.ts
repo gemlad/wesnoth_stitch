@@ -165,7 +165,7 @@ async function coverImageSizes(
   const font = await doc.embedFont(FONT_BYTES, { subset: true })
   await drawCoverPage(
     doc,
-    { title: 'fighter', width, height },
+    { title: 'fighter' },
     solidPattern(width, height),
     ONE_COLOUR,
     font,

@@ -20,6 +20,7 @@ import type {
 } from '../../shared/pipeline'
 import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
+import { AIDA_COUNTS, coverStatsLine, finishedSizeLine } from './pdf-cover-text'
 import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
 import { drawRunningHead } from './pdf-header'
 import { fitPreview, previewCellPx, previewScaleNote } from './pdf-preview'
@@ -31,9 +32,6 @@ import {
   PRINTABLE_HEIGHT_MM,
   PRINTABLE_WIDTH_MM
 } from './pdf-layout'
-
-/** Fabric counts (stitches per inch) a cross-stitcher actually buys. */
-export const AIDA_COUNTS = [11, 14, 16, 18] as const
 
 /**
  * Vertical pitch of one floss-key row.
@@ -57,12 +55,18 @@ const HAIRLINE = rgb(0.75, 0.75, 0.75)
 /** Size of the "Preview" heading. Its scale note (#68) is measured against it. */
 const PREVIEW_HEADING_PT = 13
 
-/** Metadata the cover page states about the pattern. */
+/**
+ * Metadata the cover page states about the pattern.
+ *
+ * **Size is deliberately not in here (#99).** It used to be, and the cover printed whatever it
+ * was told: the UAT script passed the *sprite's* dimensions while charting a pattern trimmed to
+ * its content (#53), so a 39×31 chart advertised itself as 72×72 — and every finished-size
+ * figure under it, in four fabric counts, was wrong to match. The cover now measures the
+ * pattern it is drawing, so the two cannot disagree. Nothing can pass a size at all.
+ */
 export interface ChartMeta {
   /** Usually the sprite's name — what this is a chart *of*. */
   title: string
-  width: number
-  height: number
 }
 
 /** How many key rows fit on one page. Derived, so changing the page can't silently clip. */
@@ -103,11 +107,6 @@ function addPage(pdf: PDFDocument): PDFPage {
   return pdf.addPage([mmToPt(A4_WIDTH_MM), mmToPt(A4_HEIGHT_MM)])
 }
 
-/** Finished size in inches on `count`-count Aida — a stitch is 1/count of an inch. */
-function finishedInches(stitches: number, count: number): number {
-  return stitches / count
-}
-
 /**
  * The cover: what this is, how big it comes out, a preview of the pattern, and who owns the
  * art.
@@ -135,12 +134,9 @@ export async function drawCoverPage(
 
   page.drawText(meta.title, { x: left, y, size: 22, font, color: INK })
 
+  // Both size claims measure the pattern being drawn rather than take a caller's word (#99).
   y -= mmToPt(12)
-  const stitches = palette.colours.reduce((sum, c) => sum + c.pixelCount, 0)
-  page.drawText(
-    `${meta.width} × ${meta.height} stitches · ${palette.colourCount} DMC floss colours · ${stitches.toLocaleString()} stitches to sew`,
-    { x: left, y, size: 11, font, color: INK }
-  )
+  page.drawText(coverStatsLine(pattern, palette), { x: left, y, size: 11, font, color: INK })
 
   // The palette was reduced to fit the chart — say so, rather than quietly present the
   // reduced count as if it were the sprite's own (§5.2).
@@ -157,13 +153,13 @@ export async function drawCoverPage(
 
   for (const count of AIDA_COUNTS) {
     y -= mmToPt(7)
-    const w = finishedInches(meta.width, count)
-    const h = finishedInches(meta.height, count)
-    const line =
-      `${count}-count Aida:   ` +
-      `${w.toFixed(1)}" × ${h.toFixed(1)}"   ` +
-      `(${(w * 2.54).toFixed(1)} × ${(h * 2.54).toFixed(1)} cm)`
-    page.drawText(line, { x: left + mmToPt(4), y, size: 10, font, color: INK })
+    page.drawText(finishedSizeLine(pattern, count), {
+      x: left + mmToPt(4),
+      y,
+      size: 10,
+      font,
+      color: INK
+    })
   }
 
   // Licence notice, at the foot — the same footer every other page carries (#47).
