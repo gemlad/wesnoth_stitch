@@ -5,6 +5,7 @@
 export type { PaletteColour, QuantizedPalette, StitchPattern } from './types'
 export { mapSpriteToDmc, type MapToDmcOptions, type MappedSprite } from './map-to-dmc'
 export { trimToContent, contentBounds, type ContentBounds } from './trim'
+export { flipHorizontal } from './flip'
 export {
   planReduction,
   reduceTo,

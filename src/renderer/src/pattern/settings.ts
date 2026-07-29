@@ -20,7 +20,8 @@ import type { PatternSettings } from '../../../shared/ipc'
 /** Unbleached Aida — the default fabric, and visibly not white, so the setting is discoverable. */
 export const DEFAULT_PATTERN_SETTINGS: PatternSettings = {
   backgroundColour: { r: 0xf2, g: 0xec, b: 0xdc },
-  symbolDisplay: 'colour'
+  symbolDisplay: 'colour',
+  flip: false
 }
 
 const clampChannel = (n: number): number => Math.max(0, Math.min(255, Math.round(n)))

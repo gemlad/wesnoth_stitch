@@ -36,6 +36,13 @@ export interface PatternSettings {
   /** Fabric colour. "No stitch" cells render as this, rather than assumed-white Aida (§8). */
   backgroundColour: RGB
   symbolDisplay: SymbolDisplay
+  /**
+   * Mirror the pattern left-to-right (#56), for a unit that should face the other way.
+   *
+   * Presentation, like the other two: it moves cells around the grid without changing what any
+   * palette index means, so the floss key and the symbol assignment are unaffected.
+   */
+  flip: boolean
 }
 
 /** Channel names. Kept as string-literal consts so both processes agree. */

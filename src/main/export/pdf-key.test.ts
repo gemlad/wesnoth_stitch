@@ -257,7 +257,7 @@ describe('buildChartPdf', () => {
       pattern,
       palette,
       { title: 'Dwarvish Fighter' },
-      { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
+      { backgroundColour: AIDA, symbolDisplay: 'both', flip: false, fontBytes: FONT_BYTES }
     )
 
     const loaded = await PDFDocument.load(bytes)
@@ -271,7 +271,7 @@ describe('buildChartPdf', () => {
       patternOf(72, 72, 8),
       paletteOf(8),
       { title: TITLE },
-      { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
+      { backgroundColour: AIDA, symbolDisplay: 'both', flip: false, fontBytes: FONT_BYTES }
     )
     const loaded = await PDFDocument.load(bytes)
     const [cover, ...rest] = loaded.getPages()
@@ -291,12 +291,39 @@ describe('buildChartPdf', () => {
     }
   })
 
+  it('mirrors the whole document when the flip is on (#56)', async () => {
+    // An asymmetric pattern: every cell in a row is a different colour, so a mirror changes
+    // what is drawn. Byte equality is the assertion because the same input twice gives the
+    // same bytes — so a difference can only come from the flip, and its absence proves a
+    // symmetric pattern is left alone.
+    const asymmetric: StitchPattern = {
+      width: 4,
+      height: 2,
+      cells: [
+        [0, 1, 2, 3],
+        [3, 2, 1, 0]
+      ]
+    }
+    const build = (flip: boolean): Promise<Uint8Array> =>
+      buildChartPdf(
+        asymmetric,
+        paletteOf(4),
+        { title: TITLE },
+        { backgroundColour: AIDA, symbolDisplay: 'both', flip, fontBytes: FONT_BYTES }
+      )
+
+    const [plain, again, flipped] = await Promise.all([build(false), build(false), build(true)])
+
+    expect(Buffer.from(again)).toEqual(Buffer.from(plain)) // the export is deterministic…
+    expect(Buffer.from(flipped)).not.toEqual(Buffer.from(plain)) // …so this is the flip
+  })
+
   it('produces a real, loadable PDF rather than plausible bytes', async () => {
     const bytes = await buildChartPdf(
       patternOf(10, 10, 3),
       paletteOf(3),
       { title: 't' },
-      { backgroundColour: AIDA, symbolDisplay: 'symbol', fontBytes: FONT_BYTES }
+      { backgroundColour: AIDA, symbolDisplay: 'symbol', flip: false, fontBytes: FONT_BYTES }
     )
     expect(Buffer.from(bytes.slice(0, 5)).toString()).toBe('%PDF-')
     await expect(PDFDocument.load(bytes)).resolves.toBeDefined()
@@ -309,7 +336,7 @@ describe('buildChartPdf', () => {
         patternOf(10, 10, tooMany),
         paletteOf(tooMany),
         { title: 't' },
-        { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
+        { backgroundColour: AIDA, symbolDisplay: 'both', flip: false, fontBytes: FONT_BYTES }
       )
     ).rejects.toThrow(RangeError)
   })

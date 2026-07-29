@@ -18,7 +18,7 @@
 import fontkit from '@pdf-lib/fontkit'
 import { PDFDocument } from 'pdf-lib'
 import type { PatternSettings } from '../../shared/ipc'
-import type { QuantizedPalette, StitchPattern } from '../../shared/pipeline'
+import { flipHorizontal, type QuantizedPalette, type StitchPattern } from '../../shared/pipeline'
 import { drawChartPages, type ChartOptions } from './pdf-chart'
 import { stampPageNumbers } from './pdf-footer'
 import { drawCoverPage, drawKeyPages, type ChartMeta } from './pdf-key'
@@ -55,7 +55,17 @@ export async function buildChartPdf(
   pdf.setTitle(meta.title)
   pdf.setCreator('Wesnoth Stitch')
 
-  await drawCoverPage(pdf, meta, pattern, palette, font, {
+  /**
+   * The flip (#56) is applied **once, here**, rather than by each caller. The cover preview,
+   * the chart pages and the centre marks are all derived from this one pattern, so flipping it
+   * at the top is what guarantees they cannot disagree about which way round the unit faces —
+   * a chart mirrored relative to its own preview would be worse than no flip at all.
+   *
+   * Dimensions are unchanged by a mirror, so `meta` needs no adjustment.
+   */
+  const charted = options.flip ? flipHorizontal(pattern) : pattern
+
+  await drawCoverPage(pdf, meta, charted, palette, font, {
     backgroundColour: options.backgroundColour
   })
   // Every page after the cover carries the sprite's name (#91) — the cover already states it.
@@ -67,7 +77,7 @@ export async function buildChartPdf(
     symbolDisplay: options.symbolDisplay,
     ...(options.cellMm === undefined ? {} : { cellMm: options.cellMm })
   }
-  drawChartPages(pdf, pattern, palette, font, chart)
+  drawChartPages(pdf, charted, palette, font, chart)
 
   // Last, because "of 12" cannot be written until every page exists (#92) — the key paginates
   // on the palette and the chart tiles on the pattern.
