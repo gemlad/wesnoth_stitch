@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DMC_COLORS, DMC_REFERENCE, nearestDmc, nearestDmcToRgb } from './dmc'
+import { compareDmcCodes, DMC_COLORS, DMC_REFERENCE, nearestDmc, nearestDmcToRgb } from './dmc'
 import { srgbToLab } from './convert'
 
 describe('DMC dataset', () => {
@@ -27,6 +27,38 @@ describe('DMC dataset', () => {
   it('precomputes a Lab reference for every floss colour', () => {
     expect(DMC_REFERENCE.length).toBe(DMC_COLORS.length)
     expect(DMC_REFERENCE[0].lab).toEqual(srgbToLab(DMC_COLORS[0].rgb))
+  })
+})
+
+describe('compareDmcCodes', () => {
+  it('orders numbered codes by value, not as strings', () => {
+    // The failure this exists to prevent: a string sort puts 3865 before 422 and 3 before 310.
+    expect(['3865', '422', '310', '3'].sort(compareDmcCodes)).toEqual(['3', '310', '422', '3865'])
+  })
+
+  it('puts the named codes after every numbered floss, alphabetically', () => {
+    expect(['ECRU', '3865', 'BLANC', '310', 'B5200'].sort(compareDmcCodes)).toEqual([
+      '310',
+      '3865',
+      'B5200',
+      'BLANC',
+      'ECRU'
+    ])
+  })
+
+  it('sorts the whole real dataset without leaving a code behind', () => {
+    // Every code in the chart goes through the comparator — including the three named ones,
+    // which is the case a value-only comparator would return NaN for and silently mis-sort.
+    const sorted = DMC_COLORS.map((e) => e.code).sort(compareDmcCodes)
+    expect(sorted).toHaveLength(DMC_COLORS.length)
+    expect(sorted.slice(-3)).toEqual(['B5200', 'BLANC', 'ECRU'])
+    const numbers = sorted.filter((c) => /^\d+$/.test(c)).map(Number)
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b))
+  })
+
+  it('is a total order: equal codes compare equal', () => {
+    expect(compareDmcCodes('310', '310')).toBe(0)
+    expect(compareDmcCodes('ECRU', 'ECRU')).toBe(0)
   })
 })
 

@@ -18,7 +18,7 @@ import {
   type StitchPattern
 } from '../../shared/pipeline'
 import { buildChartPdf } from './pdf'
-import { drawCoverPage, drawKeyPages, keyRowsPerPage } from './pdf-key'
+import { drawCoverPage, drawKeyPages, keyRows, keyRowsPerPage } from './pdf-key'
 import { DEFAULT_CELL_MM, planTiles } from './pdf-layout'
 
 const FONT = fileURLToPath(new URL('../../../resources/fonts/DejaVuSans.ttf', import.meta.url))
@@ -47,6 +47,27 @@ function paletteOf(n: number, sourceColourCount = n): QuantizedPalette {
     }),
     colourCount: n,
     sourceColourCount
+  }
+}
+
+/**
+ * A palette whose code order and palette order **disagree** — the only fixture that can tell
+ * a sorted key from an unsorted one. Codes are listed dominant-floss-first, as reduction
+ * leaves them (§5.2); pixel counts descend to match.
+ */
+function paletteOfCodes(codes: string[]): QuantizedPalette {
+  return {
+    colours: codes.map((code, i) => {
+      const v = (i * 31) % 256
+      return {
+        rgb: { r: v, g: v, b: v },
+        lab: { l: 0, a: 0, b: 0 },
+        dmc: { code, name: `floss ${code}`, hex: '#000000', rgb: { r: v, g: v, b: v } },
+        pixelCount: (codes.length - i) * 10
+      }
+    }),
+    colourCount: codes.length,
+    sourceColourCount: codes.length
   }
 }
 
@@ -108,6 +129,54 @@ describe('drawCoverPage', () => {
     // The embedded raster makes the document substantially larger than the same cover with
     // nothing to preview — proof the image bytes actually landed in the document.
     expect(withPreview).toBeGreaterThan(empty + 500)
+  })
+})
+
+describe('keyRows (#90)', () => {
+  // Deliberately out of code order, and with the two named codes in the middle.
+  const CODES = ['3865', '310', 'ECRU', '422', 'B5200', '3', '898']
+
+  it('prints in DMC code order, numbers by value and named codes last', () => {
+    const rows = keyRows(paletteOfCodes(CODES))
+    expect(rows.map((r) => r.colour.dmc.code)).toEqual([
+      '3',
+      '310',
+      '422',
+      '898',
+      '3865',
+      'B5200',
+      'ECRU'
+    ])
+  })
+
+  it('keeps each colour with the glyph the chart draws for it', () => {
+    // The dangerous version of this change sorts the palette and re-derives symbols from the
+    // sorted array — a key that is beautifully ordered and wrong about every glyph. Sorting
+    // must move rows, never re-letter them, so every row is checked against `symbolsFor` at
+    // its *original* palette index.
+    const palette = paletteOfCodes(CODES)
+    const symbols = symbolsFor(palette)
+    const rows = keyRows(palette)
+
+    for (const row of rows) {
+      const original = palette.colours.indexOf(row.colour)
+      expect(row.symbol.glyph).toBe(symbols[original].glyph)
+    }
+  })
+
+  it('keys every colour exactly once, and leaves the palette untouched', () => {
+    const palette = paletteOfCodes(CODES)
+    const before = palette.colours.map((c) => c.dmc.code)
+    const rows = keyRows(palette)
+
+    expect(rows).toHaveLength(palette.colours.length)
+    expect(new Set(rows.map((r) => r.symbol.glyph)).size).toBe(palette.colours.length)
+    // The chart reads `palette.colours` in this order; sorting the key must not disturb it.
+    expect(palette.colours.map((c) => c.dmc.code)).toEqual(before)
+  })
+
+  it('refuses a palette with more colours than there are stitch symbols', () => {
+    expect(() => keyRows(paletteOf(MAX_COLOUR_COUNT + 1))).toThrow(RangeError)
   })
 })
 
