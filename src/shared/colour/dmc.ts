@@ -51,3 +51,28 @@ export function nearestDmc(lab: LabColor): DMCEntry {
 export function nearestDmcToRgb(rgb: { r: number; g: number; b: number }): DMCEntry {
   return nearestDmc(srgbToLab(rgb))
 }
+
+/**
+ * Order two DMC codes the way the catalogue does — and the way a shop's drawers are
+ * filled (#90).
+ *
+ * **Not a string sort.** Codes are numbers written as text, so `localeCompare` puts `3865`
+ * before `422` and `3` before `310`: an order that looks sorted and is useless to read down
+ * with a floss box open. Numeric codes therefore compare by *value*.
+ *
+ * The three named codes in the dataset — `B5200`, `BLANC`, `ECRU` — have no numeric value, so
+ * they sort alphabetically **after** every numbered floss rather than being wedged in at some
+ * arbitrary point. Putting them at the end is a presentation call, not a fact about DMC; it is
+ * this one comparator to change if the whites are wanted first.
+ */
+export function compareDmcCodes(a: string, b: string): number {
+  const na = Number(a)
+  const nb = Number(b)
+  const aIsNumber = Number.isFinite(na)
+  const bIsNumber = Number.isFinite(nb)
+
+  if (aIsNumber && bIsNumber) return na - nb
+  if (aIsNumber) return -1
+  if (bIsNumber) return 1
+  return a.localeCompare(b)
+}

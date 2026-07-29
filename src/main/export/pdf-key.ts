@@ -11,8 +11,13 @@
  */
 import type { PDFDocument, PDFFont, PDFPage } from 'pdf-lib'
 import { rgb } from 'pdf-lib'
-import type { RGB } from '../../shared/colour'
-import type { QuantizedPalette, StitchPattern } from '../../shared/pipeline'
+import { compareDmcCodes, type RGB } from '../../shared/colour'
+import type {
+  PaletteColour,
+  QuantizedPalette,
+  StitchPattern,
+  StitchSymbol
+} from '../../shared/pipeline'
 import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
 import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
@@ -63,6 +68,35 @@ export interface ChartMeta {
 /** How many key rows fit on one page. Derived, so changing the page can't silently clip. */
 export function keyRowsPerPage(): number {
   return Math.floor((PRINTABLE_HEIGHT_MM - KEY_HEADER_MM) / KEY_ROW_MM)
+}
+
+/** One printed line of the floss key: a colour and the glyph that names it on the chart. */
+export interface KeyRow {
+  colour: PaletteColour
+  symbol: StitchSymbol
+}
+
+/**
+ * The key's rows, in print order: **sorted by DMC code** (#90).
+ *
+ * The palette itself is ordered dominant-floss-first (§5.2), which is the right order for
+ * *assigning* glyphs and the wrong one for reading down with a floss box open — at the shop
+ * counter you are looking up codes, so the key is sorted by code and the chart is left alone.
+ *
+ * **The sort must not touch the glyph assignment.** Each row carries the symbol taken from
+ * `symbolsFor(palette)` at the colour's *original* palette index, so re-ordering the page
+ * cannot re-letter the chart. Sorting `palette.colours` and re-deriving symbols from the
+ * sorted array would produce a key that is beautifully ordered and wrong about every glyph —
+ * the one bug here that wastes a whole stitching project rather than merely looking bad.
+ *
+ * @throws RangeError (via `symbolsFor`) if the palette holds more colours than the symbol set
+ * can name.
+ */
+export function keyRows(palette: QuantizedPalette): KeyRow[] {
+  const symbols = symbolsFor(palette)
+  return palette.colours
+    .map((colour, index) => ({ colour, symbol: symbols[index] }))
+    .sort((a, b) => compareDmcCodes(a.colour.dmc.code, b.colour.dmc.code))
 }
 
 function addPage(pdf: PDFDocument): PDFPage {
@@ -179,10 +213,12 @@ export async function drawCoverPage(
 /**
  * The floss key: one row per colour — swatch, glyph, DMC code and name, stitch count.
  *
- * Glyphs come from the same `symbolsFor(palette)` call the chart pages make, so the key and
- * the chart **cannot** disagree about what a glyph means. Deriving them twice, or letting
- * the key re-index the palette itself, is how a chart ends up keyed wrong — the one bug
- * that would waste an entire stitching project rather than just look bad.
+ * Rows are ordered by DMC code (#90) — see `keyRows`, which also explains why that ordering
+ * cannot be allowed to reach the glyphs. They come from the same `symbolsFor(palette)` call
+ * the chart pages make, so the key and the chart **cannot** disagree about what a glyph means.
+ * Deriving them twice, or letting the key re-index the palette itself, is how a chart ends up
+ * keyed wrong — the one bug that would waste an entire stitching project rather than just look
+ * bad.
  *
  * Paginates. Up to 40 colours the key is a single page; a full 47-colour cap (#30 / D3,
  * #28) spills onto a second. "It always fits on one page" was exactly the assumption that
@@ -200,31 +236,30 @@ export function drawKeyPages(
    */
   rowsPerPage: number = keyRowsPerPage()
 ): PDFPage[] {
-  const symbols = symbolsFor(palette)
+  const rows = keyRows(palette)
   const perPage = rowsPerPage
   const pages: PDFPage[] = []
 
   const left = mmToPt(MARGIN_MM)
   const swatch = mmToPt(4.5)
 
-  for (let start = 0; start < palette.colours.length; start += perPage) {
+  for (let start = 0; start < rows.length; start += perPage) {
     const page = addPage(pdf)
     pages.push(page)
     drawLicenceFooter(page, font) // every page carries the attribution (#47)
 
-    const chunk = palette.colours.slice(start, start + perPage)
+    const chunk = rows.slice(start, start + perPage)
     let y = mmToPt(A4_HEIGHT_MM - MARGIN_MM - 8)
 
     const heading =
-      palette.colours.length > perPage
-        ? `Floss key (${start + 1}–${start + chunk.length} of ${palette.colours.length})`
+      rows.length > perPage
+        ? `Floss key (${start + 1}–${start + chunk.length} of ${rows.length})`
         : 'Floss key'
     page.drawText(heading, { x: left, y, size: 14, font, color: INK })
 
     y -= mmToPt(KEY_HEADER_MM - 4)
 
-    chunk.forEach((colour, row) => {
-      const index = start + row
+    chunk.forEach(({ colour, symbol }, row) => {
       const rowY = y - mmToPt(row * KEY_ROW_MM)
 
       page.drawRectangle({
@@ -237,7 +272,7 @@ export function drawKeyPages(
         borderWidth: 0.3
       })
 
-      page.drawText(symbols[index].glyph, {
+      page.drawText(symbol.glyph, {
         x: left + swatch + mmToPt(4),
         y: rowY - mmToPt(2.6),
         size: 11,
