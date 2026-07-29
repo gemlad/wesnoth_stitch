@@ -23,6 +23,8 @@ import { DEFAULT_CELL_MM, planTiles } from './pdf-layout'
 
 const FONT = fileURLToPath(new URL('../../../resources/fonts/DejaVuSans.ttf', import.meta.url))
 const AIDA: RGB = { r: 0xf2, g: 0xec, b: 0xdc }
+/** The running head every page after the cover carries (#91). */
+const TITLE = 'dwarvish-fighter'
 const FONT_BYTES = readFileSync(FONT)
 
 let pdf: PDFDocument
@@ -184,7 +186,7 @@ describe('drawKeyPages', () => {
   it('fits a palette up to one page (40 rows) on a single sheet', () => {
     // The row pitch (6mm) puts 40 rows on a page — enough for the original 37-colour cap.
     expect(keyRowsPerPage()).toBe(40)
-    expect(drawKeyPages(pdf, paletteOf(40), font)).toHaveLength(1)
+    expect(drawKeyPages(pdf, paletteOf(40), font, TITLE)).toHaveLength(1)
   })
 
   it('spills a full 47-colour cap key onto a second page rather than clipping', () => {
@@ -192,16 +194,25 @@ describe('drawKeyPages', () => {
     // pagination is now live on a real chart. Row pitch was deliberately not shrunk to
     // reclaim the page.
     expect(MAX_COLOUR_COUNT).toBeGreaterThan(keyRowsPerPage())
-    expect(drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT), font)).toHaveLength(2)
+    expect(drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT), font, TITLE)).toHaveLength(2)
   })
 
   it('paginates by the row budget it is given', () => {
-    expect(drawKeyPages(pdf, paletteOf(12), font, 5)).toHaveLength(3)
-    expect(drawKeyPages(pdf, paletteOf(10), font, 5)).toHaveLength(2)
+    expect(drawKeyPages(pdf, paletteOf(12), font, TITLE, 5)).toHaveLength(3)
+    expect(drawKeyPages(pdf, paletteOf(10), font, TITLE, 5)).toHaveLength(2)
   })
 
   it('refuses a palette with more colours than there are stitch symbols', () => {
-    expect(() => drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT + 1), font)).toThrow(RangeError)
+    expect(() => drawKeyPages(pdf, paletteOf(MAX_COLOUR_COUNT + 1), font, TITLE)).toThrow(
+      RangeError
+    )
+  })
+
+  it('carries the running head without costing a row (#91)', () => {
+    // The name shares the "Floss key" baseline, so the row budget is untouched however long
+    // the sprite is called.
+    const long = 'an-absurdly-long-sprite-name-that-would-run-off-the-page-if-unchecked'
+    expect(drawKeyPages(pdf, paletteOf(40), font, long)).toHaveLength(1)
   })
 
   it('keys every colour in the palette exactly once', () => {

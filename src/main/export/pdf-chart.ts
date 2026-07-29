@@ -20,6 +20,7 @@ import { contrastInk, type RGB } from '../../shared/colour'
 import type { PatternSettings } from '../../shared/ipc'
 import { symbolsFor, type QuantizedPalette, type StitchPattern } from '../../shared/pipeline'
 import { drawLicenceFooter } from './pdf-footer'
+import { drawRunningHead } from './pdf-header'
 import { centreMarksForTile, drawCentreMarks } from './pdf-markers'
 import {
   A4_HEIGHT_MM,
@@ -41,6 +42,8 @@ const RULER_FONT_PT = 6
 const TITLE_FONT_PT = 9
 
 export interface ChartOptions extends PatternSettings {
+  /** The sprite's name, for the running head on every page (#91). */
+  title: string
   /** Physical cell size. Defaults to the §5.3 reference scale (~2.36mm). */
   cellMm?: number
 }
@@ -83,7 +86,7 @@ function drawTile(
   font: PDFFont,
   options: Required<ChartOptions>
 ): void {
-  const { cellMm, backgroundColour, symbolDisplay } = options
+  const { cellMm, backgroundColour, symbolDisplay, title } = options
   const cell = mmToPt(cellMm)
   const cols = tile.x1 - tile.x0
   const rows = tile.y1 - tile.y0
@@ -187,17 +190,16 @@ function drawTile(
     })
   }
 
-  // 4. Heading, so a loose page can be put back in its place.
-  page.drawText(
-    `Rows ${tile.y0}–${tile.y1} / Cols ${tile.x0}–${tile.x1}`,
-    {
-      x: left,
-      y: mmToPt(A4_HEIGHT_MM - MARGIN_MM) - TITLE_FONT_PT,
-      size: TITLE_FONT_PT,
-      font,
-      color: line
-    }
-  )
+  // 4. Heading, so a loose page can be put back in its place — where it sits in the pattern,
+  //    and (#91) what pattern that is, right-aligned on the same baseline. See pdf-header:
+  //    sharing this line is what keeps the header out of the tiling maths.
+  const heading = `Rows ${tile.y0}–${tile.y1} / Cols ${tile.x0}–${tile.x1}`
+  const headingY = mmToPt(A4_HEIGHT_MM - MARGIN_MM) - TITLE_FONT_PT
+  page.drawText(heading, { x: left, y: headingY, size: TITLE_FONT_PT, font, color: line })
+  drawRunningHead(page, font, title, {
+    y: headingY,
+    headingRightPt: left + font.widthOfTextAtSize(heading, TITLE_FONT_PT)
+  })
 
   // 5. Centre markers (#54): whichever of top-edge / side-edge / true-centre fall on this
   //    tile, so a stitcher can start from the middle. On a multi-page chart each mark lands

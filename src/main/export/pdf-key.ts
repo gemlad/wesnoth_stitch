@@ -21,6 +21,7 @@ import type {
 import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
 import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
+import { drawRunningHead } from './pdf-header'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -45,6 +46,8 @@ export const AIDA_COUNTS = [11, 14, 16, 18] as const
 const KEY_ROW_MM = 6
 /** Space at the top of a key page for its heading. */
 const KEY_HEADER_MM = 14
+/** Size of that heading. The sprite name (#91) shares its baseline, so both are measured. */
+const KEY_HEADING_PT = 14
 
 const INK = rgb(0, 0, 0)
 const MUTED = rgb(0.42, 0.42, 0.42)
@@ -228,6 +231,8 @@ export function drawKeyPages(
   pdf: PDFDocument,
   palette: QuantizedPalette,
   font: PDFFont,
+  /** The sprite's name, for the running head (#91) — the key is not the cover either. */
+  title: string,
   /**
    * Rows per page. Defaults to what the page holds (40). The cap has since risen to 47
    * (#30 / D3, settled by #28), so a full-cap key now runs onto a second page and the
@@ -255,7 +260,12 @@ export function drawKeyPages(
       rows.length > perPage
         ? `Floss key (${start + 1}–${start + chunk.length} of ${rows.length})`
         : 'Floss key'
-    page.drawText(heading, { x: left, y, size: 14, font, color: INK })
+    page.drawText(heading, { x: left, y, size: KEY_HEADING_PT, font, color: INK })
+    // The sprite name shares this baseline (#91), right-aligned.
+    drawRunningHead(page, font, title, {
+      y,
+      headingRightPt: left + font.widthOfTextAtSize(heading, KEY_HEADING_PT)
+    })
 
     y -= mmToPt(KEY_HEADER_MM - 4)
 
