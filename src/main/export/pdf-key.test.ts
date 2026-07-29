@@ -8,7 +8,8 @@
 import fontkit from '@pdf-lib/fontkit'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { PDFDocument, type PDFFont } from 'pdf-lib'
+import { inflateSync } from 'node:zlib'
+import { PDFArray, PDFDocument, PDFName, PDFRawStream, type PDFFont, type PDFPage } from 'pdf-lib'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { RGB } from '../../shared/colour'
 import {
@@ -19,7 +20,7 @@ import {
 } from '../../shared/pipeline'
 import { buildChartPdf } from './pdf'
 import { drawCoverPage, drawKeyPages, keyRows, keyRowsPerPage } from './pdf-key'
-import { DEFAULT_CELL_MM, planTiles } from './pdf-layout'
+import { DEFAULT_CELL_MM, MARGIN_MM, mmToPt, planTiles, PRINTABLE_WIDTH_MM } from './pdf-layout'
 
 const FONT = fileURLToPath(new URL('../../../resources/fonts/DejaVuSans.ttf', import.meta.url))
 const AIDA: RGB = { r: 0xf2, g: 0xec, b: 0xdc }
@@ -222,6 +223,36 @@ describe('drawKeyPages', () => {
   })
 })
 
+/**
+ * The x positions of every text run drawn on `page` at the footer baseline.
+ *
+ * The one thing unit tests cannot reach is whether `buildChartPdf` actually *calls* the
+ * numbering pass — so this reads the assembled document back. Drawn characters are
+ * unrecoverable (an embedded subset font encodes them as glyph ids), but the text matrix
+ * `1 0 0 1 x y Tm` that positions each run is plain in the content stream, and position is
+ * exactly what is being claimed: left margin for the licence notice, right-aligned for the
+ * page number.
+ */
+function footerTextXs(page: PDFPage): number[] {
+  const contents = page.node.get(PDFName.of('Contents'))
+  const refs = contents instanceof PDFArray ? contents.asArray() : [contents]
+
+  let stream = ''
+  for (const ref of refs) {
+    const object = page.doc.context.lookup(ref)
+    if (!(object instanceof PDFRawStream)) continue
+    const bytes = Buffer.from(object.getContents())
+    stream += object.dict.get(PDFName.of('Filter'))
+      ? inflateSync(bytes).toString('latin1')
+      : bytes.toString('latin1')
+  }
+
+  const baseline = mmToPt(9) // FIRST_LINE_MM, where both the notice and the number sit
+  return [...stream.matchAll(/1 0 0 1 (-?[\d.]+) (-?[\d.]+) Tm/g)]
+    .filter((m) => Math.abs(Number(m[2]) - baseline) < 0.5)
+    .map((m) => Number(m[1]))
+}
+
 describe('buildChartPdf', () => {
   it('assembles cover + key + chart, in that order', async () => {
     const palette = paletteOf(8)
@@ -238,6 +269,31 @@ describe('buildChartPdf', () => {
     const chartPages = planTiles(72, 72, DEFAULT_CELL_MM).length
     expect(loaded.getPageCount()).toBe(1 + 1 + chartPages)
     expect(loaded.getTitle()).toBe('Dwarvish Fighter')
+  })
+
+  it('numbers every page but the cover (#92)', async () => {
+    const bytes = await buildChartPdf(
+      patternOf(72, 72, 8),
+      paletteOf(8),
+      { title: TITLE, width: 72, height: 72 },
+      { backgroundColour: AIDA, symbolDisplay: 'both', fontBytes: FONT_BYTES }
+    )
+    const loaded = await PDFDocument.load(bytes)
+    const [cover, ...rest] = loaded.getPages()
+    const leftMargin = mmToPt(MARGIN_MM)
+    const rightEdge = mmToPt(MARGIN_MM + PRINTABLE_WIDTH_MM)
+
+    // The cover carries the licence notice and nothing else on that line.
+    expect(footerTextXs(cover)).toEqual([expect.closeTo(leftMargin, 1)])
+
+    expect(rest.length).toBeGreaterThan(0)
+    for (const page of rest) {
+      const xs = footerTextXs(page)
+      expect(xs).toHaveLength(2)
+      expect(xs[0]).toBeCloseTo(leftMargin, 1) // the notice, still left-aligned
+      expect(xs[1]).toBeGreaterThan(leftMargin) // the number, over on the right
+      expect(xs[1]).toBeLessThan(rightEdge)
+    }
   })
 
   it('produces a real, loadable PDF rather than plausible bytes', async () => {

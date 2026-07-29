@@ -20,6 +20,7 @@ import { PDFDocument } from 'pdf-lib'
 import type { PatternSettings } from '../../shared/ipc'
 import type { QuantizedPalette, StitchPattern } from '../../shared/pipeline'
 import { drawChartPages, type ChartOptions } from './pdf-chart'
+import { stampPageNumbers } from './pdf-footer'
 import { drawCoverPage, drawKeyPages, type ChartMeta } from './pdf-key'
 
 export type { ChartMeta } from './pdf-key'
@@ -67,6 +68,10 @@ export async function buildChartPdf(
     ...(options.cellMm === undefined ? {} : { cellMm: options.cellMm })
   }
   drawChartPages(pdf, pattern, palette, font, chart)
+
+  // Last, because "of 12" cannot be written until every page exists (#92) — the key paginates
+  // on the palette and the chart tiles on the pattern.
+  stampPageNumbers(pdf.getPages(), font)
 
   return pdf.save()
 }
