@@ -31,9 +31,15 @@ npm run fetch:sprites      # blobless sparse-clone of the pinned tag -> units.ta
 Attach the produced `units.tar.gz` in step 5. *(This script and the app-side download are
 built in #70; until then the app still uses the dev set and this step is a placeholder.)*
 
-### 2. Bump the version
+### 2. Bump the version and close off the changelog
 
 Edit `version` in `package.json` (e.g. `1.0.0`), commit on a release branch.
+
+In the same commit, rename the **Unreleased** heading in
+[`../CHANGELOG.md`](../CHANGELOG.md) to the version and today's date, add a fresh empty
+`## [Unreleased]` above it, and update the compare links at the foot of the file. The
+changelog is written as the release happens, not reconstructed from `git log` afterwards —
+the release notes in step 6 are that section.
 
 ### 3. Run the checks — all must pass
 
