@@ -62,7 +62,7 @@ for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
     reduced.pattern,
     reduced.palette,
     { title, width: src.width, height: src.height },
-    { backgroundColour: FABRIC, symbolDisplay, fontBytes }
+    { backgroundColour: FABRIC, symbolDisplay, flip: false, fontBytes }
   )
 
   const out = `${OUT_DIR}/chart-${symbolDisplay}.pdf`

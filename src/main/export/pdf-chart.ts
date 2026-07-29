@@ -41,7 +41,12 @@ const MAJOR_LINE_PT = 0.7
 const RULER_FONT_PT = 6
 const TITLE_FONT_PT = 9
 
-export interface ChartOptions extends PatternSettings {
+/**
+ * `flip` is deliberately **not** part of this (#56): by the time a pattern reaches the chart
+ * pages it is already the one to draw. `buildChartPdf` mirrors once, at the top, so the cover
+ * preview and the chart cannot end up facing different ways.
+ */
+export interface ChartOptions extends Omit<PatternSettings, 'flip'> {
   /** The sprite's name, for the running head on every page (#91). */
   title: string
   /** Physical cell size. Defaults to the §5.3 reference scale (~2.36mm). */

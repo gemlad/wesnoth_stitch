@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ConvertedSprite, SpriteSummary } from '../../../shared/ipc'
+// Imported from the module rather than the pipeline barrel: that index re-exports the DMC
+// dataset, and pulling 392 floss colours into the renderer bundle for one array reverse is
+// exactly the trade `ConvertedSprite.maxColourCount` exists to avoid.
+import { flipHorizontal } from '../../../shared/pipeline/flip'
 import { MIN_SYMBOL_SCALE } from '../pattern/draw'
 import { latestOnly } from '../pattern/latest-only'
 import {
@@ -104,6 +108,23 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
     if (sprite) convert(sprite.id)
   }, [sprite, convert])
 
+  /**
+   * What the grid draws: the conversion, mirrored if the flip is on (#56).
+   *
+   * Derived rather than stored, so `converted` stays the thing main sent and toggling the flip
+   * costs an array reverse instead of a round trip. The export does its own flip from the same
+   * setting, which is why the two cannot drift.
+   */
+  const shown = useMemo(
+    () =>
+      converted === null
+        ? null
+        : settings.flip
+          ? flipHorizontal(converted.pattern)
+          : converted.pattern,
+    [converted, settings.flip]
+  )
+
   if (!sprite) {
     return (
       <section className="pattern-view pattern-view--empty">
@@ -191,6 +212,20 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
           />
         </label>
 
+        {/* Mirrors the chart, and the export with it (#56). The raw sprite in the preview pane
+            deliberately does not flip: it is the reference you check the pattern against. */}
+        <button
+          type="button"
+          className={
+            'pattern-controls__toggle' + (settings.flip ? ' pattern-controls__toggle--on' : '')
+          }
+          title="Mirror the pattern left to right"
+          aria-pressed={settings.flip}
+          onClick={() => setSettings((s) => ({ ...s, flip: !s.flip }))}
+        >
+          Flip
+        </button>
+
         <button
           type="button"
           className="pattern-controls__button"
@@ -245,10 +280,10 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
       <div className="pattern-view__stage" ref={stageRef}>
         {error && <p className="app-status app-status--error">Couldn’t convert: {error}</p>}
         {!error && !converted && <p className="app-status">Converting…</p>}
-        {!error && converted && (
+        {!error && converted && shown && (
           <PatternGrid
             key={`${sprite.id}:${viewEpoch}`}
-            pattern={converted.pattern}
+            pattern={shown}
             palette={converted.palette}
             symbols={converted.symbols}
             settings={settings}
