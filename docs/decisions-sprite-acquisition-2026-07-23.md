@@ -2,7 +2,7 @@
 
 Spike outcome for Milestone 4. Decides how a **packaged, installed** Wesnoth Stitch obtains
 the official **units** sprite set, given the fixed constraints from
-[`milestone-4-tasks.md`](milestone-4-tasks.md): no bundled copy, easy for a non-technical
+[`archive/milestone-4-tasks.md`](archive/milestone-4-tasks.md): no bundled copy, easy for a non-technical
 user (no git), Windows-first, offline-tolerant where reasonable.
 
 Made autonomously (Gemma: "no decisions for me") on measured evidence, recorded here so #70

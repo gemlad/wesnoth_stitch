@@ -738,7 +738,7 @@ the constraint it currently is not.
 Still not a redesign — the prototype already produces PNG previews and DMC-keyed PDF
 charts, and that logic is portable. The main change is what it runs against: the
 `StitchPattern` / `QuantizedPalette` structures (§6) instead of the old flattened-image
-path. Milestone 3; broken down in `milestone-3-tasks.md`.
+path. Milestone 3; broken down in `archive/milestone-3-tasks.md`.
 
 **PNG.** One block of N×N pixels per stitch, rendered with `pngjs` in the main process (no
 canvas needed — it is already the decoder). "No stitch" cells take
@@ -872,7 +872,7 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
 > friction this section anticipated, so the installed app downloads the sprite set on first
 > run instead. The mechanism is being decided by a spike (#69); implementation and the
 > "download-first, folder-picker maybe as fallback" question live in
-> [`milestone-4-tasks.md`](milestone-4-tasks.md).
+> [`archive/milestone-4-tasks.md`](archive/milestone-4-tasks.md).
 
 ## 8. Open Questions
 
@@ -937,7 +937,7 @@ GitHub-fetch-and-cache logic could be ported in as an alternative **asset source
    and — the notable scope shift — **in-app sprite download pulled forward from §7.5** so the
    installed app fetches the official sprite set itself rather than requiring the
    local-checkout of §5.1 (the current hardcoded `SPRITE_ROOT` gives a packaged build no
-   sprites at all). Broken down in [`milestone-4-tasks.md`](milestone-4-tasks.md).
+   sprites at all). Broken down in [`archive/milestone-4-tasks.md`](archive/milestone-4-tasks.md).
 5. Future extensions: multi-source browsing (§7.1), batch processing (§7.2), manual
    per-stitch override (§7.3), non-unit asset categories (§7.4). Post-first-release work
    (page-overlap margins, colour-key display, distribution/Pattern Keeper compatibility,
