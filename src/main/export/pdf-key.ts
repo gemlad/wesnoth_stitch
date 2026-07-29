@@ -20,8 +20,10 @@ import type {
 } from '../../shared/pipeline'
 import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
+import { AIDA_COUNTS, coverStatsLine, finishedSizeLine } from './pdf-cover-text'
 import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
 import { drawRunningHead } from './pdf-header'
+import { fitPreview, previewCellPx, previewScaleNote } from './pdf-preview'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -30,9 +32,6 @@ import {
   PRINTABLE_HEIGHT_MM,
   PRINTABLE_WIDTH_MM
 } from './pdf-layout'
-
-/** Fabric counts (stitches per inch) a cross-stitcher actually buys. */
-export const AIDA_COUNTS = [11, 14, 16, 18] as const
 
 /**
  * Vertical pitch of one floss-key row.
@@ -53,19 +52,21 @@ const INK = rgb(0, 0, 0)
 const MUTED = rgb(0.42, 0.42, 0.42)
 const HAIRLINE = rgb(0.75, 0.75, 0.75)
 
-/**
- * Pixels per stitch for the embedded cover preview (#46). Chosen so the raster's longest side
- * lands near this many pixels regardless of pattern size — crisp when scaled to the cover box,
- * without embedding a needlessly large image for a small sprite.
- */
-const PREVIEW_TARGET_PX = 700
+/** Size of the "Preview" heading. Its scale note (#68) is measured against it. */
+const PREVIEW_HEADING_PT = 13
 
-/** Metadata the cover page states about the pattern. */
+/**
+ * Metadata the cover page states about the pattern.
+ *
+ * **Size is deliberately not in here (#99).** It used to be, and the cover printed whatever it
+ * was told: the UAT script passed the *sprite's* dimensions while charting a pattern trimmed to
+ * its content (#53), so a 39×31 chart advertised itself as 72×72 — and every finished-size
+ * figure under it, in four fabric counts, was wrong to match. The cover now measures the
+ * pattern it is drawing, so the two cannot disagree. Nothing can pass a size at all.
+ */
 export interface ChartMeta {
   /** Usually the sprite's name — what this is a chart *of*. */
   title: string
-  width: number
-  height: number
 }
 
 /** How many key rows fit on one page. Derived, so changing the page can't silently clip. */
@@ -106,11 +107,6 @@ function addPage(pdf: PDFDocument): PDFPage {
   return pdf.addPage([mmToPt(A4_WIDTH_MM), mmToPt(A4_HEIGHT_MM)])
 }
 
-/** Finished size in inches on `count`-count Aida — a stitch is 1/count of an inch. */
-function finishedInches(stitches: number, count: number): number {
-  return stitches / count
-}
-
 /**
  * The cover: what this is, how big it comes out, a preview of the pattern, and who owns the
  * art.
@@ -138,12 +134,9 @@ export async function drawCoverPage(
 
   page.drawText(meta.title, { x: left, y, size: 22, font, color: INK })
 
+  // Both size claims measure the pattern being drawn rather than take a caller's word (#99).
   y -= mmToPt(12)
-  const stitches = palette.colours.reduce((sum, c) => sum + c.pixelCount, 0)
-  page.drawText(
-    `${meta.width} × ${meta.height} stitches · ${palette.colourCount} DMC floss colours · ${stitches.toLocaleString()} stitches to sew`,
-    { x: left, y, size: 11, font, color: INK }
-  )
+  page.drawText(coverStatsLine(pattern, palette), { x: left, y, size: 11, font, color: INK })
 
   // The palette was reduced to fit the chart — say so, rather than quietly present the
   // reduced count as if it were the sprite's own (§5.2).
@@ -160,13 +153,13 @@ export async function drawCoverPage(
 
   for (const count of AIDA_COUNTS) {
     y -= mmToPt(7)
-    const w = finishedInches(meta.width, count)
-    const h = finishedInches(meta.height, count)
-    const line =
-      `${count}-count Aida:   ` +
-      `${w.toFixed(1)}" × ${h.toFixed(1)}"   ` +
-      `(${(w * 2.54).toFixed(1)} × ${(h * 2.54).toFixed(1)} cm)`
-    page.drawText(line, { x: left + mmToPt(4), y, size: 10, font, color: INK })
+    page.drawText(finishedSizeLine(pattern, count), {
+      x: left + mmToPt(4),
+      y,
+      size: 10,
+      font,
+      color: INK
+    })
   }
 
   // Licence notice, at the foot — the same footer every other page carries (#47).
@@ -178,23 +171,33 @@ export async function drawCoverPage(
   // transparent sprite, trimmed to 0×0 — #53), which has nothing to show.
   if (pattern.width > 0 && pattern.height > 0) {
     y -= mmToPt(14)
-    page.drawText('Preview', { x: left, y, size: 13, font, color: INK })
+    page.drawText('Preview', { x: left, y, size: PREVIEW_HEADING_PT, font, color: INK })
 
-    const cellPx = Math.max(4, Math.round(PREVIEW_TARGET_PX / Math.max(pattern.width, pattern.height)))
+    // The box the preview may occupy: below its heading, above the licence footer.
+    const boxTop = y - mmToPt(6)
+    const boxBottom = footerTop + mmToPt(8)
+    const maxW = mmToPt(PRINTABLE_WIDTH_MM)
+
+    // True 14-count size if it fits, else reduced — and the page says which (#68).
+    const fit = fitPreview(pattern, { maxWidthPt: maxW, maxHeightPt: boxTop - boxBottom })
+    page.drawText(previewScaleNote(fit.trueSize), {
+      x: left + font.widthOfTextAtSize('Preview', PREVIEW_HEADING_PT) + mmToPt(3),
+      y,
+      size: 9,
+      font,
+      color: MUTED
+    })
+
+    // Rasterise for the size it will be drawn at, not a fixed pixel budget: at true size the
+    // preview can be 130mm across, where a thumbnail-sized raster is visibly soft.
     const png = renderPatternPng(pattern, palette, {
-      cellSize: cellPx,
+      cellSize: previewCellPx(pattern.width, fit.widthPt),
       backgroundColour: options.backgroundColour
     })
     const image = await pdf.embedPng(png)
 
-    // Fit the raster into the box below the heading and above the footer, preserving aspect.
-    const boxTop = y - mmToPt(6)
-    const boxBottom = footerTop + mmToPt(8)
-    const maxW = mmToPt(PRINTABLE_WIDTH_MM)
-    const maxH = boxTop - boxBottom
-    const scale = Math.min(maxW / image.width, maxH / image.height)
-    const drawW = image.width * scale
-    const drawH = image.height * scale
+    const drawW = fit.widthPt
+    const drawH = fit.heightPt
     const drawX = left + (maxW - drawW) / 2 // centre horizontally in the content column
     const drawY = boxTop - drawH
 

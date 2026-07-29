@@ -61,7 +61,7 @@ for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
   const bytes = await buildChartPdf(
     reduced.pattern,
     reduced.palette,
-    { title, width: src.width, height: src.height },
+    { title },
     { backgroundColour: FABRIC, symbolDisplay, flip: false, fontBytes }
   )
 
