@@ -22,6 +22,7 @@ import { symbolsFor } from '../../shared/pipeline'
 import { renderPatternPng } from './png'
 import { drawLicenceFooter, LICENCE_FOOTER_TOP_MM } from './pdf-footer'
 import { drawRunningHead } from './pdf-header'
+import { fitPreview, previewCellPx, previewScaleNote } from './pdf-preview'
 import {
   A4_HEIGHT_MM,
   A4_WIDTH_MM,
@@ -53,12 +54,8 @@ const INK = rgb(0, 0, 0)
 const MUTED = rgb(0.42, 0.42, 0.42)
 const HAIRLINE = rgb(0.75, 0.75, 0.75)
 
-/**
- * Pixels per stitch for the embedded cover preview (#46). Chosen so the raster's longest side
- * lands near this many pixels regardless of pattern size — crisp when scaled to the cover box,
- * without embedding a needlessly large image for a small sprite.
- */
-const PREVIEW_TARGET_PX = 700
+/** Size of the "Preview" heading. Its scale note (#68) is measured against it. */
+const PREVIEW_HEADING_PT = 13
 
 /** Metadata the cover page states about the pattern. */
 export interface ChartMeta {
@@ -178,23 +175,33 @@ export async function drawCoverPage(
   // transparent sprite, trimmed to 0×0 — #53), which has nothing to show.
   if (pattern.width > 0 && pattern.height > 0) {
     y -= mmToPt(14)
-    page.drawText('Preview', { x: left, y, size: 13, font, color: INK })
+    page.drawText('Preview', { x: left, y, size: PREVIEW_HEADING_PT, font, color: INK })
 
-    const cellPx = Math.max(4, Math.round(PREVIEW_TARGET_PX / Math.max(pattern.width, pattern.height)))
+    // The box the preview may occupy: below its heading, above the licence footer.
+    const boxTop = y - mmToPt(6)
+    const boxBottom = footerTop + mmToPt(8)
+    const maxW = mmToPt(PRINTABLE_WIDTH_MM)
+
+    // True 14-count size if it fits, else reduced — and the page says which (#68).
+    const fit = fitPreview(pattern, { maxWidthPt: maxW, maxHeightPt: boxTop - boxBottom })
+    page.drawText(previewScaleNote(fit.trueSize), {
+      x: left + font.widthOfTextAtSize('Preview', PREVIEW_HEADING_PT) + mmToPt(3),
+      y,
+      size: 9,
+      font,
+      color: MUTED
+    })
+
+    // Rasterise for the size it will be drawn at, not a fixed pixel budget: at true size the
+    // preview can be 130mm across, where a thumbnail-sized raster is visibly soft.
     const png = renderPatternPng(pattern, palette, {
-      cellSize: cellPx,
+      cellSize: previewCellPx(pattern.width, fit.widthPt),
       backgroundColour: options.backgroundColour
     })
     const image = await pdf.embedPng(png)
 
-    // Fit the raster into the box below the heading and above the footer, preserving aspect.
-    const boxTop = y - mmToPt(6)
-    const boxBottom = footerTop + mmToPt(8)
-    const maxW = mmToPt(PRINTABLE_WIDTH_MM)
-    const maxH = boxTop - boxBottom
-    const scale = Math.min(maxW / image.width, maxH / image.height)
-    const drawW = image.width * scale
-    const drawH = image.height * scale
+    const drawW = fit.widthPt
+    const drawH = fit.heightPt
     const drawX = left + (maxW - drawW) / 2 // centre horizontally in the content column
     const drawY = boxTop - drawH
 
