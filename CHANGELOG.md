@@ -16,8 +16,12 @@ on `main`, and rename that heading to the version and date when the release is c
   pattern in the open cross-stitch format that Pattern Keeper, KXStitch, WinStitch and friends
   read — so you can stitch from the app you already use and tick the stitches off as you go,
   instead of only from paper. The file is named after the sprite, and carries what the chart
-  carries: the fabric colour, every DMC code with its chart symbol, and the flip if you have it
-  on. Whole cross stitches only, which is all a sprite ever is.
+  carries: the fabric colour, every DMC code, and the flip if you have it on. Whole cross
+  stitches only, which is all a sprite ever is. The symbols, though, will be that program's own
+  and not the ones on your PDF — each program draws from its own symbol set and there is no way
+  to hand it ours, so the file numbers the colours instead and lets it choose. Every colour
+  still gets a symbol of its own, and the Wesnoth Stitch one is noted against it in the file if
+  you need to match the two up.
 
 ## [1.1.0] — 2026-07-29
 

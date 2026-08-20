@@ -17,38 +17,38 @@
   />
   <properties oxsversion="1.0" software="Wesnoth Stitch" software_version="uat" chartheight="31" chartwidth="39" charttitle="fighter" author="" copyright="Wesnoth artwork is licensed GPL v2+ / CC-BY-SA 4.0 by the Battle for Wesnoth project. https://wiki.wesnoth.org/Wesnoth:Copyrights" instructions="Whole cross stitches only, 31 DMC floss colours. No backstitch." stitchesperinch="14" stitchesperinch_y="14" palettecount="31" />
   <palette>
-    <palette_item index="0" number="cloth" name="cloth" color="F2ECDC" />
-    <palette_item index="1" number="310" name="DMC 310 Black" color="000000" printcolor="000000" strands="2" symbol="●" />
-    <palette_item index="2" number="3857" name="DMC 3857 Rosewood DK" color="662A20" printcolor="662A20" strands="2" symbol="I" />
-    <palette_item index="3" number="3041" name="DMC 3041 Antique Violet MD" color="836479" printcolor="836479" strands="2" symbol="■" />
-    <palette_item index="4" number="783" name="DMC 783 Topaz MD" color="C59626" printcolor="C59626" strands="2" symbol="☆" />
-    <palette_item index="5" number="976" name="DMC 976 Golden Brown MD" color="8A5D20" printcolor="8A5D20" strands="2" symbol="▲" />
-    <palette_item index="6" number="924" name="DMC 924 Gray Green VD" color="354850" printcolor="354850" strands="2" symbol="+" />
-    <palette_item index="7" number="930" name="DMC 930 Antique Blue DK" color="3F5A6B" printcolor="3F5A6B" strands="2" symbol="♦" />
-    <palette_item index="8" number="918" name="DMC 918 Red Copper DK" color="6F2D10" printcolor="6F2D10" strands="2" symbol="=" />
-    <palette_item index="9" number="742" name="DMC 742 Tangerine Lt" color="FFB540" printcolor="FFB540" strands="2" symbol="○" />
-    <palette_item index="10" number="927" name="DMC 927 Gray Green MD" color="6E8B94" printcolor="6E8B94" strands="2" symbol="J" />
-    <palette_item index="11" number="3051" name="DMC 3051 Green Gray DK" color="6C7955" printcolor="6C7955" strands="2" symbol="□" />
-    <palette_item index="12" number="3781" name="DMC 3781 Mocha Brown DK" color="523828" printcolor="523828" strands="2" symbol="L" />
-    <palette_item index="13" number="413" name="DMC 413 Dark Chocolate" color="413022" printcolor="413022" strands="2" symbol="△" />
-    <palette_item index="14" number="922" name="DMC 922 Copper Lt" color="CF8350" printcolor="CF8350" strands="2" symbol="†" />
-    <palette_item index="15" number="3371" name="DMC 3371 Black Brown" color="3E200B" printcolor="3E200B" strands="2" symbol="◇" />
-    <palette_item index="16" number="3851" name="DMC 3851 Teal Green Bright Lt" color="78C8C0" printcolor="78C8C0" strands="2" symbol="7" />
-    <palette_item index="17" number="3761" name="DMC 3761 Sky Blue Lt2" color="ACD8E0" printcolor="ACD8E0" strands="2" symbol="◐" />
-    <palette_item index="18" number="3802" name="DMC 3802 Wine VD" color="7A1A38" printcolor="7A1A38" strands="2" symbol="×" />
-    <palette_item index="19" number="3803" name="DMC 3803 Wine DK" color="9C2050" printcolor="9C2050" strands="2" symbol="Y" />
-    <palette_item index="20" number="3805" name="DMC 3805 Cyclamen Pink" color="E25088" printcolor="E25088" strands="2" symbol="T" />
-    <palette_item index="21" number="3854" name="DMC 3854 Autumn Gold MD" color="E8C060" printcolor="E8C060" strands="2" symbol="#" />
-    <palette_item index="22" number="738" name="DMC 738 Tan VL" color="DBC5A0" printcolor="DBC5A0" strands="2" symbol="F" />
-    <palette_item index="23" number="B5200" name="DMC B5200 White" color="FFFFFF" printcolor="FFFFFF" strands="2" symbol="A" />
-    <palette_item index="24" number="746" name="DMC 746 Yellow Cream Lt" color="FFF5D4" printcolor="FFF5D4" strands="2" symbol="‡" />
-    <palette_item index="25" number="3771" name="DMC 3771 Desert Sand VL2" color="EFCCA7" printcolor="EFCCA7" strands="2" symbol="B" />
-    <palette_item index="26" number="407" name="DMC 407 Hazelnut Brown DK" color="7C553A" printcolor="7C553A" strands="2" symbol="C" />
-    <palette_item index="27" number="601" name="DMC 601 Cranberry DK" color="D33373" printcolor="D33373" strands="2" symbol="D" />
-    <palette_item index="28" number="317" name="DMC 317 Pewter Gray DK" color="535353" printcolor="535353" strands="2" symbol="3" />
-    <palette_item index="29" number="3033" name="DMC 3033 Mocha Brown VL" color="D1C0A0" printcolor="D1C0A0" strands="2" symbol="E" />
-    <palette_item index="30" number="642" name="DMC 642 Beige Gray MD" color="A09B8E" printcolor="A09B8E" strands="2" symbol="4" />
-    <palette_item index="31" number="926" name="DMC 926 Gray Green DK" color="46626B" printcolor="46626B" strands="2" symbol="V" />
+    <palette_item index="0" number="cloth" name="cloth" color="F2ECDC" printcolor="F2ECDC" blendcolor="nil" comments="" strands="2" dashpattern="" misc1="" />
+    <palette_item index="1" number="DMC 310" name="Black" color="000000" printcolor="000000" bscolor="000000" blendcolor="nil" comments="Wesnoth Stitch symbol: filled circle" strands="2" bsstrands="1" symbol="1" dashpattern="" misc1="" />
+    <palette_item index="2" number="DMC 3857" name="Rosewood DK" color="662A20" printcolor="662A20" bscolor="662A20" blendcolor="nil" comments="Wesnoth Stitch symbol: letter I" strands="2" bsstrands="1" symbol="2" dashpattern="" misc1="" />
+    <palette_item index="3" number="DMC 3041" name="Antique Violet MD" color="836479" printcolor="836479" bscolor="836479" blendcolor="nil" comments="Wesnoth Stitch symbol: filled square" strands="2" bsstrands="1" symbol="3" dashpattern="" misc1="" />
+    <palette_item index="4" number="DMC 783" name="Topaz MD" color="C59626" printcolor="C59626" bscolor="C59626" blendcolor="nil" comments="Wesnoth Stitch symbol: open star" strands="2" bsstrands="1" symbol="4" dashpattern="" misc1="" />
+    <palette_item index="5" number="DMC 976" name="Golden Brown MD" color="8A5D20" printcolor="8A5D20" bscolor="8A5D20" blendcolor="nil" comments="Wesnoth Stitch symbol: filled triangle" strands="2" bsstrands="1" symbol="5" dashpattern="" misc1="" />
+    <palette_item index="6" number="DMC 924" name="Gray Green VD" color="354850" printcolor="354850" bscolor="354850" blendcolor="nil" comments="Wesnoth Stitch symbol: plus" strands="2" bsstrands="1" symbol="6" dashpattern="" misc1="" />
+    <palette_item index="7" number="DMC 930" name="Antique Blue DK" color="3F5A6B" printcolor="3F5A6B" bscolor="3F5A6B" blendcolor="nil" comments="Wesnoth Stitch symbol: diamond suit" strands="2" bsstrands="1" symbol="7" dashpattern="" misc1="" />
+    <palette_item index="8" number="DMC 918" name="Red Copper DK" color="6F2D10" printcolor="6F2D10" bscolor="6F2D10" blendcolor="nil" comments="Wesnoth Stitch symbol: equals" strands="2" bsstrands="1" symbol="8" dashpattern="" misc1="" />
+    <palette_item index="9" number="DMC 742" name="Tangerine Lt" color="FFB540" printcolor="FFB540" bscolor="FFB540" blendcolor="nil" comments="Wesnoth Stitch symbol: open circle" strands="2" bsstrands="1" symbol="9" dashpattern="" misc1="" />
+    <palette_item index="10" number="DMC 927" name="Gray Green MD" color="6E8B94" printcolor="6E8B94" bscolor="6E8B94" blendcolor="nil" comments="Wesnoth Stitch symbol: letter J" strands="2" bsstrands="1" symbol="10" dashpattern="" misc1="" />
+    <palette_item index="11" number="DMC 3051" name="Green Gray DK" color="6C7955" printcolor="6C7955" bscolor="6C7955" blendcolor="nil" comments="Wesnoth Stitch symbol: open square" strands="2" bsstrands="1" symbol="11" dashpattern="" misc1="" />
+    <palette_item index="12" number="DMC 3781" name="Mocha Brown DK" color="523828" printcolor="523828" bscolor="523828" blendcolor="nil" comments="Wesnoth Stitch symbol: letter L" strands="2" bsstrands="1" symbol="12" dashpattern="" misc1="" />
+    <palette_item index="13" number="DMC 413" name="Dark Chocolate" color="413022" printcolor="413022" bscolor="413022" blendcolor="nil" comments="Wesnoth Stitch symbol: open triangle" strands="2" bsstrands="1" symbol="13" dashpattern="" misc1="" />
+    <palette_item index="14" number="DMC 922" name="Copper Lt" color="CF8350" printcolor="CF8350" bscolor="CF8350" blendcolor="nil" comments="Wesnoth Stitch symbol: dagger" strands="2" bsstrands="1" symbol="14" dashpattern="" misc1="" />
+    <palette_item index="15" number="DMC 3371" name="Black Brown" color="3E200B" printcolor="3E200B" bscolor="3E200B" blendcolor="nil" comments="Wesnoth Stitch symbol: open diamond" strands="2" bsstrands="1" symbol="15" dashpattern="" misc1="" />
+    <palette_item index="16" number="DMC 3851" name="Teal Green Bright Lt" color="78C8C0" printcolor="78C8C0" bscolor="78C8C0" blendcolor="nil" comments="Wesnoth Stitch symbol: digit seven" strands="2" bsstrands="1" symbol="16" dashpattern="" misc1="" />
+    <palette_item index="17" number="DMC 3761" name="Sky Blue Lt2" color="ACD8E0" printcolor="ACD8E0" bscolor="ACD8E0" blendcolor="nil" comments="Wesnoth Stitch symbol: half-filled circle" strands="2" bsstrands="1" symbol="17" dashpattern="" misc1="" />
+    <palette_item index="18" number="DMC 3802" name="Wine VD" color="7A1A38" printcolor="7A1A38" bscolor="7A1A38" blendcolor="nil" comments="Wesnoth Stitch symbol: cross" strands="2" bsstrands="1" symbol="18" dashpattern="" misc1="" />
+    <palette_item index="19" number="DMC 3803" name="Wine DK" color="9C2050" printcolor="9C2050" bscolor="9C2050" blendcolor="nil" comments="Wesnoth Stitch symbol: letter Y" strands="2" bsstrands="1" symbol="19" dashpattern="" misc1="" />
+    <palette_item index="20" number="DMC 3805" name="Cyclamen Pink" color="E25088" printcolor="E25088" bscolor="E25088" blendcolor="nil" comments="Wesnoth Stitch symbol: letter T" strands="2" bsstrands="1" symbol="20" dashpattern="" misc1="" />
+    <palette_item index="21" number="DMC 3854" name="Autumn Gold MD" color="E8C060" printcolor="E8C060" bscolor="E8C060" blendcolor="nil" comments="Wesnoth Stitch symbol: hash" strands="2" bsstrands="1" symbol="21" dashpattern="" misc1="" />
+    <palette_item index="22" number="DMC 738" name="Tan VL" color="DBC5A0" printcolor="DBC5A0" bscolor="DBC5A0" blendcolor="nil" comments="Wesnoth Stitch symbol: letter F" strands="2" bsstrands="1" symbol="22" dashpattern="" misc1="" />
+    <palette_item index="23" number="DMC B5200" name="White" color="FFFFFF" printcolor="FFFFFF" bscolor="FFFFFF" blendcolor="nil" comments="Wesnoth Stitch symbol: letter A" strands="2" bsstrands="1" symbol="23" dashpattern="" misc1="" />
+    <palette_item index="24" number="DMC 746" name="Yellow Cream Lt" color="FFF5D4" printcolor="FFF5D4" bscolor="FFF5D4" blendcolor="nil" comments="Wesnoth Stitch symbol: double dagger" strands="2" bsstrands="1" symbol="24" dashpattern="" misc1="" />
+    <palette_item index="25" number="DMC 3771" name="Desert Sand VL2" color="EFCCA7" printcolor="EFCCA7" bscolor="EFCCA7" blendcolor="nil" comments="Wesnoth Stitch symbol: letter B" strands="2" bsstrands="1" symbol="25" dashpattern="" misc1="" />
+    <palette_item index="26" number="DMC 407" name="Hazelnut Brown DK" color="7C553A" printcolor="7C553A" bscolor="7C553A" blendcolor="nil" comments="Wesnoth Stitch symbol: letter C" strands="2" bsstrands="1" symbol="26" dashpattern="" misc1="" />
+    <palette_item index="27" number="DMC 601" name="Cranberry DK" color="D33373" printcolor="D33373" bscolor="D33373" blendcolor="nil" comments="Wesnoth Stitch symbol: letter D" strands="2" bsstrands="1" symbol="27" dashpattern="" misc1="" />
+    <palette_item index="28" number="DMC 317" name="Pewter Gray DK" color="535353" printcolor="535353" bscolor="535353" blendcolor="nil" comments="Wesnoth Stitch symbol: digit three" strands="2" bsstrands="1" symbol="28" dashpattern="" misc1="" />
+    <palette_item index="29" number="DMC 3033" name="Mocha Brown VL" color="D1C0A0" printcolor="D1C0A0" bscolor="D1C0A0" blendcolor="nil" comments="Wesnoth Stitch symbol: letter E" strands="2" bsstrands="1" symbol="29" dashpattern="" misc1="" />
+    <palette_item index="30" number="DMC 642" name="Beige Gray MD" color="A09B8E" printcolor="A09B8E" bscolor="A09B8E" blendcolor="nil" comments="Wesnoth Stitch symbol: digit four" strands="2" bsstrands="1" symbol="30" dashpattern="" misc1="" />
+    <palette_item index="31" number="DMC 926" name="Gray Green DK" color="46626B" printcolor="46626B" bscolor="46626B" blendcolor="nil" comments="Wesnoth Stitch symbol: letter V" strands="2" bsstrands="1" symbol="31" dashpattern="" misc1="" />
   </palette>
   <fullstitches>
     <stitch x="12" y="1" palindex="15" />
