@@ -75,11 +75,12 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   const [colourCount, setColourCount] = useState<number | null>(null)
 
   /**
-   * Whether a chart export is running. Building a chart takes long enough to notice, and a
+   * Which export is running, if any. Building a chart takes long enough to notice, and a
    * second click while the save dialog is already up would open a second dialog — so the
-   * button disables rather than queue.
+   * buttons disable rather than queue. Held as *which* rather than a flag so only the button
+   * you pressed says it is working, while both stay unclickable until it is done.
    */
-  const [exporting, setExporting] = useState(false)
+  const [exporting, setExporting] = useState<'pdf' | 'oxs' | null>(null)
   /** Last export outcome, shown briefly. `null` after a cancel — that is not worth saying. */
   const [exported, setExported] = useState<string | null>(null)
 
@@ -147,14 +148,16 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
     : 0
 
   /**
-   * Export the printable chart as it is on screen.
+   * Export the chart as it is on screen — the printable PDF, or the OXS file other
+   * cross-stitch software reads (#94).
    *
    * Main re-derives the pattern from `(id, colourCount)` — see `ExportRequest`. What is sent
-   * is the *current* `k` and settings, so what lands on disk is what you are looking at.
+   * is the *current* `k` and settings, so what lands on disk is what you are looking at. Both
+   * exports send the same request, which is what keeps the two files agreeing.
    */
-  const onExportPdf = async (): Promise<void> => {
+  const onExport = async (kind: 'pdf' | 'oxs'): Promise<void> => {
     if (exporting || !sprite) return
-    setExporting(true)
+    setExporting(kind)
     setExported(null)
     try {
       const request = {
@@ -162,14 +165,15 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
         ...(colourCount === null ? {} : { colourCount }),
         settings
       }
-      const outcome = await window.api.exportPdf(request)
+      const outcome =
+        kind === 'pdf' ? await window.api.exportPdf(request) : await window.api.exportOxs(request)
 
       // Cancelling is not a failure — say nothing at all.
       if (outcome.status === 'saved') setExported(outcome.path)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setExporting(false)
+      setExporting(null)
     }
   }
 
@@ -268,10 +272,22 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
               type="button"
               className="pattern-controls__button"
               title="Save the printable chart: cover, floss key, and chart pages"
-              disabled={exporting}
-              onClick={() => void onExportPdf()}
+              disabled={exporting !== null}
+              onClick={() => void onExport('pdf')}
             >
-              {exporting ? 'Building…' : 'Chart PDF'}
+              {exporting === 'pdf' ? 'Building…' : 'Chart PDF'}
+            </button>
+
+            {/* The same chart as data (#94), for stitching from other software — Pattern
+                Keeper, KXStitch and the like — rather than off paper. */}
+            <button
+              type="button"
+              className="pattern-controls__button"
+              title="Save as .oxs, the open format other cross-stitch software reads"
+              disabled={exporting !== null}
+              onClick={() => void onExport('oxs')}
+            >
+              {exporting === 'oxs' ? 'Saving…' : 'Chart OXS'}
             </button>
           </div>
         )}

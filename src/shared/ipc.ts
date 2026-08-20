@@ -54,7 +54,8 @@ export const IpcChannels = {
   getThumbnail: 'sprites:thumbnail',
   getFullImage: 'sprites:full-image',
   convertSprite: 'sprites:convert',
-  exportPdf: 'export:pdf'
+  exportPdf: 'export:pdf',
+  exportOxs: 'export:oxs'
 } as const
 
 /**
@@ -190,4 +191,17 @@ export interface SpriteApi {
    * slider is capped at `maxColourCount`, so that is a bug, not a thing a user can do.
    */
   exportPdf(request: ExportRequest): Promise<ExportOutcome>
+
+  /**
+   * Export the chart as OXS (#94) — the open interchange format other cross-stitch software
+   * reads, so the pattern can be stitched from Pattern Keeper, KXStitch or the like.
+   *
+   * Takes the same request as {@link exportPdf} and honours the same settings, save one:
+   * `symbolDisplay` chooses how a chart is *drawn*, and an OXS file carries the colours and
+   * the glyphs together for the reading program to draw as it pleases. The flip and the
+   * fabric colour do land in the file.
+   *
+   * Opens a save dialog; resolves `{ status: 'cancelled' }` if the user backs out.
+   */
+  exportOxs(request: ExportRequest): Promise<ExportOutcome>
 }

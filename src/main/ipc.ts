@@ -15,6 +15,7 @@ import { decodeImage, makeThumbnail } from './images'
 import { convertSprite } from './convert'
 import { loadExportFont } from './export/font'
 import { buildChartPdf } from './export/pdf'
+import { buildChartOxs } from './export/oxs'
 import { chartExportName } from './export/chart-filename'
 import {
   hasSprites,
@@ -154,7 +155,7 @@ export function registerIpcHandlers(): void {
     }
   )
 
-  // The export handler re-derives the pattern from (id, colourCount) rather than take it
+  // Both export handlers re-derive the pattern from (id, colourCount) rather than take it
   // from the renderer. convertSprite's cache makes that free, and it means the exported
   // file and the preview it came from are the *same* conversion — they cannot disagree.
 
@@ -179,6 +180,37 @@ export function registerIpcHandlers(): void {
             { ...settings, fontBytes: loadExportFont() }
           )
           await writeFile(path, pdf)
+        }
+      )
+    }
+  )
+
+  ipcMain.handle(
+    IpcChannels.exportOxs,
+    async (event, { id, colourCount, settings }: ExportRequest): Promise<ExportOutcome> => {
+      const { palette, pattern } = await convertSprite(id, resolveSpritePath(id), colourCount)
+      const name = spriteName(id)
+
+      return saveThrough(
+        event,
+        {
+          // Just the sprite's name (#94) — unlike the PDF, which tags the chart mode to keep
+          // two renderings of one sprite apart. An OXS file has no mode: it carries the
+          // colours *and* the glyphs, and the reading program decides how to draw them.
+          defaultName: name,
+          extension: 'oxs',
+          description: 'Open cross-stitch chart'
+        },
+        async (path) => {
+          const oxs = buildChartOxs(
+            pattern,
+            palette,
+            { title: name, softwareVersion: app.getVersion() },
+            settings
+          )
+          // UTF-8, as the document's own declaration promises — the glyphs in the palette
+          // are not all ASCII.
+          await writeFile(path, oxs, 'utf8')
         }
       )
     }

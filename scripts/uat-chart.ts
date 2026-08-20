@@ -13,6 +13,7 @@
 import { basename } from 'node:path'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { PNG } from 'pngjs'
+import { buildChartOxs } from '../src/main/export/oxs'
 import { buildChartPdf } from '../src/main/export/pdf'
 import { DEFAULT_CELL_MM, glyphSizePt } from '../src/main/export/pdf-layout'
 import { renderPatternPng } from '../src/main/export/png'
@@ -53,6 +54,18 @@ console.log(`  preview → ${OUT_DIR}/preview.png`)
 
 const fontBytes = readFileSync('resources/fonts/DejaVuSans.ttf')
 const title = basename(sprite, '.png')
+
+// The OXS export (#94). Its verdict is the same kind as the print test's and can't be
+// automated either: whether the file actually *opens*, in software we don't own — so the
+// artefact has to come out of `buildChartOxs`, the function the IPC handler calls.
+const oxs = buildChartOxs(
+  reduced.pattern,
+  reduced.palette,
+  { title, softwareVersion: 'uat' },
+  { backgroundColour: FABRIC, flip: false }
+)
+writeFileSync(`${OUT_DIR}/chart.oxs`, oxs, 'utf8')
+console.log(`  oxs     → ${OUT_DIR}/chart.oxs`)
 
 for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
   // Drives `buildChartPdf` — the very entry point the app's IPC handler will call (#36) —

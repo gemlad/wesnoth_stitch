@@ -29,6 +29,7 @@ Point the chart script at any sprite: `npm run uat:chart -- wesnoth-sprites/unit
 | `chart-symbol.pdf` | **Black-and-white** chart — cover, floss key, chart page. | **This is [#28].** The glyph is the *only* thing naming a colour, so this is the fair test of the symbol set. |
 | `chart-both.pdf` | The working chart — colour underneath, glyph on top. | What you'd really stitch from. Judge whether it's *usable*, not just correct. |
 | `preview.png` | The PNG export, 12px per stitch. | The quick-look export. Mainly: does the fabric colour look right behind the pattern? |
+| `chart.oxs` | The OXS export ([#94]) — the same chart as open interchange data. | **Does it open?** Load it in Pattern Keeper, KXStitch or WinStitch: right size, right floss, symbols on the right colours. Only software we don't own can answer that. |
 | `glyph-legibility-test.pdf` | Seven-page glyph drill — calibration rulers, all 47 glyphs at four cell sizes, the suspect pairs side-by-side *and* separated, a blind identification task with a key, and two real charts. | The systematic version of the same question. |
 
 **Both PDFs now come from the same place.** The legibility sheet used to render through
@@ -104,3 +105,4 @@ the real charts on pages 5–6 are laid out at.
 [#20]: https://github.com/gemlad/wesnoth_stitch/issues/20
 [#28]: https://github.com/gemlad/wesnoth_stitch/issues/28
 [#30]: https://github.com/gemlad/wesnoth_stitch/issues/30
+[#94]: https://github.com/gemlad/wesnoth_stitch/issues/94
