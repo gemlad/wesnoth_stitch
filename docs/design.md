@@ -759,6 +759,29 @@ holds its edge or cell (`centreMarksForTile`). The cover preview reuses `renderP
 (§5.5 PNG), so the quick colour look that was once a standalone export (#45) now rides inside
 the document it belongs to.
 
+**OXS (#94).** The PDF says how a chart should *look*; OXS says what it *is*. It is the open
+interchange format ([spec](https://ursasoftware.com/OXSFormat/)) that Pattern Keeper, KXStitch
+and WinStitch read, so the same chart can be stitched from the tool the stitcher already uses —
+ticked off on a tablet, re-keyed to another floss brand, or dropped into a larger design. A
+second button beside the PDF one, saved as `<sprite>.oxs`; `buildChartOxs` is a pure
+pattern → string function next to the PDF builder, and `npm run uat:chart` drops a real
+`chart.oxs` in `uat/` because "does it open in software we don't own" is a human verdict.
+Three points where the mapping had to be decided rather than transcribed:
+
+- **Palette index 0 is the cloth**, which is how the file carries `backgroundColour` — so every
+  floss index shifts by one on the way out (`palindex = cell + 1`). `palettecount` counts the
+  floss only; the spec says so explicitly.
+- **Stitches are 1-based and sparse.** A no-stitch cell is *absent* rather than written as
+  cloth, which is what makes the fabric show through in the reading program.
+- **Symbols are written as the glyph itself**, not as Ursa's sequence number into its own
+  symbol font — a number no other reader can resolve. Our glyphs are single BMP code points
+  chosen to be legible alone (§5.3), so the character is the portable answer; a reader that
+  wants a number falls back to its own symbols and the colours are still right.
+
+Nothing else in the format applies: a sprite is whole cross stitches only (Req. 4), so
+`partstitches`, `backstitches` and `ornaments_inc_knots_and_beads` are written empty — which
+the spec asks for regardless, calling them mandatory even when empty.
+
 **The licence notice is on every page, not just the cover (#47).** Wesnoth's art licence
 (GPL v2+ / CC-BY-SA 4.0) requires credit on derived work, and a loose chart page printed
 without its cover would otherwise carry none. A shared `drawLicenceFooter` (from the one

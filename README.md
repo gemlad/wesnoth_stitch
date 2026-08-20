@@ -49,6 +49,13 @@ the app so it's a single quick download.
 **Print the PDF at 100% / "actual size"** (not "fit to page") — the chart is laid out at a real
 physical size so the symbols stay legible and the finished dimensions are correct.
 
+### Stitching from an app instead of paper
+
+**Chart OXS** saves the same pattern as a `.oxs` file — the open cross-stitch format that
+Pattern Keeper, KXStitch, WinStitch and others open. Use it if you'd rather stitch from a
+tablet and tick off stitches as you go. It carries your fabric colour, the DMC code and symbol
+for every thread, and the flip if you've turned it on.
+
 ## Licence and credits
 
 - **Wesnoth Stitch** itself is free software under the **GNU GPL v3 or later** — see

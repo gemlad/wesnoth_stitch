@@ -10,7 +10,14 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Export the chart as `.oxs`** (#94). A second export button, beside "Chart PDF", saving the
+  pattern in the open cross-stitch format that Pattern Keeper, KXStitch, WinStitch and friends
+  read — so you can stitch from the app you already use and tick the stitches off as you go,
+  instead of only from paper. The file is named after the sprite, and carries what the chart
+  carries: the fabric colour, every DMC code with its chart symbol, and the flip if you have it
+  on. Whole cross stitches only, which is all a sprite ever is.
 
 ## [1.1.0] — 2026-07-29
 
