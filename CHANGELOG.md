@@ -10,6 +10,12 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.2.0] — 2026-08-20
+
+One feature: the chart can leave the app as data, not just as paper.
+
 ### Added
 
 - **Export the chart as `.oxs`** (#94). A second export button, beside "Chart PDF", saving the
@@ -104,6 +110,7 @@ First public release — a Windows installer on the Releases page.
 - Licensing throughout: GPL-3.0-or-later, with the Wesnoth art attribution on every printed
   page, on screen, and in `THIRD-PARTY-NOTICES.md`.
 
-[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/gemlad/wesnoth_stitch/releases/tag/v1.0.0
