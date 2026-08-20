@@ -773,10 +773,20 @@ Three points where the mapping had to be decided rather than transcribed:
   floss only; the spec says so explicitly.
 - **Stitches are 1-based and sparse.** A no-stitch cell is *absent* rather than written as
   cloth, which is what makes the fabric show through in the reading program.
-- **Symbols are written as the glyph itself**, not as Ursa's sequence number into its own
-  symbol font — a number no other reader can resolve. Our glyphs are single BMP code points
-  chosen to be legible alone (§5.3), so the character is the portable answer; a reader that
-  wants a number falls back to its own symbols and the colours are still right.
+- **Symbols are a sequence number, and the imported chart's glyphs will not match the PDF's.**
+  The spec says *"Ursa uses a symbol number, which is a sequence number. Others may specify a
+  font and/or an actual character"*, and the character reading was tried first — it imported
+  into WinStitch and FlossCross with **no symbols at all** (Gemma, 2026-08-20). Neither program
+  resolves a character; both index a symbol library of their own. So each floss carries `1, 2,
+  3…` in palette order and the reader draws its own glyph there. Our set (§5.3) was chosen
+  against a font we bundle and cannot be communicated through this format; what the numbers do
+  guarantee is that they are *distinct*, which is the property that makes a chart stitchable.
+  Each item's `comments` names the Wesnoth Stitch glyph, so the printed key can still be lined
+  up against the imported palette by hand.
+- **The brand goes in `number`, not `name`** — `number="DMC 310"`, `name="Black"`, as the
+  spec's own example has it. That is the field a reader matches floss on, and "310" alone is
+  ambiguous in software that knows several ranges. The whole file is ASCII: the one thing in it
+  that was not is what failed to import.
 
 Nothing else in the format applies: a sprite is whole cross stitches only (Req. 4), so
 `partstitches`, `backstitches` and `ornaments_inc_knots_and_beads` are written empty — which

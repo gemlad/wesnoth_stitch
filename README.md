@@ -53,8 +53,14 @@ physical size so the symbols stay legible and the finished dimensions are correc
 
 **Chart OXS** saves the same pattern as a `.oxs` file — the open cross-stitch format that
 Pattern Keeper, KXStitch, WinStitch and others open. Use it if you'd rather stitch from a
-tablet and tick off stitches as you go. It carries your fabric colour, the DMC code and symbol
-for every thread, and the flip if you've turned it on.
+tablet and tick off stitches as you go. It carries your fabric colour, every thread's DMC code,
+and the flip if you've turned it on.
+
+**The symbols will look different there.** Each program draws chart symbols from its own set,
+and there's no way to hand it ours — so the `.oxs` numbers the colours and lets the program
+choose the glyphs. Every colour still gets its own symbol; it just won't be the one on the PDF.
+(Each colour's Wesnoth Stitch symbol is written into the file's notes, if you need to match the
+two up.)
 
 ## Licence and credits
 

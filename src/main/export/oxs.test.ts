@@ -121,32 +121,52 @@ describe('buildChartOxs', () => {
     const xml = buildChartOxs(patternOf([[0]]), paletteOf(1), meta, options)
     const [cloth] = elements(xml, 'palette_item')
 
-    expect(cloth).toMatchObject({ index: '0', number: 'cloth', name: 'cloth', color: 'F2ECDC' })
+    expect(cloth).toMatchObject({
+      index: '0',
+      number: 'cloth',
+      name: 'cloth',
+      color: 'F2ECDC',
+      printcolor: 'F2ECDC'
+    })
   })
 
-  it('lists each floss with its DMC code, colour and chart glyph', () => {
+  it('lists each floss with its DMC code and colour', () => {
     const xml = buildChartOxs(patternOf([[0, 1]]), paletteOf(2), meta, options)
-    const palette = paletteOf(2)
     const [, first, second] = elements(xml, 'palette_item')
-    const symbols = symbolsFor(palette)
 
+    // Brand in `number`, plain floss name in `name` — the spec's own example does it this way,
+    // and it is `number` the reading program matches on.
     expect(first).toMatchObject({
       index: '1',
-      number: '310',
-      name: 'DMC 310 Black',
+      number: 'DMC 310',
+      name: 'Black',
       color: '000000',
-      printcolor: '000000',
-      symbol: symbols[0].glyph
+      printcolor: '000000'
     })
-    expect(second).toMatchObject({
-      index: '2',
-      number: '666',
-      name: 'DMC 666 Bright Red',
-      color: 'FF0000',
-      symbol: symbols[1].glyph
-    })
-    // The glyphs are what tell two colours apart on the chart; sharing one is the bug.
+    expect(second).toMatchObject({ index: '2', number: 'DMC 666', name: 'Bright Red' })
+  })
+
+  it('numbers the symbols in sequence, because that is what readers index', () => {
+    const xml = buildChartOxs(patternOf([[0, 1]]), paletteOf(2), meta, options)
+    const [cloth, first, second] = elements(xml, 'palette_item')
+
+    // A glyph character here imported into WinStitch and FlossCross as *no symbol at all*.
+    expect(first.symbol).toBe('1')
+    expect(second.symbol).toBe('2')
+    // Distinctness is the property that matters: two colours sharing a symbol is unstitchable.
     expect(first.symbol).not.toBe(second.symbol)
+    // The cloth is never stitched, so it names no symbol.
+    expect(cloth.symbol).toBeUndefined()
+  })
+
+  it('names this app’s own glyph in comments, so the PDF key can still be lined up', () => {
+    const xml = buildChartOxs(patternOf([[0, 1]]), paletteOf(2), meta, options)
+    const symbols = symbolsFor(paletteOf(2))
+    const [, first] = elements(xml, 'palette_item')
+
+    expect(first.comments).toBe(`Wesnoth Stitch symbol: ${symbols[0].name}`)
+    // ASCII only: a non-ASCII glyph in this file is what failed to import in the first place.
+    expect(first.comments).toMatch(/^[\x20-\x7e]+$/)
   })
 
   it('writes one stitch per cell, 1-based, with the cloth-shifted palette index', () => {

@@ -20,11 +20,21 @@
  * `palindex="${i + 1}"`. `palettecount` counts the floss only — the spec says so explicitly:
  * *"palettecount excludes cloth color, which is item 0"*.
  *
- * **Symbols are written as the glyph itself.** Ursa writes `symbol="21"`, a sequence number
- * into its own symbol font, and the spec allows others to differ — but a bare number is
- * worthless to any reader that does not have that font. Our glyphs are single BMP code points
- * chosen to be legible alone (§5.3), so the character *is* the portable answer; a reader that
- * expects a number falls back to its own symbols, and the colours are right either way.
+ * **Symbols are a plain sequence number, not this app's glyph.** The spec's wording is
+ * *"Ursa uses a symbol number, which is a sequence number. Others may specify a font and/or an
+ * actual character"* — and the character reading, tried first, was **wrong in practice**: a
+ * file carrying `symbol="●"` imported into WinStitch and FlossCross with **no symbols at all**
+ * (Gemma, 2026-08-20). Neither program looks up a character; both index a symbol library of
+ * their own. So each floss gets `1, 2, 3…` in palette order and the reading program draws
+ * whatever its library holds at that slot.
+ *
+ * **The consequence, accepted deliberately: an imported chart's glyphs do not match the PDF's.**
+ * There is no way to make them: our set (§5.3) was chosen against a bundled font we control,
+ * and no OXS reader can be told about it. What *is* guaranteed is that the numbers are
+ * distinct, so two floss colours can never share a symbol wherever the file lands — which is
+ * the property that makes a chart stitchable. Each palette item also carries the name of the
+ * Wesnoth Stitch glyph in `comments`, so the PDF key and the imported palette can still be
+ * lined up by hand.
  *
  * Pure and Electron-free, like the PDF builder beside it: pattern in, string out, so the format
  * can be tested without a window — and so `npm run uat:chart` can drop a real `.oxs` next to
@@ -172,12 +182,19 @@ export function buildChartOxs(
   )
 
   lines.push('  <palette>')
+  const clothHex = hex(options.backgroundColour)
   lines.push(
     `    <palette_item ${attributes({
       index: 0,
       number: 'cloth',
       name: 'cloth',
-      color: hex(options.backgroundColour)
+      color: clothHex,
+      printcolor: clothHex,
+      blendcolor: 'nil',
+      comments: '',
+      strands: STRANDS,
+      dashpattern: '',
+      misc1: ''
     })} />`
   )
   palette.colours.forEach((colour, index) => {
@@ -186,14 +203,26 @@ export function buildChartOxs(
     lines.push(
       `    <palette_item ${attributes({
         index: index + 1,
-        number: code,
-        // Brand-qualified, because `number` alone is ambiguous in software that knows several
-        // floss ranges: "310" is Black in DMC and something else entirely elsewhere.
-        name: `DMC ${code} ${colour.dmc.name}`,
+        // Brand-qualified in `number`, following the spec's own example (`number="DMC 781"`,
+        // `name="Topaz V DK"`) — "310" alone is ambiguous in software that knows several floss
+        // ranges, and this is the field those programs match on.
+        number: `DMC ${code}`,
+        name: colour.dmc.name,
         color: colourHex,
         printcolor: colourHex,
+        bscolor: colourHex,
+        blendcolor: 'nil',
+        // The glyph this colour carries on our own printed chart — as its *name*, since the
+        // symbol number below deliberately says nothing about it. Kept ASCII: the whole reason
+        // this file no longer ships a `●` is that readers did not cope with it.
+        comments: `Wesnoth Stitch symbol: ${symbols[index].name}`,
         strands: STRANDS,
-        symbol: symbols[index].glyph
+        bsstrands: 1,
+        // 1, 2, 3… in palette order. See the note on symbols above: a sequence number is what
+        // WinStitch and FlossCross actually read, and being distinct is all it has to be.
+        symbol: index + 1,
+        dashpattern: '',
+        misc1: ''
       })} />`
     )
   })

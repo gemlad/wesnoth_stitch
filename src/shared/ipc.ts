@@ -197,9 +197,9 @@ export interface SpriteApi {
    * reads, so the pattern can be stitched from Pattern Keeper, KXStitch or the like.
    *
    * Takes the same request as {@link exportPdf} and honours the same settings, save one:
-   * `symbolDisplay` chooses how a chart is *drawn*, and an OXS file carries the colours and
-   * the glyphs together for the reading program to draw as it pleases. The flip and the
-   * fabric colour do land in the file.
+   * `symbolDisplay` chooses how a chart is *drawn*, and the reading program decides that for
+   * itself — it is handed the colours and a symbol number per colour, not a rendering. The
+   * flip and the fabric colour do land in the file.
    *
    * Opens a save dialog; resolves `{ status: 'cancelled' }` if the user backs out.
    */
