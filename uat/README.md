@@ -30,6 +30,7 @@ Point the chart script at any sprite: `npm run uat:chart -- wesnoth-sprites/unit
 | `chart-both.pdf` | The working chart — colour underneath, glyph on top. | What you'd really stitch from. Judge whether it's *usable*, not just correct. |
 | `preview.png` | The PNG export, 12px per stitch. | The quick-look export. Mainly: does the fabric colour look right behind the pattern? |
 | `chart.oxs` | The OXS export ([#94]) — the same chart as open interchange data. | **Does it open, and does every colour get a symbol?** Load it in Pattern Keeper, KXStitch, WinStitch or FlossCross: right size, right floss, and a distinct symbol per colour. The symbols are the reading program's own, *not* the PDF's (see §5.5) — the first attempt wrote our glyph as a character and imported with no symbols at all. Only software we don't own can answer this. |
+| `chart-pk.pdf` | The Pattern Keeper export ([#55]) — the same chart, laid out for the Android app's PDF importer. | **Does Pattern Keeper import it, and is the result right?** Put it on a phone and import it. It should read **39×31** (the trimmed fighter) with **31 colours**; when it asks about page overlap the answer is **none** — the pages don't repeat a row or a column. Then check the three things only a real import can answer: every cell has the symbol the printed chart has, every colour in its key carries the right **DMC** number and name, and the stitch counts add up. Unlike `chart.oxs`, the symbols here **are** ours — the app draws what the PDF draws. |
 | `glyph-legibility-test.pdf` | Seven-page glyph drill — calibration rulers, all 47 glyphs at four cell sizes, the suspect pairs side-by-side *and* separated, a blind identification task with a key, and two real charts. | The systematic version of the same question. |
 
 **Both PDFs now come from the same place.** The legibility sheet used to render through
@@ -99,10 +100,16 @@ the real charts on pages 5–6 are laid out at.
 - Glyph pairs failing in print → comment on **[#28]**, and update §5.3 in `design.md`.
 - The chart-reads-as-a-smudge problem, or anything about *which* glyph goes to which colour
   → **[#30]**, the symbol-set spike.
+- Pattern Keeper refusing the PDF, or importing it wrong → **[#55]**, with what the app said
+  and a screenshot. The layout choices it turns on are listed in `design.md` §5.5, and each
+  one is a line in `src/main/export/pdf-pk.ts` — including the one deliberate departure from
+  the reference export attached to the issue, which writes a *space* glyph into every blank
+  cell where we write nothing at all.
 - Anything still undecided → a dated `docs/decisions-*.md`. The last round is recorded in
   `docs/decisions-agreed-2026-07-23.md`; all of its calls are now made.
 
 [#20]: https://github.com/gemlad/wesnoth_stitch/issues/20
 [#28]: https://github.com/gemlad/wesnoth_stitch/issues/28
 [#30]: https://github.com/gemlad/wesnoth_stitch/issues/30
+[#55]: https://github.com/gemlad/wesnoth_stitch/issues/55
 [#94]: https://github.com/gemlad/wesnoth_stitch/issues/94

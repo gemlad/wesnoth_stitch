@@ -15,8 +15,9 @@ import { decodeImage, makeThumbnail } from './images'
 import { convertSprite } from './convert'
 import { loadExportFont } from './export/font'
 import { buildChartPdf } from './export/pdf'
+import { buildPatternKeeperPdf } from './export/pdf-pk'
 import { buildChartOxs } from './export/oxs'
-import { chartExportName } from './export/chart-filename'
+import { chartExportName, patternKeeperExportName } from './export/chart-filename'
 import {
   hasSprites,
   readInstalledVersion,
@@ -69,7 +70,11 @@ function spriteName(id: string): string {
  */
 async function saveThrough(
   event: Electron.IpcMainInvokeEvent,
-  { defaultName, extension, description }: { defaultName: string; extension: string; description: string },
+  {
+    defaultName,
+    extension,
+    description
+  }: { defaultName: string; extension: string; description: string },
   write: (path: string) => Promise<void>
 ): Promise<ExportOutcome> {
   const window = BrowserWindow.fromWebContents(event.sender)
@@ -155,7 +160,7 @@ export function registerIpcHandlers(): void {
     }
   )
 
-  // Both export handlers re-derive the pattern from (id, colourCount) rather than take it
+  // Every export handler re-derives the pattern from (id, colourCount) rather than take it
   // from the renderer. convertSprite's cache makes that free, and it means the exported
   // file and the preview it came from are the *same* conversion — they cannot disagree.
 
@@ -178,6 +183,35 @@ export function registerIpcHandlers(): void {
             palette,
             { title: name },
             { ...settings, fontBytes: loadExportFont() }
+          )
+          await writeFile(path, pdf)
+        }
+      )
+    }
+  )
+
+  ipcMain.handle(
+    IpcChannels.exportPatternKeeperPdf,
+    async (event, { id, colourCount, settings }: ExportRequest): Promise<ExportOutcome> => {
+      const { palette, pattern } = await convertSprite(id, resolveSpritePath(id), colourCount)
+      const name = spriteName(id)
+
+      return saveThrough(
+        event,
+        {
+          // The name #55 asks for, verbatim — see patternKeeperExportName.
+          defaultName: patternKeeperExportName(name),
+          extension: 'pdf',
+          description: 'Pattern Keeper chart'
+        },
+        async (path) => {
+          // Only the flip crosses over (#55): the Pattern Keeper document is always symbols on
+          // bare paper, and the app renders the floss colours itself from the key's DMC codes.
+          const pdf = await buildPatternKeeperPdf(
+            pattern,
+            palette,
+            { title: name },
+            { flip: settings.flip, fontBytes: loadExportFont() }
           )
           await writeFile(path, pdf)
         }

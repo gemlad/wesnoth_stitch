@@ -792,6 +792,41 @@ Nothing else in the format applies: a sprite is whole cross stitches only (Req. 
 `partstitches`, `backstitches` and `ornaments_inc_knots_and_beads` are written empty — which
 the spec asks for regardless, calling them mandatory even when empty.
 
+**Pattern Keeper PDF (#55).** A *second* PDF, saved as `<sprite>_chart_PK.pdf`, laid out for
+[Pattern Keeper](https://patternkeeper.app/) — the Android app that imports a chart PDF and
+lets you tick stitches off on a phone. OXS already reaches that app, but it reaches it as
+*data*, and the symbols become the reading program's own (see above); the PDF route keeps our
+glyphs, because the app draws what the document draws. It does not read a chart *format*: it
+reads the drawing operators, finds the gridlines, takes the glyph in each cell as **text**, and
+looks up what that glyph means in a table it finds **by its column headings**. So the
+constraint is a parser's, not a reader's, and the layout follows from it:
+
+- **No cover page.** The cover carries a raster preview (#46), and Pattern Keeper's own
+  designer guidance warns that preview grids get read "as part of the chart itself" — a
+  phantom chart you then have to delete by hand on a phone.
+- **Symbols only, never colour.** The app renders floss colours itself from the key's DMC
+  codes, so a filled cell under the glyph tells it nothing and gives it more to see past.
+- **Solid gridlines, no transparency**, and heavier than the print chart's (0.57pt / 1.13pt
+  against 0.2pt / 0.7pt). The print chart's 60% opacity is an `ExtGState` alpha; a grey stroke
+  is the same thing to the eye and one less construct in the way.
+- **No centre markers (#54).** The true-centre diamond is drawn *inside* a cell that should
+  hold exactly one mark. Pattern Keeper tracks your place for you, which is the job the
+  markers do on paper.
+- **The key is headed `Symbol` / `Number` / `Name`, spelled exactly so.** Those strings are how
+  the table is found at all. `Number` carries `DMC 310` rather than a bare `310`, the same call
+  the OXS `number` attribute makes and for the same reason.
+- **Chart pages first, key last** — the order the reference export attached to #55 uses, and
+  the opposite of the print document's. Nothing is bought from this one: it is imported once
+  and then read on a screen, so the pages you look at come first.
+
+**Why a second document rather than a mode of the first.** #55 asks for it, but the reason is
+better than compliance: the two have opposing requirements, and every item above is something
+the printed chart is *right* to do and this one is right to refuse. What they share is
+`pdf-layout` — the same cell size, margins and tiling — so a cell is the same physical size in
+both and the two can never disagree about how the pattern is cut into pages. Whether a real
+import succeeds is a human verdict like #28's and #94's: `npm run uat:chart` drops a real
+`chart-pk.pdf` in `uat/` to take it against.
+
 **The licence notice is on every page, not just the cover (#47).** Wesnoth's art licence
 (GPL v2+ / CC-BY-SA 4.0) requires credit on derived work, and a loose chart page printed
 without its cover would otherwise carry none. A shared `drawLicenceFooter` (from the one

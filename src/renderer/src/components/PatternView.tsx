@@ -19,6 +19,14 @@ interface Props {
   sprite: SpriteSummary | null
 }
 
+/**
+ * The three files a chart can leave the app as: the printable PDF (#34/#35), the Pattern
+ * Keeper PDF (#55), and OXS (#94). Named rather than inlined because the same union types the
+ * in-flight marker and the export call, so a fourth export cannot be added to one and not the
+ * other.
+ */
+type ExportKind = 'pdf' | 'pk' | 'oxs'
+
 const DISPLAY_MODES: { value: SymbolDisplay; label: string; title: string }[] = [
   { value: 'colour', label: 'Colour', title: 'Floss colours only' },
   { value: 'symbol', label: 'Symbol', title: 'Symbols on bare fabric — a printed chart' },
@@ -80,7 +88,7 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
    * buttons disable rather than queue. Held as *which* rather than a flag so only the button
    * you pressed says it is working, while both stay unclickable until it is done.
    */
-  const [exporting, setExporting] = useState<'pdf' | 'oxs' | null>(null)
+  const [exporting, setExporting] = useState<ExportKind | null>(null)
   /** Last export outcome, shown briefly. `null` after a cancel — that is not worth saying. */
   const [exported, setExported] = useState<string | null>(null)
 
@@ -148,14 +156,15 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
     : 0
 
   /**
-   * Export the chart as it is on screen — the printable PDF, or the OXS file other
-   * cross-stitch software reads (#94).
+   * Export the chart as it is on screen — the printable PDF, the Pattern Keeper PDF (#55),
+   * or the OXS file other cross-stitch software reads (#94).
    *
    * Main re-derives the pattern from `(id, colourCount)` — see `ExportRequest`. What is sent
-   * is the *current* `k` and settings, so what lands on disk is what you are looking at. Both
-   * exports send the same request, which is what keeps the two files agreeing.
+   * is the *current* `k` and settings, so what lands on disk is what you are looking at. All
+   * three exports send the same request, which is what keeps the files agreeing; each one
+   * decides for itself which of the settings its format can carry.
    */
-  const onExport = async (kind: 'pdf' | 'oxs'): Promise<void> => {
+  const onExport = async (kind: ExportKind): Promise<void> => {
     if (exporting || !sprite) return
     setExporting(kind)
     setExported(null)
@@ -165,8 +174,11 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
         ...(colourCount === null ? {} : { colourCount }),
         settings
       }
-      const outcome =
-        kind === 'pdf' ? await window.api.exportPdf(request) : await window.api.exportOxs(request)
+      const outcome = await (kind === 'pdf'
+        ? window.api.exportPdf(request)
+        : kind === 'pk'
+          ? window.api.exportPatternKeeperPdf(request)
+          : window.api.exportOxs(request))
 
       // Cancelling is not a failure — say nothing at all.
       if (outcome.status === 'saved') setExported(outcome.path)
@@ -278,8 +290,21 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
               {exporting === 'pdf' ? 'Building…' : 'Chart PDF'}
             </button>
 
-            {/* The same chart as data (#94), for stitching from other software — Pattern
-                Keeper, KXStitch and the like — rather than off paper. */}
+            {/* The same chart laid out for Pattern Keeper's PDF importer (#55), so it can be
+                stitched off a phone. A second PDF rather than a mode of the first: the two
+                have opposing layouts — see export/pdf-pk.ts. */}
+            <button
+              type="button"
+              className="pattern-controls__button"
+              title="Save a PDF laid out for the Pattern Keeper app to import"
+              disabled={exporting !== null}
+              onClick={() => void onExport('pk')}
+            >
+              {exporting === 'pk' ? 'Building…' : 'Chart PDF (PK)'}
+            </button>
+
+            {/* The same chart as data (#94), for stitching from other software — KXStitch,
+                WinStitch and the like — rather than off paper. */}
             <button
               type="button"
               className="pattern-controls__button"
