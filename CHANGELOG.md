@@ -10,6 +10,12 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.3.0] — 2026-08-21
+
+One feature: the chart can be stitched from your phone, with the symbols you already know.
+
 ### Added
 
 - **Export a chart for the Pattern Keeper app** (#55). A third export button, "Chart PDF (PK)",
@@ -121,7 +127,8 @@ First public release — a Windows installer on the Releases page.
 - Licensing throughout: GPL-3.0-or-later, with the Wesnoth art attribution on every printed
   page, on screen, and in `THIRD-PARTY-NOTICES.md`.
 
-[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/gemlad/wesnoth_stitch/releases/tag/v1.0.0
