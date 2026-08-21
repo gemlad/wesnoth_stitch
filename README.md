@@ -51,6 +51,17 @@ physical size so the symbols stay legible and the finished dimensions are correc
 
 ### Stitching from an app instead of paper
 
+**Chart PDF (PK)** saves `<sprite>_chart_PK.pdf`, a PDF laid out for the Android app
+[Pattern Keeper](https://patternkeeper.app/) to import — so you can stitch off a phone and tick
+the stitches off as you go. It's a plain black-and-white chart: symbols on bare paper, then a
+floss key of symbol, DMC number and colour name. The app paints the thread colours in for
+itself, from those DMC numbers. **The symbols are the ones on your printed chart**, which is
+what this gives you over the `.oxs` file below. When Pattern Keeper asks about page overlap on
+import, the answer is **none** — the pages don't repeat a row or a column.
+
+Your printable **Chart PDF** is untouched by all this; the two are separate files and you can
+export either, or both.
+
 **Chart OXS** saves the same pattern as a `.oxs` file — the open cross-stitch format that
 Pattern Keeper, KXStitch, WinStitch and others open. Use it if you'd rather stitch from a
 tablet and tick off stitches as you go. It carries your fabric colour, every thread's DMC code,

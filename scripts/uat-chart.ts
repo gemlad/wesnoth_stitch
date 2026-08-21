@@ -15,6 +15,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { PNG } from 'pngjs'
 import { buildChartOxs } from '../src/main/export/oxs'
 import { buildChartPdf } from '../src/main/export/pdf'
+import { buildPatternKeeperPdf } from '../src/main/export/pdf-pk'
 import { DEFAULT_CELL_MM, glyphSizePt } from '../src/main/export/pdf-layout'
 import { renderPatternPng } from '../src/main/export/png'
 import { MAX_COLOUR_COUNT, mapSpriteToDmc, reduceSprite } from '../src/shared/pipeline'
@@ -83,4 +84,20 @@ for (const symbolDisplay of ['both', 'symbol'] as SymbolDisplay[]) {
   console.log(`  ${symbolDisplay.padEnd(6)} → ${out}`)
 }
 
-console.log('\nPrint at 100% / Actual Size. Anything else and the scale — the whole point — is void.')
+// The Pattern Keeper export (#55). Its verdict is the same kind as the OXS one's and cannot
+// be automated either: whether the file actually *imports*, into an app we don't own, on a
+// phone. So the artefact comes out of `buildPatternKeeperPdf`, the function the IPC handler
+// calls — symbols on bare paper regardless of the modes above, because that is all the
+// Pattern Keeper layout ever is.
+const pk = await buildPatternKeeperPdf(
+  reduced.pattern,
+  reduced.palette,
+  { title },
+  { flip: false, fontBytes }
+)
+writeFileSync(`${OUT_DIR}/chart-pk.pdf`, pk)
+console.log(`  pk     → ${OUT_DIR}/chart-pk.pdf`)
+
+console.log(
+  '\nPrint at 100% / Actual Size. Anything else and the scale — the whole point — is void.'
+)

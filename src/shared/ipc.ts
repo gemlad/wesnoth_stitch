@@ -55,6 +55,7 @@ export const IpcChannels = {
   getFullImage: 'sprites:full-image',
   convertSprite: 'sprites:convert',
   exportPdf: 'export:pdf',
+  exportPatternKeeperPdf: 'export:pdf-pk',
   exportOxs: 'export:oxs'
 } as const
 
@@ -191,6 +192,20 @@ export interface SpriteApi {
    * slider is capped at `maxColourCount`, so that is a bug, not a thing a user can do.
    */
   exportPdf(request: ExportRequest): Promise<ExportOutcome>
+
+  /**
+   * Export the chart as a Pattern Keeper PDF (#55) — the same pattern, laid out so the
+   * Android app can parse it: chart pages of symbols on bare paper, then a `Symbol` /
+   * `Number` / `Name` floss key. Saved as `<sprite>_chart_PK.pdf`.
+   *
+   * Takes the same request as {@link exportPdf} and honours the flip, but **not**
+   * `symbolDisplay` or the fabric colour: the app renders the colours itself from the key's
+   * DMC codes, so the document it reads is always symbols on white. See `export/pdf-pk.ts`
+   * for why it is a second document rather than a mode of the first.
+   *
+   * Opens a save dialog; resolves `{ status: 'cancelled' }` if the user backs out.
+   */
+  exportPatternKeeperPdf(request: ExportRequest): Promise<ExportOutcome>
 
   /**
    * Export the chart as OXS (#94) — the open interchange format other cross-stitch software

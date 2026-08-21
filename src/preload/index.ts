@@ -20,6 +20,8 @@ const api: SpriteApi = {
   convertSprite: (id, colourCount) =>
     ipcRenderer.invoke(IpcChannels.convertSprite, id, colourCount),
   exportPdf: (request) => ipcRenderer.invoke(IpcChannels.exportPdf, request),
+  exportPatternKeeperPdf: (request) =>
+    ipcRenderer.invoke(IpcChannels.exportPatternKeeperPdf, request),
   exportOxs: (request) => ipcRenderer.invoke(IpcChannels.exportOxs, request)
 }
 

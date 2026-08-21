@@ -10,7 +10,18 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Export a chart for the Pattern Keeper app** (#55). A third export button, "Chart PDF (PK)",
+  saving `<sprite>_chart_PK.pdf` — a PDF laid out so the Android app
+  [Pattern Keeper](https://patternkeeper.app/) can import it, so you can stitch off a phone and
+  tick the stitches off as you go, **with the symbols you see on your printed chart**. That is
+  what it adds over the `.oxs` export, which reaches the same app but lets it pick its own
+  symbols. It is a plain black-and-white chart — symbols on bare paper, then a floss key of
+  symbol, DMC number and colour name — because the app paints the colours itself. Your
+  printable chart is untouched and still exports exactly as before; this is a second file, not
+  a setting. When Pattern Keeper asks about page overlap on import, the answer is **none**: the
+  pages do not repeat a row or a column.
 
 ## [1.2.0] — 2026-08-20
 
