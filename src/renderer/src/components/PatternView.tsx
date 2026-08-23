@@ -25,6 +25,15 @@ interface Props {
    */
   backgroundColour: RGB
   onBackgroundColourChange: (colour: RGB) => void
+  /**
+   * Reports each conversion as it lands, so the preview pane can show the same reduction at
+   * sprite size (#108).
+   *
+   * The conversion stays owned here — this is where the slider that drives it lives, and
+   * where the plan cache is kept warm. What goes up is only the *result*, so the two panes
+   * are looking at one object and cannot disagree about which reduction is on screen.
+   */
+  onConverted: (converted: ConvertedSprite | null) => void
 }
 
 /**
@@ -77,7 +86,8 @@ function useElementSize(): [
 export function PatternView({
   sprite,
   backgroundColour,
-  onBackgroundColourChange
+  onBackgroundColourChange,
+  onConverted
 }: Props): React.JSX.Element {
   const [converted, setConverted] = useState<ConvertedSprite | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -114,17 +124,21 @@ export function PatternView({
     return () => inFlight.cancel()
   }, [])
 
-  const convert = useCallback((id: string, k?: number) => {
-    requests.current.run(
-      () => window.api.convertSprite(id, k),
-      (result) => {
-        setConverted(result)
-        // The first conversion has no `k` to echo: adopt the Req. 6 default it chose.
-        setColourCount((current) => current ?? result.palette.colourCount)
-      },
-      (e: unknown) => setError(e instanceof Error ? e.message : String(e))
-    )
-  }, [])
+  const convert = useCallback(
+    (id: string, k?: number) => {
+      requests.current.run(
+        () => window.api.convertSprite(id, k),
+        (result) => {
+          setConverted(result)
+          onConverted(result)
+          // The first conversion has no `k` to echo: adopt the Req. 6 default it chose.
+          setColourCount((current) => current ?? result.palette.colourCount)
+        },
+        (e: unknown) => setError(e instanceof Error ? e.message : String(e))
+      )
+    },
+    [onConverted]
+  )
 
   // App keys this component by sprite id, so each selection remounts it with fresh state
   // — no need to clear `converted`/`error` synchronously here.

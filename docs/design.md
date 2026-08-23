@@ -733,6 +733,52 @@ a shared type that the pipeline, the IPC contract, the grid and their tests all 
 worth it at this size. Revisit if a larger grid (§7.4) or export (§5.5) makes the payload
 the constraint it currently is not.
 
+#### The reduction, at sprite size (#108)
+
+The chart fills its stage, so it is normally north of 10× life size, and at that
+magnification every reduction looks like vandalism. But the question the slider actually
+raises is whether the loss shows at the size the unit is drawn in the game — and the only
+thing in the app drawn at that size is the raw sprite in the preview pane (§5.1). So the
+pane grows a second canvas beside it: the same `StitchPattern` painted one pixel per
+stitch, captioned with its floss count. Same scale, same pixels, side by side.
+
+It appears **only when `colourCount < sourceColourCount`**. At full colour the two images
+would differ only by the DMC mapping, which is not what the slider does, so the pane falls
+back to the single sprite it has always shown. Neither image flips (#56), for the reason
+the raw sprite never did: this pane is the reference you check the chart against.
+
+No-stitch cells come out transparent rather than filled with the fabric colour, so the two
+images read as one picture twice rather than as a picture and a swatch. The painter is
+`pattern/sprite-preview.ts` — deliberately *not* part of `draw.ts`, which draws the chart:
+scaled cells, ruled grid, symbol glyphs, overdrawn seams, every one of which this must not
+do. One cell is one pixel here, so what comes out is an image, not a drawing.
+
+**Where the conversion lives.** `PatternView` still owns it — that is where the slider is,
+and where the plan cache is kept warm — and reports each result up to `App`, which hands it
+to the preview pane. One object, two panes, so they cannot disagree about which reduction
+is on screen. `App` clears it in the same tick as a sprite selection, so the previous
+sprite's image never renders against the new sprite while its conversion is in flight.
+
+The cost of that lift is that `App` now re-renders on every slider step, which would
+otherwise reconcile several thousand `SpriteThumb` elements per frame. `SpriteBrowser` is
+`memo`ized against it; none of its three props move while the slider is dragged.
+
+#### Which settings survive a sprite change (#50, #51)
+
+`App` keys `PatternView` by sprite id, so selecting a sprite remounts it and resets
+everything it owns. That is right for the conversion and the zoom, and wrong for the
+fabric: picking a cloth is a decision about the piece being made, not about one unit. So
+`backgroundColour` is held by `App` and passed down; `symbolDisplay` and `flip` stay local
+and still reset per sprite, being decisions about how you are reading *this* chart.
+`PatternView` reassembles the three into one `PatternSettings`, which is the shape the
+exports take (§5.5) — split at the call sites, the chart on screen and the chart on disk
+could be built from different settings.
+
+Once the fabric outlives the sprite it was picked on, asking for the default is the only
+way back to it, hence the Reset beside the swatch. It is disabled rather than hidden at the
+default: a control that appears only after you have changed the thing it resets is one you
+never find when you want it.
+
 ### 5.5 Export
 
 Still not a redesign — the prototype already produces PNG previews and DMC-keyed PDF

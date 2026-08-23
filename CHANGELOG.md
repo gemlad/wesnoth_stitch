@@ -12,6 +12,13 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ### Added
 
+- **See the colour reduction at sprite size** (#108). Turn the Colours slider down and a second
+  little picture appears next to the sprite in the right-hand panel: the pattern, drawn at the
+  same size the unit is drawn at in the game, captioned with how many floss colours are left.
+  The chart in the middle is magnified ten times or more, where every reduction looks like
+  butchery — this is the same reduction at the size you will actually be looking at it, so you
+  can decide whether the loss is one you mind. It only appears when there is a reduction to
+  see; at full colour the panel shows the sprite alone, as before.
 - **A "Reset" beside the fabric swatch** (#51). Puts the fabric back to unbleached Aida, the
   colour the app starts on, without you having to hunt for it in the colour picker. It greys
   out while you are already on that colour, so it is always there to be found but never
@@ -21,7 +28,7 @@ on `main`, and rename that heading to the version and date when the release is c
 
 - **The fabric colour now stays put when you pick another sprite** (#50). Choosing your cloth
   is a decision about the piece you are making, not about one unit, and it used to be thrown
-  away the moment you clicked a different sprite. It no longer is. How you are *reading* the
+  away the moment you clicked a different sprite. It no longer is. How you are _reading_ the
   chart — Colour/Symbol/Both, and the flip — still starts fresh on each sprite, because those
   are decisions about the chart in front of you.
 
