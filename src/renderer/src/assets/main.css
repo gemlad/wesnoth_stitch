@@ -361,6 +361,33 @@ body {
   image-rendering: pixelated;
 }
 
+/* Sprite beside the reduced pattern (#108). Both canvases sit at their natural size — the
+   whole point is to judge the reduction at the scale the unit is drawn at, so nothing here
+   may scale them. The row wraps because a wide sprite plus its pattern can outrun the pane,
+   and stacking is a better answer than a horizontal scrollbar. */
+
+.preview-pane__images {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+}
+
+.preview-pane__image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.preview-pane__image figcaption {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+  white-space: nowrap;
+}
+
 .preview-pane__meta {
   flex: none;
   padding: 12px 16px;

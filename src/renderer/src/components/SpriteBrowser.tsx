@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { SpriteSummary } from '../../../shared/ipc'
 import { SpriteThumb } from './SpriteThumb'
 import { countIn, groupSprites } from './sprite-search'
@@ -19,8 +19,14 @@ interface Props {
  *
  * The search box sits outside the scroll container, so it stays put with several thousand
  * sprites below it.
+ *
+ * **Memoized** (see the export below). `App` now re-renders on every conversion so it can hand
+ * the result to the preview pane (#108), and a conversion happens on every step of the colour
+ * slider. Reconciling several thousand `SpriteThumb` elements per slider frame is a price this
+ * panel should not pay for a change that cannot affect it: none of its three props move while
+ * the slider is dragged.
  */
-export function SpriteBrowser({ sprites, selectedId, onSelect }: Props): React.JSX.Element {
+function SpriteBrowserInner({ sprites, selectedId, onSelect }: Props): React.JSX.Element {
   const [query, setQuery] = useState('')
   const groups = useMemo(() => groupSprites(sprites, query), [sprites, query])
   const matches = countIn(groups)
@@ -76,3 +82,9 @@ export function SpriteBrowser({ sprites, selectedId, onSelect }: Props): React.J
     </div>
   )
 }
+
+/**
+ * The props are a state array, a string and a `useCallback` — all referentially stable across
+ * the re-renders this is being spared, so the default shallow comparison is enough.
+ */
+export const SpriteBrowser = memo(SpriteBrowserInner)

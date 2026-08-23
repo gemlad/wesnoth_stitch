@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RGB } from '../../shared/colour'
-import type { SpriteDownloadProgress, SpriteStatus, SpriteSummary } from '../../shared/ipc'
+import type {
+  ConvertedSprite,
+  SpriteDownloadProgress,
+  SpriteStatus,
+  SpriteSummary
+} from '../../shared/ipc'
 import { APP_LICENCE_LINES, LICENCE_LINES } from '../../shared/licence'
 import { DEFAULT_PATTERN_SETTINGS } from './pattern/settings'
 import { SpriteBrowser } from './components/SpriteBrowser'
@@ -32,6 +37,16 @@ function App(): React.JSX.Element {
     DEFAULT_PATTERN_SETTINGS.backgroundColour
   )
 
+  /**
+   * The conversion currently on the chart, reported up by `PatternView` so the preview pane
+   * can draw the same reduction at sprite size beside the raw sprite (#108).
+   *
+   * It is held here rather than fetched twice because the two panes must be showing the same
+   * thing: a second `convertSprite` call would be a second answer to the same question, and
+   * the comparison is worthless the moment they can disagree.
+   */
+  const [converted, setConverted] = useState<ConvertedSprite | null>(null)
+
   // A single "download in progress" record drives both the first-run screen and the inline
   // "update sprites" control — which one is shown depends only on whether a set already exists.
   const [downloading, setDownloading] = useState(false)
@@ -42,6 +57,19 @@ function App(): React.JSX.Element {
   const [updateMessage, setUpdateMessage] = useState<string | null>(null)
   // Guard against the mount effect firing a second time (React 18 StrictMode double-invoke).
   const started = useRef(false)
+
+  /**
+   * Select a sprite, dropping the previous sprite's conversion in the same tick.
+   *
+   * Without the second setter the preview pane would render the *old* sprite's reduced image
+   * against the new sprite for as long as the conversion takes — a frame or a hundred,
+   * depending on how rich the sprite is. Clearing here rather than in an effect means that
+   * frame never exists.
+   */
+  const selectSprite = useCallback((sprite: SpriteSummary): void => {
+    setSelected(sprite)
+    setConverted(null)
+  }, [])
 
   const loadList = useCallback((): void => {
     window.api
@@ -132,7 +160,7 @@ function App(): React.JSX.Element {
           <SpriteBrowser
             sprites={sprites}
             selectedId={selected?.id ?? null}
-            onSelect={setSelected}
+            onSelect={selectSprite}
           />
           {/* The pattern gets the centre: it is the thing being made, and zoom/pan needs
               the room. The raw sprite stays beside it — it is the reference you check the
@@ -143,8 +171,13 @@ function App(): React.JSX.Element {
             sprite={selected}
             backgroundColour={backgroundColour}
             onBackgroundColourChange={setBackgroundColour}
+            onConverted={setConverted}
           />
-          <PreviewPane key={`preview:${selected?.id ?? 'none'}`} sprite={selected} />
+          <PreviewPane
+            key={`preview:${selected?.id ?? 'none'}`}
+            sprite={selected}
+            converted={converted}
+          />
         </div>
       )}
 
