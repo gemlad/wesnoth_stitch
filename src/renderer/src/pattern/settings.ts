@@ -39,3 +39,16 @@ export function cssToRgb(hex: string): RGB {
     b: parseInt(hex.slice(5, 7), 16)
   }
 }
+
+/**
+ * Is this the fabric colour the app starts on?
+ *
+ * Exists for the reset control (#51), which is disabled once there is nothing to reset —
+ * a button that visibly does nothing is worse than no button. Compared through
+ * {@link rgbToCss} rather than channel by channel because that is the form the colour
+ * input round-trips through, so this answers the question the *control* is asking
+ * ("would pressing reset change the swatch?") rather than a stricter one it never sees.
+ */
+export function isDefaultBackground(rgb: RGB): boolean {
+  return rgbToCss(rgb) === rgbToCss(DEFAULT_PATTERN_SETTINGS.backgroundColour)
+}

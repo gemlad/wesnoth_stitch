@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { RGB } from '../../shared/colour'
 import type { SpriteDownloadProgress, SpriteStatus, SpriteSummary } from '../../shared/ipc'
 import { APP_LICENCE_LINES, LICENCE_LINES } from '../../shared/licence'
+import { DEFAULT_PATTERN_SETTINGS } from './pattern/settings'
 import { SpriteBrowser } from './components/SpriteBrowser'
 import { PatternView } from './components/PatternView'
 import { PreviewPane } from './components/PreviewPane'
@@ -12,6 +14,23 @@ function App(): React.JSX.Element {
   const [sprites, setSprites] = useState<SpriteSummary[] | null>(null)
   const [selected, setSelected] = useState<SpriteSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  /**
+   * The fabric colour, held here rather than in `PatternView` (#50).
+   *
+   * `PatternView` is keyed by sprite id below, so selecting a sprite remounts it and resets
+   * every piece of state it owns. That is what we want for the conversion and the zoom — and
+   * exactly what we do not want for the fabric: picking a cloth is a decision about the
+   * *project*, not about one unit, and having it snap back to unbleached Aida every time you
+   * looked at another sprite silently threw that decision away.
+   *
+   * Only the fabric is lifted. `symbolDisplay` and `flip` stay inside `PatternView` and still
+   * reset per sprite: they are decisions about how you are reading *this* chart, and the flip
+   * in particular is a per-unit choice about which way a soldier should face.
+   */
+  const [backgroundColour, setBackgroundColour] = useState<RGB>(
+    DEFAULT_PATTERN_SETTINGS.backgroundColour
+  )
 
   // A single "download in progress" record drives both the first-run screen and the inline
   // "update sprites" control — which one is shown depends only on whether a set already exists.
@@ -69,7 +88,9 @@ function App(): React.JSX.Element {
   // The first-run screen takes over only while there is no set to browse yet: still checking,
   // or downloading/errored with nothing loaded. Once sprites exist, downloads happen inline.
   const needsSetup =
-    !error && !sprites && (status === null || status.state === 'absent' || downloading || downloadError !== null)
+    !error &&
+    !sprites &&
+    (status === null || status.state === 'absent' || downloading || downloadError !== null)
 
   return (
     <div className="app-shell">
@@ -86,7 +107,9 @@ function App(): React.JSX.Element {
             {!downloading && updateMessage && !downloadError && (
               <span className="sprite-update__ok">{updateMessage}</span>
             )}
-            {downloadError && <span className="sprite-update__error">Update failed: {downloadError}</span>}
+            {downloadError && (
+              <span className="sprite-update__error">Update failed: {downloadError}</span>
+            )}
           </div>
         )}
       </header>
@@ -94,19 +117,33 @@ function App(): React.JSX.Element {
       {error && <p className="app-status app-status--error">Couldn’t load sprites: {error}</p>}
 
       {needsSetup && (
-        <SpriteSetup progress={progress} error={downloadError} busy={downloading} onRetry={runDownload} />
+        <SpriteSetup
+          progress={progress}
+          error={downloadError}
+          busy={downloading}
+          onRetry={runDownload}
+        />
       )}
 
       {!error && !needsSetup && !sprites && <p className="app-status">Loading sprites…</p>}
 
       {sprites && (
         <div className="app-body">
-          <SpriteBrowser sprites={sprites} selectedId={selected?.id ?? null} onSelect={setSelected} />
+          <SpriteBrowser
+            sprites={sprites}
+            selectedId={selected?.id ?? null}
+            onSelect={setSelected}
+          />
           {/* The pattern gets the centre: it is the thing being made, and zoom/pan needs
               the room. The raw sprite stays beside it — it is the reference you check the
               pattern against, so replacing it would cost the only side-by-side comparison
               in the app. */}
-          <PatternView key={`pattern:${selected?.id ?? 'none'}`} sprite={selected} />
+          <PatternView
+            key={`pattern:${selected?.id ?? 'none'}`}
+            sprite={selected}
+            backgroundColour={backgroundColour}
+            onBackgroundColourChange={setBackgroundColour}
+          />
           <PreviewPane key={`preview:${selected?.id ?? 'none'}`} sprite={selected} />
         </div>
       )}
