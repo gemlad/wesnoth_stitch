@@ -10,6 +10,13 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.4.0] — 2026-08-23
+
+Three small things at the desk: the fabric you picked stays picked, there is a way back to
+the default, and you can finally see what turning the colour slider down actually costs.
+
 ### Added
 
 - **See the colour reduction at sprite size** (#108). Turn the Colours slider down and a second
@@ -147,7 +154,8 @@ First public release — a Windows installer on the Releases page.
 - Licensing throughout: GPL-3.0-or-later, with the Wesnoth art attribution on every printed
   page, on screen, and in `THIRD-PARTY-NOTICES.md`.
 
-[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.0.0...v1.1.0
