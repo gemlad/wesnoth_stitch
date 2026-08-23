@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { RGB } from '../../../shared/colour'
 import type { ConvertedSprite, SpriteSummary } from '../../../shared/ipc'
 // Imported from the module rather than the pipeline barrel: that index re-exports the DMC
 // dataset, and pulling 392 floss colours into the renderer bundle for one array reverse is
@@ -8,6 +9,7 @@ import { MIN_SYMBOL_SCALE } from '../pattern/draw'
 import { latestOnly } from '../pattern/latest-only'
 import {
   cssToRgb,
+  isDefaultBackground,
   rgbToCss,
   DEFAULT_PATTERN_SETTINGS,
   type PatternSettings,
@@ -17,6 +19,12 @@ import { PatternGrid } from './PatternGrid'
 
 interface Props {
   sprite: SpriteSummary | null
+  /**
+   * The fabric colour, owned by `App` so it survives this component's remount-per-sprite
+   * (#50). The other two `PatternSettings` are local state here — see the `settings` memo.
+   */
+  backgroundColour: RGB
+  onBackgroundColourChange: (colour: RGB) => void
 }
 
 /**
@@ -66,10 +74,17 @@ function useElementSize(): [
  * a warm ~1.9 ms re-cut of the same merge sequence (§5.2). Selecting a sprite is
  * therefore the prewarm the design asks for; no separate one is needed.
  */
-export function PatternView({ sprite }: Props): React.JSX.Element {
+export function PatternView({
+  sprite,
+  backgroundColour,
+  onBackgroundColourChange
+}: Props): React.JSX.Element {
   const [converted, setConverted] = useState<ConvertedSprite | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [settings, setSettings] = useState<PatternSettings>(DEFAULT_PATTERN_SETTINGS)
+  const [symbolDisplay, setSymbolDisplay] = useState<SymbolDisplay>(
+    DEFAULT_PATTERN_SETTINGS.symbolDisplay
+  )
+  const [flip, setFlip] = useState(DEFAULT_PATTERN_SETTINGS.flip)
   const [scale, setScale] = useState(0)
   // Bumped to remount the grid, which re-fits it. See PatternGrid's doc comment.
   const [viewEpoch, setViewEpoch] = useState(0)
@@ -118,6 +133,20 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
   }, [sprite, convert])
 
   /**
+   * The settings the grid and the exports read, reassembled from the two that are local to
+   * this chart and the one `App` holds across sprites (#50).
+   *
+   * Kept as a single `PatternSettings` because that is what crosses the IPC boundary to the
+   * exports — splitting it at the call sites would let the chart on screen and the chart on
+   * disk be built from different sets of settings, which is the one thing `ExportRequest` is
+   * shaped to prevent.
+   */
+  const settings = useMemo<PatternSettings>(
+    () => ({ backgroundColour, symbolDisplay, flip }),
+    [backgroundColour, symbolDisplay, flip]
+  )
+
+  /**
    * What the grid draws: the conversion, mirrored if the flip is on (#56).
    *
    * Derived rather than stored, so `converted` stays the thing main sent and toggling the flip
@@ -126,12 +155,8 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
    */
   const shown = useMemo(
     () =>
-      converted === null
-        ? null
-        : settings.flip
-          ? flipHorizontal(converted.pattern)
-          : converted.pattern,
-    [converted, settings.flip]
+      converted === null ? null : flip ? flipHorizontal(converted.pattern) : converted.pattern,
+    [converted, flip]
   )
 
   if (!sprite) {
@@ -142,7 +167,8 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
     )
   }
 
-  const symbolsHidden = settings.symbolDisplay !== 'colour' && scale > 0 && scale < MIN_SYMBOL_SCALE
+  const symbolsHidden = symbolDisplay !== 'colour' && scale > 0 && scale < MIN_SYMBOL_SCALE
+  const atDefaultFabric = isDefaultBackground(backgroundColour)
 
   /**
    * The slider stops at the sprite's own distinct-DMC count, not at the symbol-set
@@ -204,40 +230,53 @@ export function PatternView({ sprite }: Props): React.JSX.Element {
               key={mode.value}
               type="button"
               title={mode.title}
-              aria-pressed={settings.symbolDisplay === mode.value}
+              aria-pressed={symbolDisplay === mode.value}
               className={
                 'pattern-controls__toggle' +
-                (settings.symbolDisplay === mode.value ? ' pattern-controls__toggle--on' : '')
+                (symbolDisplay === mode.value ? ' pattern-controls__toggle--on' : '')
               }
-              onClick={() => setSettings((s) => ({ ...s, symbolDisplay: mode.value }))}
+              onClick={() => setSymbolDisplay(mode.value)}
             >
               {mode.label}
             </button>
           ))}
         </div>
 
-        <label className="pattern-controls__field">
-          Fabric
-          <input
-            type="color"
-            className="pattern-controls__colour"
-            value={rgbToCss(settings.backgroundColour)}
-            onChange={(e) =>
-              setSettings((s) => ({ ...s, backgroundColour: cssToRgb(e.target.value) }))
-            }
-          />
-        </label>
+        {/* The fabric colour now outlives the sprite you picked it on (#50), so the only way
+            back to unbleached Aida is to ask for it — hence the reset beside the swatch (#51).
+            It is disabled, not hidden, when there is nothing to reset: a control that appears
+            only once you have already changed the thing it resets is a control you never find
+            when you are looking for it. */}
+        <span className="pattern-controls__fabric">
+          <label className="pattern-controls__field">
+            Fabric
+            <input
+              type="color"
+              className="pattern-controls__colour"
+              value={rgbToCss(backgroundColour)}
+              onChange={(e) => onBackgroundColourChange(cssToRgb(e.target.value))}
+            />
+          </label>
+          <button
+            type="button"
+            className="pattern-controls__reset"
+            title="Reset the fabric colour to unbleached Aida"
+            aria-label="Reset fabric colour"
+            disabled={atDefaultFabric}
+            onClick={() => onBackgroundColourChange(DEFAULT_PATTERN_SETTINGS.backgroundColour)}
+          >
+            Reset
+          </button>
+        </span>
 
         {/* Mirrors the chart, and the export with it (#56). The raw sprite in the preview pane
             deliberately does not flip: it is the reference you check the pattern against. */}
         <button
           type="button"
-          className={
-            'pattern-controls__toggle' + (settings.flip ? ' pattern-controls__toggle--on' : '')
-          }
+          className={'pattern-controls__toggle' + (flip ? ' pattern-controls__toggle--on' : '')}
           title="Mirror the pattern left to right"
-          aria-pressed={settings.flip}
-          onClick={() => setSettings((s) => ({ ...s, flip: !s.flip }))}
+          aria-pressed={flip}
+          onClick={() => setFlip((on) => !on)}
         >
           Flip
         </button>

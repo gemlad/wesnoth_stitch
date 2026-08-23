@@ -492,6 +492,35 @@ body {
   flex: 1;
 }
 
+/* Fabric colour + its reset (#51). The reset is quieter than a __button: it sits inside the Fabric field and
+   should read as part of the swatch, not as a peer of Fit and the exports. */
+
+.pattern-controls__fabric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pattern-controls__reset {
+  padding: 2px 6px;
+  border: 1px solid var(--ev-c-gray-3);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.pattern-controls__reset:hover:not(:disabled) {
+  color: var(--ev-c-text-1);
+  background: var(--ev-c-gray-3);
+}
+
+.pattern-controls__reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* Colour-count slider (#19) */
 
 .pattern-controls__field--slider {

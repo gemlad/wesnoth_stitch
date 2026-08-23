@@ -10,7 +10,20 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **A "Reset" beside the fabric swatch** (#51). Puts the fabric back to unbleached Aida, the
+  colour the app starts on, without you having to hunt for it in the colour picker. It greys
+  out while you are already on that colour, so it is always there to be found but never
+  pretends to do something.
+
+### Changed
+
+- **The fabric colour now stays put when you pick another sprite** (#50). Choosing your cloth
+  is a decision about the piece you are making, not about one unit, and it used to be thrown
+  away the moment you clicked a different sprite. It no longer is. How you are *reading* the
+  chart — Colour/Symbol/Both, and the flip — still starts fresh on each sprite, because those
+  are decisions about the chart in front of you.
 
 ## [1.3.0] — 2026-08-21
 
