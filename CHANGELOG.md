@@ -10,6 +10,12 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.4.1] — 2026-09-08
+
+One fix, for anyone who takes a chart out of the app and into other cross-stitch software.
+
 ### Fixed
 
 - **OXS exports now start at 0,0** (#114). Every stitch in a `.oxs` file was written one column
@@ -158,7 +164,8 @@ First public release — a Windows installer on the Releases page.
 - Licensing throughout: GPL-3.0-or-later, with the Wesnoth art attribution on every printed
   page, on screen, and in `THIRD-PARTY-NOTICES.md`.
 
-[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/gemlad/wesnoth_stitch/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/gemlad/wesnoth_stitch/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/gemlad/wesnoth_stitch/compare/v1.1.0...v1.2.0
