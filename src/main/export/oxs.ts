@@ -20,6 +20,12 @@
  * `palindex="${i + 1}"`. `palettecount` counts the floss only — the spec says so explicitly:
  * *"palettecount excludes cloth color, which is item 0"*.
  *
+ * **Stitch coordinates are 0-based, so the top-left cell is (0, 0).** The spec's examples are
+ * ambiguous on the origin and were first read as 1-based, which shifted every exported chart
+ * one cell right and one cell down against its own `chartwidth`/`chartheight` — the last column
+ * and row fell outside the stated grid (#114). Readers count from zero, so the pattern's
+ * `cells[row][col]` becomes `x="${col}" y="${row}"` with no offset.
+ *
  * **Symbols are a plain sequence number, not this app's glyph.** The spec's wording is
  * *"Ursa uses a symbol number, which is a sequence number. Others may specify a font and/or an
  * actual character"* — and the character reading, tried first, was **wrong in practice**: a
@@ -239,8 +245,9 @@ export function buildChartOxs(
           `Cell (${col}, ${row}) indexes palette colour ${index}, but the palette has ${palette.colours.length}`
         )
       }
-      // 1-based, top-left origin — the coordinates the spec's own examples use.
-      lines.push(`    <stitch ${attributes({ x: col + 1, y: row + 1, palindex: index + 1 })} />`)
+      // 0-based, top-left origin: the first cell of the chart is (0, 0). See the note on
+      // coordinates above — the spec's examples read as 1-based, but the software does not.
+      lines.push(`    <stitch ${attributes({ x: col, y: row, palindex: index + 1 })} />`)
     }
   }
   lines.push('  </fullstitches>')

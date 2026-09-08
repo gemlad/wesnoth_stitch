@@ -10,7 +10,11 @@ on `main`, and rename that heading to the version and date when the release is c
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **OXS exports now start at 0,0** (#114). Every stitch in a `.oxs` file was written one column
+  right and one row down, so the chart sat off by one against the size the file itself declares.
+  Programs that read the file place the pattern correctly now.
 
 ## [1.4.0] — 2026-08-23
 

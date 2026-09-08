@@ -817,8 +817,10 @@ Three points where the mapping had to be decided rather than transcribed:
 - **Palette index 0 is the cloth**, which is how the file carries `backgroundColour` — so every
   floss index shifts by one on the way out (`palindex = cell + 1`). `palettecount` counts the
   floss only; the spec says so explicitly.
-- **Stitches are 1-based and sparse.** A no-stitch cell is *absent* rather than written as
-  cloth, which is what makes the fabric show through in the reading program.
+- **Stitches are 0-based and sparse.** The top-left cell is `(0, 0)`; a no-stitch cell is
+  *absent* rather than written as cloth, which is what makes the fabric show through in the
+  reading program. The origin was first read as 1-based from the spec's examples, which put the
+  last column at `x = chartwidth` — one cell outside the grid the same file declares (#114).
 - **Symbols are a sequence number, and the imported chart's glyphs will not match the PDF's.**
   The spec says *"Ursa uses a symbol number, which is a sequence number. Others may specify a
   font and/or an actual character"*, and the character reading was tried first — it imported
