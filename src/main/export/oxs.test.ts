@@ -169,7 +169,7 @@ describe('buildChartOxs', () => {
     expect(first.comments).toMatch(/^[\x20-\x7e]+$/)
   })
 
-  it('writes one stitch per cell, 1-based, with the cloth-shifted palette index', () => {
+  it('writes one stitch per cell, 0-based, with the cloth-shifted palette index', () => {
     const xml = buildChartOxs(
       patternOf([
         [0, 1],
@@ -180,8 +180,29 @@ describe('buildChartOxs', () => {
       options
     )
 
-    // Row-major from the top-left cell, which is (1, 1) — not (0, 0).
-    expect(stitches(xml)).toEqual(['1,1,1', '2,1,2', '1,2,2', '2,2,1'])
+    // Row-major from the top-left cell, which is (0, 0) — not (1, 1) (#114).
+    expect(stitches(xml)).toEqual(['0,0,1', '1,0,2', '0,1,2', '1,1,1'])
+  })
+
+  it('keeps every stitch inside the grid it declares (#114)', () => {
+    // The bug this pins: a 1-based origin put the last column at x=chartwidth and the last row
+    // at y=chartheight, one cell outside the chart the same file says it is.
+    const xml = buildChartOxs(
+      patternOf([
+        [0, 0, 0],
+        [0, 0, 0]
+      ]),
+      paletteOf(1),
+      meta,
+      options
+    )
+    const { chartwidth, chartheight } = elements(xml, 'properties')[0]
+    const coordinates = elements(xml, 'stitch').map((s) => [Number(s.x), Number(s.y)])
+
+    expect(Math.min(...coordinates.map(([x]) => x))).toBe(0)
+    expect(Math.min(...coordinates.map(([, y]) => y))).toBe(0)
+    expect(Math.max(...coordinates.map(([x]) => x))).toBe(Number(chartwidth) - 1)
+    expect(Math.max(...coordinates.map(([, y]) => y))).toBe(Number(chartheight) - 1)
   })
 
   it('leaves no-stitch cells out entirely, so the cloth shows through', () => {
@@ -195,7 +216,7 @@ describe('buildChartOxs', () => {
       options
     )
 
-    expect(stitches(xml)).toEqual(['2,1,1'])
+    expect(stitches(xml)).toEqual(['1,0,1'])
   })
 
   it('mirrors the stitches when the flip is on (#56)', () => {
@@ -203,7 +224,7 @@ describe('buildChartOxs', () => {
     const flipped = buildChartOxs(pattern, paletteOf(2), meta, { ...options, flip: true })
 
     // The palette is untouched by a mirror — only where the stitches sit changes.
-    expect(stitches(flipped)).toEqual(['1,1,2', '3,1,1'])
+    expect(stitches(flipped)).toEqual(['0,0,2', '2,0,1'])
     expect(elements(flipped, 'properties')[0].chartwidth).toBe('3')
   })
 
